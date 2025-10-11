@@ -150,8 +150,10 @@ export function GroupChat({ groupId, onBack }: GroupChatProps) {
     };
 
     const isCreator = currentGroup?.userRole === 'creator' || currentGroup?.creator?._id === user?._id || currentGroup?.creator?._id === user?.id;
-    const isAdmin = currentGroup?.userRole === 'admin';
-    const canSendMessages = isCreator || isAdmin;
+    const isGroupAdmin = currentGroup?.userRole === 'admin';
+    const isPlatformAdmin = user?.role === 'admin';
+    const canSendMessages = isCreator || isGroupAdmin;
+    const canViewMessages = currentGroup?.isMember || isCreator || isPlatformAdmin;
 
     if (loading || messagesLoading) {
         return (
@@ -230,7 +232,7 @@ export function GroupChat({ groupId, onBack }: GroupChatProps) {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {!currentGroup.isMember && !isCreator ? (
+                {!canViewMessages ? (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-emerald-500/20 rounded-full flex items-center justify-center mb-4 mx-auto">
                             <Users className="w-8 h-8 text-primary" />
@@ -319,7 +321,7 @@ export function GroupChat({ groupId, onBack }: GroupChatProps) {
             </div>
 
             {/* Message Input */}
-            {user && (currentGroup.isMember || isCreator) ? (
+            {user && canViewMessages ? (
                 canSendMessages ? (
                     <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
                         {/* Image Preview */}
@@ -356,7 +358,7 @@ export function GroupChat({ groupId, onBack }: GroupChatProps) {
                                     type="text"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder={isCreator ? "Type your message as group host..." : isAdmin ? "Type your message as admin..." : "Type your message..."}
+                                    placeholder={isCreator ? "Type your message as group host..." : isGroupAdmin ? "Type your message as admin..." : "Type your message..."}
                                     className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                     disabled={sending}
                                 />

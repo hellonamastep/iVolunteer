@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,18 +13,51 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Share2 } from "lucide-react";
 import { toast } from "react-toastify";
+import { toast as shadToast } from "@/hooks/use-toast";
 import { useDonationEvent, DonationEvent } from "@/contexts/donationevents-context";
 
 export default function DonatePage() {
+  const searchParams = useSearchParams();
   const { events, fetchEvents, loading, handleRazorpayPayment } = useDonationEvent();
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [highlightedDonationId, setHighlightedDonationId] = useState<string | null>(null);
   const quickAmounts = [100, 250, 500, 1000]; // Converted to Rupees
+  
+  // Refs for scrolling to specific donation events
+  const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  // Handle donationId from URL parameter
+  useEffect(() => {
+    const donationId = searchParams.get('donationId');
+    
+    if (donationId && events.length > 0) {
+      // Set highlighted donation
+      setHighlightedDonationId(donationId);
+      
+      // Wait for the donation card to render and then scroll to it
+      setTimeout(() => {
+        const donationElement = donationRefs.current.get(donationId);
+        if (donationElement) {
+          donationElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            setHighlightedDonationId(null);
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams, events.length]);
   
 
   const handleCustomDonate = (eventId: string) => {
@@ -38,6 +72,54 @@ export default function DonatePage() {
 
   const handleDonateClick = (eventId: string, amount: number) => {
     handleRazorpayPayment(eventId, amount);
+  };
+
+  const handleShare = async (event: DonationEvent, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent any parent click handlers
+    
+    const donationUrl = `${window.location.origin}/donate?donationId=${event._id}`;
+    console.log('Sharing donation URL:', donationUrl);
+    
+    try {
+      if (navigator.share) {
+        // Use native share API if available
+        await navigator.share({
+          title: event.title,
+          text: event.description || 'Support this donation cause',
+          url: donationUrl,
+        });
+        console.log('Donation shared successfully via native share');
+        
+        shadToast({
+          title: 'Success',
+          description: 'Donation event shared successfully',
+        });
+      } else {
+        // Fallback to copying link to clipboard
+        if (!navigator.clipboard) {
+          throw new Error('Clipboard API not available');
+        }
+        
+        await navigator.clipboard.writeText(donationUrl);
+        console.log('Donation URL copied to clipboard');
+        
+        shadToast({
+          title: 'Link copied!',
+          description: 'Donation event link copied to clipboard',
+        });
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      
+      // Only show error if it's not a user cancellation
+      if (error instanceof Error && error.name !== 'AbortError') {
+        shadToast({
+          title: 'Failed to share',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive'
+        });
+      }
+    }
   };
 
   // Filter events based on selected filter
@@ -116,31 +198,55 @@ export default function DonatePage() {
                   const isCompleted = event.collectedAmount >= event.goalAmount;
                   
                   return (
-                    <Card key={event._id} className="border-0 hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
-                      <div className={`absolute top-0 left-0 w-1 h-full ${
-                        isCompleted ? 'bg-green-500' : 'bg-gradient-to-b from-blue-500 to-purple-500'
-                      }`} />
-                      
-                      <CardHeader className="pb-4">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl font-semibold text-slate-800 mb-2 line-clamp-2">
-                              {event.title}
-                            </CardTitle>
+                    <div
+                      key={event._id}
+                      ref={(el) => {
+                        if (el && event._id) {
+                          donationRefs.current.set(event._id, el);
+                        } else if (event._id) {
+                          donationRefs.current.delete(event._id);
+                        }
+                      }}
+                      className={`transition-all duration-300 ${
+                        highlightedDonationId === event._id 
+                          ? 'ring-4 ring-blue-500 ring-offset-2 rounded-xl shadow-2xl' 
+                          : ''
+                      }`}
+                    >
+                      <Card className="border-0 hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
+                        <div className={`absolute top-0 left-0 w-1 h-full ${
+                          isCompleted ? 'bg-green-500' : 'bg-gradient-to-b from-blue-500 to-purple-500'
+                        }`} />
+                        
+                        <CardHeader className="pb-4 relative">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
+                            <div className="flex-1 pr-8">
+                              <CardTitle className="text-xl font-semibold text-slate-800 mb-2 line-clamp-2">
+                                {event.title}
+                              </CardTitle>
                             <CardDescription className="text-slate-600">
                               {event.ngo?.name || "Community NGO"} • {event.ngo?.email || "Supporting local causes"}
                             </CardDescription>
                           </div>
-                          <Badge 
-                            variant={isCompleted ? "default" : "secondary"} 
-                            className={`px-3 py-1 text-sm ${
-                              isCompleted 
-                                ? 'bg-green-100 text-green-800 border-green-200' 
-                                : 'bg-blue-100 text-blue-800 border-blue-200'
-                            }`}
-                          >
-                            {isCompleted ? 'Goal Achieved' : event.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={isCompleted ? "default" : "secondary"} 
+                              className={`px-3 py-1 text-sm ${
+                                isCompleted 
+                                  ? 'bg-green-100 text-green-800 border-green-200' 
+                                  : 'bg-blue-100 text-blue-800 border-blue-200'
+                              }`}
+                            >
+                              {isCompleted ? 'Goal Achieved' : event.status}
+                            </Badge>
+                            <button
+                              onClick={(e) => handleShare(event, e)}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Share donation event"
+                            >
+                              <Share2 className="w-4 h-4 text-gray-600" />
+                            </button>
+                          </div>
                         </div>
                         
                         <p className="text-slate-700 text-sm leading-relaxed mt-2">
@@ -245,6 +351,7 @@ export default function DonatePage() {
                         )}
                       </CardContent>
                     </Card>
+                    </div>
                   );
                 })
               ) : (

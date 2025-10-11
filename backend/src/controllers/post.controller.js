@@ -29,10 +29,6 @@ export const getCategories = async (req, res) => {
 // Create a new post
 export const createPost = async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'Image is required' });
-        }
-
         const { title, category, description } = req.body;
 
         // Validate required fields
@@ -59,15 +55,22 @@ export const createPost = async (req, res) => {
             });
         }
 
-        const post = new Post({
+        // Create post object with required fields
+        const postData = {
             user: req.user._id,
             title: title.trim(),
             category,
             description: description.trim(),
-            city: city.trim(),
-            imageUrl: req.file.path,
-            cloudinaryPublicId: req.file.filename
-        });
+            city: city.trim()
+        };
+
+        // Add image data only if an image was uploaded
+        if (req.file) {
+            postData.imageUrl = req.file.path;
+            postData.cloudinaryPublicId = req.file.filename;
+        }
+
+        const post = new Post(postData);
 
         await post.save();
         await post.populate('user', 'name profilePicture');
@@ -282,8 +285,10 @@ export const updatePost = async (req, res) => {
 
         // Update image if provided
         if (req.file) {
-            // Delete old image from Cloudinary
-            await deleteImage(post.cloudinaryPublicId);
+            // Delete old image from Cloudinary if it exists
+            if (post.cloudinaryPublicId) {
+                await deleteImage(post.cloudinaryPublicId);
+            }
             
             // Update with new image
             post.imageUrl = req.file.path;
@@ -319,8 +324,10 @@ export const deletePost = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to delete this post' });
         }
 
-        // Delete image from Cloudinary
-        await deleteImage(post.cloudinaryPublicId);
+        // Delete image from Cloudinary if it exists
+        if (post.cloudinaryPublicId) {
+            await deleteImage(post.cloudinaryPublicId);
+        }
         
         // Delete post from database
         await post.deleteOne();

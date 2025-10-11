@@ -76,11 +76,13 @@ const postSchema = new mongoose.Schema({
     },
     imageUrl: {
         type: String,
-        required: true
+        required: false,
+        default: null
     },
     cloudinaryPublicId: {
         type: String,
-        required: true
+        required: false,
+        default: null
     },
     comments: [commentSchema],
     reactions: [reactionSchema],

@@ -19,6 +19,7 @@ export interface Post {
     title: string;
     category: string;
     description: string;
+    city: string;
     imageUrl: string;
     cloudinaryPublicId: string;
     comments: Comment[];

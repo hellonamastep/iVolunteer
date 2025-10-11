@@ -8,6 +8,7 @@ import { AdminProvider } from "@/contexts/admin-context";
 import { UserProvider } from "@/contexts/user-context";
 import { PostProvider } from "@/contexts/post-context";
 import { ToastContainer } from "react-toastify";
+import { Toaster } from "@/components/ui/toaster";
 import { CorporateProvider } from "@/contexts/corporate-context";
 import { DonationEventProvider } from "@/contexts/donationevents-context";
 import { PointsProvider } from "@/contexts/points-context";
@@ -36,6 +37,7 @@ export function Providers({ children }: { children: ReactNode }) {
                           draggable
                           theme="light"
                         />
+                        <Toaster />
                       </DonationEventProvider>
                     </ParticipationRequestProvider>
                   </GroupsProvider>

@@ -18,6 +18,27 @@ export const createGroup = async (req, res) => {
             });
         }
 
+        // Get city from the logged-in user's profile (same as post creation flow)
+        let city;
+        let status = 'pending'; // Default status for regular users
+        
+        if (req.user.role === 'admin') {
+            // Admin groups are auto-approved and set to 'global' city
+            city = 'global';
+            status = 'approved';
+        } else if (req.user.role === 'user') {
+            city = req.user.city;
+        } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+            city = req.user.address?.city;
+        }
+
+        if (!city) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'User must have a city set in their profile to create groups' 
+            });
+        }
+
         let imageUrl = null;
         let cloudinaryPublicId = null;
 
@@ -47,6 +68,8 @@ export const createGroup = async (req, res) => {
             description,
             creator: userId,
             category,
+            city: city.trim(),
+            status: status, // Admin groups are 'approved', others are 'pending'
             imageUrl,
             cloudinaryPublicId,
             isPrivate: isPrivate === 'true' || isPrivate === true,
@@ -104,7 +127,22 @@ export const getGroups = async (req, res) => {
             userObject: req.user ? { id: req.user._id || req.user.id } : 'no user'
         });
 
-        const query = {};
+        let query = {};
+
+        // Status filtering logic:
+        // - Admin: See all groups (no status filter)
+        // - Regular users: See approved groups OR their own groups (any status)
+        if (req.user?.role !== 'admin' && userId) {
+            query.$or = [
+                { status: 'approved' },
+                { creator: userId }, // Show creator's own groups regardless of status
+                { 'members.user': userId } // Show groups where user is a member
+            ];
+        } else if (!userId) {
+            // Not logged in - only show approved groups
+            query.status = 'approved';
+        }
+        // If admin, no status filter is added (they see all)
 
         // Filter by category
         if (category && category !== 'All') {
@@ -982,6 +1020,81 @@ export const removeMemberFromGroup = async (req, res) => {
         res.status(500).json({ 
             success: false, 
             message: 'Failed to remove member from group' 
+        });
+    }
+};
+
+// Admin: Update group status (approve/reject)
+export const updateGroupStatus = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { status, rejectionReason } = req.body;
+
+        // Validate status
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status. Must be "approved" or "rejected"'
+            });
+        }
+
+        // Prepare update data
+        const updateData = { status };
+
+        // If rejecting, include rejection reason (if provided)
+        if (status === 'rejected' && rejectionReason) {
+            updateData.rejectionReason = rejectionReason;
+        }
+
+        // If approving, clear any previous rejection reason
+        if (status === 'approved') {
+            updateData.rejectionReason = null;
+        }
+
+        const group = await Group.findByIdAndUpdate(
+            groupId,
+            updateData,
+            { new: true }
+        ).populate('creator', 'name email');
+
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Group not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `Group ${status} successfully`,
+            data: group
+        });
+    } catch (error) {
+        console.error('Update group status error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update group status'
+        });
+    }
+};
+
+// Admin: Get all pending groups
+export const getPendingGroups = async (req, res) => {
+    try {
+        const groups = await Group.find({ status: 'pending' })
+            .populate('creator', 'name email')
+            .populate('members.user', 'name email')
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: groups
+        });
+    } catch (error) {
+        console.error('Get pending groups error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch pending groups'
         });
     }
 };

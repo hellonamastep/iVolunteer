@@ -36,6 +36,7 @@ interface Group {
         _id: string;
         name: string;
         email: string;
+        city?: string;
     };
     members: GroupMember[];
     category: string;
@@ -48,6 +49,9 @@ interface Group {
         requireApproval: boolean;
     };
     tags: string[];
+    city?: string;
+    status: 'pending' | 'approved' | 'rejected';
+    rejectionReason?: string;
     createdAt: string;
     updatedAt: string;
     memberCount: number;
@@ -74,6 +78,9 @@ interface GroupsContextType {
     promoteMemberToAdmin: (groupId: string, memberId: string) => Promise<void>;
     demoteMemberFromAdmin: (groupId: string, memberId: string) => Promise<void>;
     removeMemberFromGroup: (groupId: string, memberId: string) => Promise<void>;
+    approveGroup: (groupId: string) => Promise<void>;
+    rejectGroup: (groupId: string, rejectionReason: string) => Promise<void>;
+    getPendingGroups: () => Promise<Group[]>;
     setCurrentGroup: (group: Group | null) => void;
     clearError: () => void;
 }
@@ -567,6 +574,84 @@ export const GroupsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
     };
 
+    // Admin: Approve group
+    const approveGroup = async (groupId: string): Promise<void> => {
+        return handleApiCall(async () => {
+            const token = getToken();
+            const response = await fetch(`${API_BASE_URL}/v1/groups/admin/${groupId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: 'approved' })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to approve group');
+            }
+
+            const result = await response.json();
+            
+            // Update in groups list
+            setGroups(prev => prev.map(group => 
+                group._id === groupId ? result.data : group
+            ));
+        });
+    };
+
+    // Admin: Reject group
+    const rejectGroup = async (groupId: string, rejectionReason: string): Promise<void> => {
+        return handleApiCall(async () => {
+            const token = getToken();
+            const response = await fetch(`${API_BASE_URL}/v1/groups/admin/${groupId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ 
+                    status: 'rejected',
+                    rejectionReason 
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to reject group');
+            }
+
+            const result = await response.json();
+            
+            // Update in groups list
+            setGroups(prev => prev.map(group => 
+                group._id === groupId ? result.data : group
+            ));
+        });
+    };
+
+    // Admin: Get pending groups
+    const getPendingGroups = async (): Promise<Group[]> => {
+        return handleApiCall(async () => {
+            const token = getToken();
+            const response = await fetch(`${API_BASE_URL}/v1/groups/admin/pending`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to fetch pending groups');
+            }
+
+            const result = await response.json();
+            return result.data || [];
+        });
+    };
+
     const clearError = () => {
         setError(null);
     };
@@ -597,6 +682,9 @@ export const GroupsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         promoteMemberToAdmin,
         demoteMemberFromAdmin,
         removeMemberFromGroup,
+        approveGroup,
+        rejectGroup,
+        getPendingGroups,
         setCurrentGroup,
         clearError,
     };

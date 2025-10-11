@@ -20,6 +20,7 @@ export interface User {
   createdAt: string;
   profilePicture?: string;  // Add profile picture field
   cloudinaryPublicId?: string;  // Add cloudinary ID field
+  city?: string;  // Add city field for regional filtering
 }
 
 interface AuthContextType {

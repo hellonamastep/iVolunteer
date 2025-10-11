@@ -13,9 +13,11 @@ import {
     updateGroup,
     promoteMemberToAdmin,
     demoteMemberFromAdmin,
-    removeMemberFromGroup
+    removeMemberFromGroup,
+    updateGroupStatus,
+    getPendingGroups
 } from '../controllers/group.controller.js';
-import { authentication, optionalAuthentication } from '../middlewares/auth.middleware.js';
+import { authentication, optionalAuthentication, authorizeRole } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
@@ -61,5 +63,9 @@ router.delete('/:groupId/members/:memberId', removeMemberFromGroup); // Remove m
 // Message routes
 router.post('/:groupId/messages', upload.single('image'), sendMessage); // Send message
 router.get('/:groupId/messages', getMessages); // Get group messages
+
+// Admin routes (require admin role)
+router.get('/admin/pending', authentication, authorizeRole('admin'), getPendingGroups); // Get all pending groups
+router.put('/admin/:groupId/status', authentication, authorizeRole('admin'), updateGroupStatus); // Approve/reject group
 
 export default router;

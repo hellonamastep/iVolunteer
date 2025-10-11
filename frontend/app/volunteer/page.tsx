@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useNGO } from "@/contexts/ngo-context";
 import { useParticipationRequest } from "@/contexts/participation-request-context";
@@ -17,13 +17,16 @@ import {
   Globe,
   RefreshCcw,
   XCircle,
+  Share2,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
+import { toast } from "@/hooks/use-toast";
 
 const AvailableEventsPage: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { events, fetchAvailableEvents, loading, error } = useNGO();
   const { 
@@ -42,10 +45,49 @@ const AvailableEventsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community'>('virtual');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
+  const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
+  
+  // Refs for scrolling to specific events
+  const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetchAvailableEvents(showAllEvents);
   }, [showAllEvents]);
+
+  // Handle eventId from URL parameter
+  useEffect(() => {
+    const eventId = searchParams.get('eventId');
+    
+    if (eventId && events.length > 0) {
+      // Set highlighted event
+      setHighlightedEventId(eventId);
+      
+      // Find the event to determine which tab it belongs to
+      const targetEvent = events.find(e => e._id === eventId);
+      if (targetEvent) {
+        const eventType = (targetEvent.eventType?.toLowerCase() || 'community') as 'virtual' | 'in-person' | 'community';
+        if (activeTab !== eventType) {
+          setActiveTab(eventType);
+        }
+      }
+      
+      // Wait for the event to render and then scroll to it
+      setTimeout(() => {
+        const eventElement = eventRefs.current.get(eventId);
+        if (eventElement) {
+          eventElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            setHighlightedEventId(null);
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [searchParams, events.length]);
 
   // Filter events based on active tab
   const filteredEvents = useMemo(() => {
@@ -93,6 +135,54 @@ const AvailableEventsPage: React.FC = () => {
   const handleCardClick = (eventId: string) => {
     if (eventId) {
       router.push(`/volunteer/${eventId}`);
+    }
+  };
+
+  const handleShare = async (event: any, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const eventUrl = `${window.location.origin}/volunteer?eventId=${event._id}`;
+    console.log('Sharing event URL:', eventUrl);
+    
+    try {
+      if (navigator.share) {
+        // Use native share API if available
+        await navigator.share({
+          title: event.title,
+          text: event.description || 'Check out this volunteer event',
+          url: eventUrl,
+        });
+        console.log('Event shared successfully via native share');
+        
+        toast({
+          title: 'Success',
+          description: 'Event shared successfully',
+        });
+      } else {
+        // Fallback to copying link to clipboard
+        if (!navigator.clipboard) {
+          throw new Error('Clipboard API not available');
+        }
+        
+        await navigator.clipboard.writeText(eventUrl);
+        console.log('Event URL copied to clipboard');
+        
+        toast({
+          title: 'Link copied!',
+          description: 'Event link copied to clipboard',
+        });
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      
+      // Only show error if it's not a user cancellation
+      if (error instanceof Error && error.name !== 'AbortError') {
+        toast({
+          title: 'Failed to share',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive'
+        });
+      }
     }
   };
 
@@ -343,10 +433,21 @@ const AvailableEventsPage: React.FC = () => {
               return (
                 <div
                   key={event._id}
+                  ref={(el) => {
+                    if (el && event._id) {
+                      eventRefs.current.set(event._id, el);
+                    } else if (event._id) {
+                      eventRefs.current.delete(event._id);
+                    }
+                  }}
                   onClick={() => event._id && handleCardClick(event._id)}
                   className={`bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border overflow-hidden cursor-pointer transform hover:scale-[1.02] ${
                     eventFull ? "border-red-200" : "border-gray-100"
-                  } ${userParticipating ? "ring-2 ring-green-200" : ""}`}
+                  } ${userParticipating ? "ring-2 ring-green-200" : ""} ${
+                    highlightedEventId === event._id 
+                      ? 'ring-4 ring-blue-500 ring-offset-2 shadow-2xl' 
+                      : ''
+                  }`}
                 >
                   {/* Event Image */}
                   {event.image?.url && (
@@ -390,14 +491,20 @@ const AvailableEventsPage: React.FC = () => {
 
                   {/* Event Header */}
                   <div className="p-6 border-b border-gray-100 relative">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 pr-16">
                       {event.title}
                     </h2>
                     <p className="text-gray-600 text-sm line-clamp-3">
                       {event.description}
                     </p>
-                    <div className="absolute top-4 right-4 text-xs text-blue-600 font-medium">
-                      Click to view details
+                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                      <button
+                        onClick={(e) => handleShare(event, e)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Share event"
+                      >
+                        <Share2 className="w-4 h-4 text-gray-600" />
+                      </button>
                     </div>
                   </div>
 

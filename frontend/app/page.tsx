@@ -27,6 +27,7 @@ import Donationeventbutton from "@/components/Donationeventbutton";
 import PointsDisplay from "@/components/PointsDisplay.";
 import { motion } from "framer-motion";
 import PendingRequestsCTA from "@/components/PendingRequestsCTA";
+import PendingGroupsCTA from "@/components/PendingGroupsCTA";
 import Donationreqcta from "@/components/Donationreqcta";
 import { PendingParticipationRequests } from "@/components/PendingParticipationRequests";
 
@@ -46,6 +47,7 @@ function AdminDashboard() {
 
       <Donationreqcta />
       <PendingRequestsCTA />
+      <PendingGroupsCTA />
 
       <div className="mt-16">
       <Footer />

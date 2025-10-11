@@ -704,8 +704,16 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                         )}
 
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Group Settings</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-3">Group Information</h3>
                             <div className="space-y-2 text-sm">
+                                {currentGroup.city && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Location:</span>
+                                        <span className="flex items-center gap-1 font-medium text-gray-900">
+                                            📍 {currentGroup.city}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Privacy:</span>
                                     <span className="flex items-center gap-1">
