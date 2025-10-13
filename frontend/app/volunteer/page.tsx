@@ -24,6 +24,30 @@ import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
 import { toast } from "@/hooks/use-toast";
 
+// Helper component to highlight matching text
+const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
+  if (!highlight.trim()) {
+    return <>{text}</>;
+  }
+
+  const regex = new RegExp(`(${highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        regex.test(part) ? (
+          <mark key={index} className="bg-yellow-300 text-gray-900 font-semibold px-0.5 rounded">
+            {part}
+          </mark>
+        ) : (
+          <span key={index}>{part}</span>
+        )
+      )}
+    </>
+  );
+};
+
 const AvailableEventsPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,6 +70,8 @@ const AvailableEventsPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -89,22 +115,105 @@ const AvailableEventsPage: React.FC = () => {
     }
   }, [searchParams, events.length]);
 
-  // Filter events based on active tab
+  // Filter events based on active tab, filter type, and search query
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
       const eventType = event.eventType?.toLowerCase() || 'community';
-      return eventType === activeTab;
+      
+      // For joined filter, show all joined events regardless of tab
+      // For other filters, respect the active tab
+      const matchesTab = filterType === 'joined' ? true : eventType === activeTab;
+      
+      // Filter by type (all, joined, shortlisted)
+      let matchesFilter = true;
+      if (filterType === 'joined') {
+        const currentUserId = user?._id || "";
+        matchesFilter = (event._id && participated[event._id]) || 
+          (Array.isArray(event.participants) && 
+           event.participants.some((participant: any) => 
+             participant._id === currentUserId || participant === currentUserId
+           ));
+      } else if (filterType === 'shortlisted') {
+        // TODO: Implement shortlisted logic when shortlist feature is available
+        matchesFilter = false;
+      }
+      
+      // Filter by search query
+      const matchesSearch = searchQuery.trim() === '' || 
+        event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesTab && matchesFilter && matchesSearch;
     });
-  }, [events, activeTab]);
+  }, [events, activeTab, filterType, searchQuery, user, participated]);
+
+  // Auto-switch tab when searching for events in different sections
+  useEffect(() => {
+    if (searchQuery.trim() === '' || filterType === 'joined' || filterType === 'shortlisted') {
+      return; // Don't auto-switch for empty search or special filters
+    }
+
+    // Find all events matching the search query
+    const matchingEvents = events.filter(event => 
+      event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (matchingEvents.length === 0) {
+      return; // No matches, don't switch
+    }
+
+    // Check if current tab has any matching events
+    const currentTabHasMatches = matchingEvents.some(event => 
+      (event.eventType?.toLowerCase() || 'community') === activeTab
+    );
+
+    if (!currentTabHasMatches) {
+      // Find which tab has the most matching events
+      const tabCounts = {
+        virtual: 0,
+        'in-person': 0,
+        community: 0
+      };
+
+      matchingEvents.forEach(event => {
+        const eventType = (event.eventType?.toLowerCase() || 'community') as keyof typeof tabCounts;
+        tabCounts[eventType]++;
+      });
+
+      // Switch to the tab with the most matches
+      const bestTab = Object.entries(tabCounts).reduce((a, b) => 
+        b[1] > a[1] ? b : a
+      )[0] as 'virtual' | 'in-person' | 'community';
+
+      if (tabCounts[bestTab] > 0) {
+        setActiveTab(bestTab);
+      }
+    }
+  }, [searchQuery, events, activeTab, filterType]);
 
   // Count events by type
   const eventCounts = useMemo(() => {
+    const currentUserId = user?._id || "";
+    const joinedCount = events.filter(e => 
+      (e._id && participated[e._id]) || 
+      (Array.isArray(e.participants) && 
+       e.participants.some((participant: any) => 
+         participant._id === currentUserId || participant === currentUserId
+       ))
+    ).length;
+    
     return {
       virtual: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'virtual').length,
       'in-person': events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'in-person').length,
       community: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'community').length,
+      joined: joinedCount,
+      completed: 0, // TODO: Implement when completed events tracking is available
+      youth: 6, // Static for now
     };
-  }, [events]);
+  }, [events, user, participated]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -361,17 +470,7 @@ const AvailableEventsPage: React.FC = () => {
                   </h1>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600 bg-white px-4 py-2 rounded-full shadow-sm">
-                  V
-                </span>
-                <span className="text-sm font-medium text-gray-600">Volunteer User</span>
-                <button
-                  className="text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors"
-                >
-                  Logout
-                </button>
-              </div>
+              
             </div>
           </div>
 
@@ -379,60 +478,100 @@ const AvailableEventsPage: React.FC = () => {
           <ParticipationRequestBanner />
 
           {/* Stats Section - Top Cards */}
-          <section className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 p-5 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
+          <section className="mb-6 grid grid-cols-5 gap-3">
+            <div 
+              onClick={() => {
+                setActiveTab('virtual');
+                setFilterType('all');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                activeTab === 'virtual' && filterType === 'all' ? 'ring-4 ring-cyan-600 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <Video className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm font-medium">OR</span>
+                  <Video className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">OR</span>
                 </div>
               </div>
-              <p className="text-sm text-white/90 font-medium mb-1">Virtual Events</p>
-              <p className="text-4xl font-bold text-white">{eventCounts.virtual}</p>
+              <p className="text-xs text-white/90 font-medium mb-1">Virtual Events</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.virtual}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 p-5 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
+            <div 
+              onClick={() => {
+                setActiveTab('in-person');
+                setFilterType('all');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                activeTab === 'in-person' && filterType === 'all' ? 'ring-4 ring-emerald-600 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <Building className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm font-medium">IP</span>
+                  <Building className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">IP</span>
                 </div>
               </div>
-              <p className="text-sm text-white/90 font-medium mb-1">In-Person</p>
-              <p className="text-4xl font-bold text-white">{eventCounts['in-person']}</p>
+              <p className="text-xs text-white/90 font-medium mb-1">In-Person</p>
+              <p className="text-3xl font-bold text-white">{eventCounts['in-person']}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
+            <div 
+              onClick={() => {
+                setFilterType('joined');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                filterType === 'joined' ? 'ring-4 ring-blue-700 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm font-medium">JO</span>
+                  <CheckCircle className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">JO</span>
                 </div>
               </div>
-              <p className="text-sm text-white/90 font-medium mb-1">Joined</p>
-              <p className="text-4xl font-bold text-white">0</p>
+              <p className="text-xs text-white/90 font-medium mb-1">Joined</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.joined}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 p-5 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
+            <div 
+              onClick={() => {
+                // TODO: Implement completed events filter when feature is available
+                toast({
+                  title: 'Coming Soon',
+                  description: 'Completed events tracking will be available soon!',
+                });
+              }}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer opacity-75"
+            >
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm font-medium">CO</span>
+                  <CheckCircle className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">CO</span>
                 </div>
               </div>
-              <p className="text-sm text-white/90 font-medium mb-1">Completed</p>
-              <p className="text-4xl font-bold text-white">0</p>
+              <p className="text-xs text-white/90 font-medium mb-1">Completed</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.completed}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 p-5 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
+            <div 
+              onClick={() => {
+                setActiveTab('community');
+                setFilterType('all');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                activeTab === 'community' && filterType === 'all' ? 'ring-4 ring-yellow-600 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm font-medium">SP</span>
+                  <Globe className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">YE</span>
                 </div>
               </div>
-              <p className="text-sm text-white/90 font-medium mb-1">Youth Events</p>
-              <p className="text-4xl font-bold text-white">6</p>
+              <p className="text-xs text-white/90 font-medium mb-1">Youth Events</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.community}</p>
             </div>
           </section>
 
@@ -455,12 +594,28 @@ const AvailableEventsPage: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search events by title, keyword, or organizer..."
-                className="w-full px-5 py-3 pl-12 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-gray-700"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-5 py-3 pl-12 pr-32 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-gray-700"
               />
               <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                 🔍
               </div>
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                {searchQuery && (
+                  <>
+                    <div className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold">
+                      {filteredEvents.length} match{filteredEvents.length !== 1 ? 'es' : ''}
+                    </div>
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  </>
+                )}
                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                   <span className="text-gray-600">☰</span>
                 </button>
@@ -474,21 +629,36 @@ const AvailableEventsPage: React.FC = () => {
           {/* Filters and Actions */}
           <div className="flex items-center gap-3 mb-6 flex-wrap">
             <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700"
+              onClick={() => setFilterType('all')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'all' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
             >
               <CheckCircle className="w-4 h-4" />
-              All Events (6)
+              All Events ({events.length})
             </button>
             
             <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700"
+              onClick={() => setFilterType('joined')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'joined' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
             >
               <UserPlus className="w-4 h-4" />
-              Joined (0)
+              Joined ({eventCounts.joined})
             </button>
             
             <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700"
+              onClick={() => setFilterType('shortlisted')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'shortlisted' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
             >
               ★ Shortlisted (0)
             </button>
@@ -496,7 +666,7 @@ const AvailableEventsPage: React.FC = () => {
             <button
               onClick={handleRefresh}
               disabled={loading || isRefreshing}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -508,13 +678,22 @@ const AvailableEventsPage: React.FC = () => {
             <div className="text-center py-16">
               <div className="bg-white rounded-xl shadow-md border border-gray-200 p-10 max-w-md mx-auto">
                 <div className="text-gray-400 text-6xl mb-4">
-                  {activeTab === 'virtual' ? '💻' : activeTab === 'in-person' ? '🏢' : '🌍'}
+                  {filterType === 'joined' ? '👥' : 
+                   filterType === 'shortlisted' ? '⭐' : 
+                   activeTab === 'virtual' ? '💻' : 
+                   activeTab === 'in-person' ? '🏢' : '🌍'}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  No {activeTab === 'virtual' ? 'Virtual' : activeTab === 'in-person' ? 'In-Person' : 'Community'} Events
+                  {filterType === 'joined' ? 'No Joined Events' : 
+                   filterType === 'shortlisted' ? 'No Shortlisted Events' : 
+                   `No ${activeTab === 'virtual' ? 'Virtual' : activeTab === 'in-person' ? 'In-Person' : 'Community'} Events`}
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  There are currently no {activeTab} events available. Check back soon!
+                  {filterType === 'joined' 
+                    ? "You haven't joined any events yet. Browse available events and join one to get started!" 
+                    : filterType === 'shortlisted'
+                    ? "You haven't shortlisted any events yet."
+                    : `There are currently no ${activeTab} events available. Check back soon!`}
                 </p>
               </div>
             </div>
@@ -598,12 +777,12 @@ const AvailableEventsPage: React.FC = () => {
                   <div className="p-4">
                     {/* Event Title */}
                     <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-teal-600 transition-colors">
-                      {event.title}
+                      <HighlightText text={event.title} highlight={searchQuery} />
                     </h3>
                     
                     {/* Event Description */}
                     <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                      {event.description}
+                      <HighlightText text={event.description} highlight={searchQuery} />
                     </p>
 
                     {/* Date */}
@@ -625,7 +804,7 @@ const AvailableEventsPage: React.FC = () => {
                     <div className="flex items-center text-gray-600 mb-3 text-xs">
                       <MapPin className="h-3.5 w-3.5 mr-1.5 text-pink-500" />
                       <span className="line-clamp-1">
-                        {event.location || "Virtual"}
+                        <HighlightText text={event.location || "Virtual"} highlight={searchQuery} />
                       </span>
                     </div>
 
@@ -772,7 +951,11 @@ const AvailableEventsPage: React.FC = () => {
           {filteredEvents.length > 0 && (
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-500">
-                Showing {filteredEvents.length} {activeTab} events
+                {filterType === 'joined' 
+                  ? `Showing ${filteredEvents.length} joined event${filteredEvents.length !== 1 ? 's' : ''}`
+                  : filterType === 'shortlisted'
+                  ? `Showing ${filteredEvents.length} shortlisted event${filteredEvents.length !== 1 ? 's' : ''}`
+                  : `Showing ${filteredEvents.length} ${activeTab} event${filteredEvents.length !== 1 ? 's' : ''}`}
               </p>
             </div>
           )}
