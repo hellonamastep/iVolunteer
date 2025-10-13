@@ -60,12 +60,12 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <span className="font-bold text-white text-xl">i</span>
+              <span className="font-bold text-white text-xl">N</span>
             </div>
             <div className="absolute -inset-1.5 bg-blue-100/50 rounded-xl -z-10 group-hover:bg-blue-100/70 transition-colors duration-300" />
           </div>
           <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            Volunteer
+            AMASTEP
           </span>
         </Link>
 
@@ -130,13 +130,13 @@ export function Header() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link
-                  href="/auth"
+                  href="/signup"
                   className="px-4 py-2 text-sm font-medium border text-gray-700 hover:text-blue-600 transition-colors duration-200 rounded-lg hover:bg-gray-50"
                 >
                   Sign up
                 </Link>
                 <Link
-                  href="/auth"
+                  href="/login"
                   className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:from-blue-700 hover:to-blue-800"
                 >
                   Login

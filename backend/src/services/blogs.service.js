@@ -9,6 +9,10 @@ const getAllBlogs = async () => {
   return await Blogs.find().sort({ createdAt: -1 });
 };
 
+const getBlogBySlug = async (slug) => {
+  return await Blogs.findOne({ slug });
+};
+
 const getBlogById = async (id) => {
   return await Blogs.findById(id);
 };
@@ -27,4 +31,5 @@ export const blogService = {
   getBlogById,
   updateBlog,
   deleteBlog,
+   getBlogBySlug,
 };

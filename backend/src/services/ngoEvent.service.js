@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 
 const createEvent = async (data, organizationId, organizationName) => {
-  let {
+  const {
     title,
     description,
     location,
@@ -15,6 +15,8 @@ const createEvent = async (data, organizationId, organizationName) => {
     requirements = [],
     sponsorshipRequired,
     sponsorshipAmount,
+    sponsorshipContactEmail,
+    sponsorshipContactNumber,
     eventStatus,
     images = [],
   } = data;
@@ -34,6 +36,8 @@ const createEvent = async (data, organizationId, organizationName) => {
     requirements,
     sponsorshipRequired,
     sponsorshipAmount,
+    sponsorshipContactEmail,
+    sponsorshipContactNumber,
     images,
     status: "pending",
   });

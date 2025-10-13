@@ -13,6 +13,7 @@ import { DonationEventProvider } from "@/contexts/donationevents-context";
 import { PointsProvider } from "@/contexts/points-context";
 import { GroupsProvider } from "@/contexts/groups-context";
 import { BlogProvider } from "@/contexts/blog-context";
+import { CorporateEventProvider } from "@/contexts/corporateEvent-context";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
                   <GroupsProvider>
                     <DonationEventProvider>
                       <BlogProvider>
+                        <CorporateEventProvider>
                         {children}
                         <ToastContainer
                           position="top-right"
@@ -36,6 +38,7 @@ export function Providers({ children }: { children: ReactNode }) {
                           draggable
                           theme="light"
                         />
+                        </CorporateEventProvider>
                       </BlogProvider>
                     </DonationEventProvider>
                   </GroupsProvider>

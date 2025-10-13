@@ -166,6 +166,32 @@ const eventSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+  sponsorshipContactEmail: {
+  type: String,
+  validate: {
+    validator: function (value) {
+      if (this.sponsorshipRequired) {
+        return !!value; // must be provided if sponsorshipRequired = true
+      }
+      return true;
+    },
+    message: "Contact email is required when sponsorship is enabled",
+  },
+},
+
+sponsorshipContactNumber: {
+  type: String,
+  validate: {
+    validator: function (value) {
+      if (this.sponsorshipRequired) {
+        return !!value;
+      }
+      return true;
+    },
+    message: "Contact number is required when sponsorship is enabled",
+  },
+},
+
     sponsorshipAmount: {
       type: Number,
       min: [0, "Sponsorship amount cannot be negative"],
@@ -180,6 +206,7 @@ const eventSchema = new mongoose.Schema(
         message: "Sponsorship amount must be > 0 if sponsorship is required",
       },
     },
+    
     requirements: [
       {
         type: String,

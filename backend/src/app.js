@@ -27,6 +27,8 @@ import paymentRouter from "./routes/payment.routes.js";
 import pointsBadgeRouter from "./routes/pointsBadge.routes.js";
 import groupRouter from "./routes/group.routes.js";
 import blogRouter from "./routes/blog.route.js";
+import corporateEventRouter from "./routes/corporateEvent.routes.js";
+import corporateBidRouter from "./routes/corporateBid.routes.js";
 
 const app = express();
 
@@ -100,6 +102,10 @@ app.use("/api/v1/groups", globalRateLimiting, groupRouter);
 
 // blogs
 app.use("/api/v1/blogs", globalRateLimiting, blogRouter);
+
+// corporate events
+app.use("/api/v1/corporate-events", globalRateLimiting, corporateEventRouter);
+app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

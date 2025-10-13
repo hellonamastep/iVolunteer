@@ -12,7 +12,6 @@ import Howitworks from "@/components/Howitworks";
 import Hero from "@/components/ui/Hero";
 
 import Adminstats from "@/components/Adminstats";
-import CSRAnalytics from "@/components/Csranalytics";
 import Dailyquote from "@/components/Dailyquote";
 import Eventbutton from "@/components/Eventbutton";
 import Ngoanalytics from "@/components/Ngoanalytics";
@@ -29,6 +28,8 @@ import Donationreqcta from "@/components/Donationreqcta";
 import Eventcompltreqcta from "@/components/Eventcompltreqcta";
 import Addblogcta from "@/components/Addblogcta";
 import Manageblogscta from "@/components/Manageblogscta";
+import Copeventdash from "@/components/Copeventdash";
+import Managecopeventcta from "@/components/Managecopeventcta";
 
 // Dashboard components
 function AdminDashboard() {
@@ -59,9 +60,9 @@ function AdminDashboard() {
       </div>
 
       <Eventcompltreqcta />
-      <Addblogcta/>
-      <Manageblogscta/>
-
+      <Addblogcta />
+      <Manageblogscta />
+      <Managecopeventcta />
       <Footer />
     </section>
   );
@@ -109,10 +110,19 @@ function VolunteerDashboard() {
 
 function CorporateDashboard() {
   return (
-    <section>
+    <section className="bg-gradient-to-br from-emerald-50 to-green-50">
       <Header />
+      {/* <div className="p-8">
+        <h1 className="text-5xl font-bold text-emerald-700 mb-4">
+          Corporate Dashboard
+        </h1>
+        <p className="text-emerald-600 text-lg font-light">
+          Welcome back. Here's what's happening.
+        </p>
+      </div> */}
       <Sponsorshipopp />
-      <CSRAnalytics />
+      <Copeventdash />
+      {/* <CSRAnalytics /> */}
       <Footer />
     </section>
   );

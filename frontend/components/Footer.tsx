@@ -1,5 +1,6 @@
 import React from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import Link from "next/link";
 
 const Footer = () => {
   return (
@@ -13,12 +14,12 @@ const Footer = () => {
 
         {/* Right: Links + Social */}
         <div className="flex items-center gap-6">
-          <a href="#" className="text-sm hover:text-gray-900 transition">
+          <Link href="/termsofservice" className="text-sm hover:text-gray-900 transition">
             Terms of Service
-          </a>
-          <a href="#" className="text-sm hover:text-gray-900 transition">
+          </Link>
+          <Link href="/privacypolicy" className="text-sm hover:text-gray-900 transition">
             Privacy Policy
-          </a>
+          </Link>
 
           {/* Social Media */}
           <div className="flex items-center gap-4 ml-4">

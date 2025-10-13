@@ -68,3 +68,15 @@ export const deleteBlog = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const getBlogBySlug = async (req, res) => {
+  try {
+    const blog = await blogService.getBlogBySlug(req.params.slug);
+    if (!blog)
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    res.status(200).json({ success: true, blog });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

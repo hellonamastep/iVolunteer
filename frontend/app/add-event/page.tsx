@@ -30,6 +30,8 @@ type EventFormData = {
   sponsorshipRequired: boolean;
   sponsorshipAmount: number;
   eventStatus: string;
+  sponsorshipContactEmail?: string; // ✅ add
+  sponsorshipContactNumber?: string; // ✅ add
 };
 
 const CreateEventPage = () => {
@@ -64,37 +66,37 @@ const CreateEventPage = () => {
     }
   };
 
-const onSubmit = async (data: EventFormData) => {
-  try {
-    const formattedData = {
-      title: data.title,
-      description: data.description,
-      location: data.location,
-      date: new Date(`${data.date}T${data.time}`).toISOString(),
-      time: data.time,
-      duration: Number(data.duration),
-      category: data.category,
-      maxParticipants: Number(data.maxParticipants),
-      requirements: requirementInputs.filter((req) => req.trim() !== ""),
-      sponsorshipRequired: data.sponsorshipRequired,
-      sponsorshipAmount: data.sponsorshipRequired
-        ? Number(data.sponsorshipAmount)
-        : 0,
-      eventStatus: data.eventStatus,
-      participants: [],    // required by EventData
-      pointsOffered: 0,    // added default to satisfy TypeScript
-    };
+  const onSubmit = async (data: EventFormData) => {
+    try {
+      const formattedData = {
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        date: new Date(`${data.date}T${data.time}`).toISOString(),
+        time: data.time,
+        duration: Number(data.duration),
+        category: data.category,
+        maxParticipants: Number(data.maxParticipants),
+        requirements: requirementInputs.filter((req) => req.trim() !== ""),
+        sponsorshipRequired: data.sponsorshipRequired,
+        sponsorshipAmount: data.sponsorshipRequired
+          ? Number(data.sponsorshipAmount)
+          : 0,
+        eventStatus: data.eventStatus,
+        participants: [], // required by EventData
+        pointsOffered: 0, // added default to satisfy TypeScript
+        sponsorshipContactEmail: data.sponsorshipContactEmail,
+        sponsorshipContactNumber: data.sponsorshipContactNumber,
+      };
 
-    await createEvent(formattedData);
-    setSuccessMessage("Event created successfully!");
-    reset();
-    setRequirementInputs([""]);
-  } catch (err) {
-    console.error("Error in form submission:", err);
-  }
-};
-
-
+      await createEvent(formattedData);
+      setSuccessMessage("Event created successfully!");
+      reset();
+      setRequirementInputs([""]);
+    } catch (err) {
+      console.error("Error in form submission:", err);
+    }
+  };
 
   // Animation variants
   const containerVariants = {
@@ -297,7 +299,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.date && (
-                    <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.date.message}
+                    </p>
                   )}
                 </motion.div>
 
@@ -316,7 +320,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.time && (
-                    <p className="text-red-500 text-xs mt-1">{errors.time.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.time.message}
+                    </p>
                   )}
                 </motion.div>
 
@@ -332,7 +338,8 @@ const onSubmit = async (data: EventFormData) => {
                       step={1}
                       inputMode="numeric"
                       onKeyDown={(e) => {
-                        if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
+                        if (["-", "+", "e", "E"].includes(e.key))
+                          e.preventDefault();
                       }}
                       onInput={(e) => {
                         const el = e.currentTarget;
@@ -340,7 +347,10 @@ const onSubmit = async (data: EventFormData) => {
                       }}
                       {...register("duration", {
                         required: "Duration is required",
-                        min: { value: 1, message: "Duration must be at least 1 hour" },
+                        min: {
+                          value: 1,
+                          message: "Duration must be at least 1 hour",
+                        },
                         valueAsNumber: true,
                       })}
                       className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-4 py-2.5 shadow-sm"
@@ -350,7 +360,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.duration && (
-                    <p className="text-red-500 text-xs mt-1">{errors.duration.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.duration.message}
+                    </p>
                   )}
                 </motion.div>
               </div>
@@ -359,7 +371,9 @@ const onSubmit = async (data: EventFormData) => {
             {/* Event Details */}
             <section className="space-y-4">
               <header className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900">Event details</h3>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Event details
+                </h3>
                 <div className="h-px bg-gray-200 flex-1 ml-4" />
               </header>
 
@@ -371,7 +385,9 @@ const onSubmit = async (data: EventFormData) => {
                   </label>
                   <div className="relative">
                     <select
-                      {...register("category", { required: "Category is required" })}
+                      {...register("category", {
+                        required: "Category is required",
+                      })}
                       className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-10 py-2.5 shadow-sm appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22><path fill=%22%236b7280%22 d=%22M5.5 7.5L10 12l4.5-4.5%22/></svg>')] bg-no-repeat bg-[length:16px] bg-[right_0.75rem_center]"
                     >
                       <option value="">Select a category</option>
@@ -384,7 +400,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.category && (
-                    <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.category.message}
+                    </p>
                   )}
                 </motion.div>
 
@@ -395,7 +413,9 @@ const onSubmit = async (data: EventFormData) => {
                   </label>
                   <div className="relative">
                     <select
-                      {...register("eventStatus", { required: "Event status is required" })}
+                      {...register("eventStatus", {
+                        required: "Event status is required",
+                      })}
                       className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-10 py-2.5 shadow-sm appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22><path fill=%22%236b7280%22 d=%22M5.5 7.5L10 12l4.5-4.5%22/></svg>')] bg-no-repeat bg-[length:16px] bg-[right_0.75rem_center]"
                     >
                       {eventStatuses.map((s) => (
@@ -407,7 +427,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Activity className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.eventStatus && (
-                    <p className="text-red-500 text-xs mt-1">{errors.eventStatus.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.eventStatus.message}
+                    </p>
                   )}
                 </motion.div>
 
@@ -421,7 +443,10 @@ const onSubmit = async (data: EventFormData) => {
                       type="number"
                       {...register("maxParticipants", {
                         required: "Number of participants is required",
-                        min: { value: 1, message: "At least 1 participant is required" },
+                        min: {
+                          value: 1,
+                          message: "At least 1 participant is required",
+                        },
                       })}
                       className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-4 py-2.5 shadow-sm"
                       placeholder="Maximum number of participants"
@@ -429,7 +454,9 @@ const onSubmit = async (data: EventFormData) => {
                     <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   </div>
                   {errors.maxParticipants && (
-                    <p className="text-red-500 text-xs mt-1">{errors.maxParticipants.message}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.maxParticipants.message}
+                    </p>
                   )}
                 </motion.div>
               </div>
@@ -490,10 +517,7 @@ const onSubmit = async (data: EventFormData) => {
 
               <motion.div variants={itemVariants}>
                 <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    {...register("sponsorshipRequired")}
-                  />
+                  <input type="checkbox" {...register("sponsorshipRequired")} />
                   Sponsorship Required
                 </label>
 
@@ -517,6 +541,54 @@ const onSubmit = async (data: EventFormData) => {
                 )}
               </motion.div>
             </section>
+
+            {/* Conditional fields */}
+            {watch("sponsorshipRequired") && (
+              <>
+                <div>
+                  <label className="block font-semibold mb-1">
+                    Sponsorship Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    {...register("sponsorshipContactEmail", {
+                      required: "Email is required when sponsorship is enabled",
+                    })}
+                    className="border p-2 rounded w-full"
+                    placeholder="Enter contact email"
+                  />
+                  {errors.sponsorshipContactEmail && (
+                    <p className="text-red-500 text-sm">
+                      {errors.sponsorshipContactEmail.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">
+                    Sponsorship Contact Number
+                  </label>
+                  <input
+                    type="text"
+                    {...register("sponsorshipContactNumber", {
+                      required:
+                        "Contact number is required when sponsorship is enabled",
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: "Please enter a valid 10-digit number",
+                      },
+                    })}
+                    className="border p-2 rounded w-full"
+                    placeholder="Enter contact number"
+                  />
+                  {errors.sponsorshipContactNumber && (
+                    <p className="text-red-500 text-sm">
+                      {errors.sponsorshipContactNumber.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Submit */}
             <motion.div variants={itemVariants} className="text-right">

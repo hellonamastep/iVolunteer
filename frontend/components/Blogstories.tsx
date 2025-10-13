@@ -12,6 +12,16 @@ const Blogstories = () => {
     getAllBlogs();
   }, []);
 
+  // Function to extract plain text from HTML for the excerpt
+  const getPlainTextExcerpt = (html: string, maxLength: number = 150) => {
+    // Remove HTML tags and get plain text
+    const plainText = html.replace(/<[^>]*>/g, '');
+    
+    // Trim to maxLength and add ellipsis if needed
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.substring(0, maxLength) + '...';
+  };
+
   if (!blogs.length)
     return (
       <div className="min-h-[400px] flex items-center justify-center">
@@ -84,9 +94,9 @@ const Blogstories = () => {
                   {blog.title}
                 </h3>
 
-                {/* Excerpt */}
+                {/* Excerpt - Fixed to show plain text */}
                 <p className="text-gray-600 leading-relaxed line-clamp-3">
-                  {blog.content}
+                  {getPlainTextExcerpt(blog.content)}
                 </p>
 
                 {/* Metadata */}

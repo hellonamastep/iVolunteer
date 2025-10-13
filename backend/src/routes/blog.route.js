@@ -5,7 +5,8 @@ import {
   getBlogs, 
   getBlog, 
   updateBlog, 
-  deleteBlog 
+  deleteBlog,
+  getBlogBySlug 
 } from "../controllers/blog.controller.js";
 import { authMiddleware, authorizeRole } from "../middlewares/auth.middleware.js";
 
@@ -25,9 +26,11 @@ const upload = multer({
 blogRouter.get("/allblogs", getBlogs);
 blogRouter.get("/:id", getBlog);
 
+
 // Protected routes (admin only)
 blogRouter.post("/addblog",authMiddleware,authorizeRole('admin'), upload.single("image"), createBlog);
 blogRouter.put("/:id",authMiddleware,authorizeRole('admin'), upload.single("image"), updateBlog);
 blogRouter.delete("/delete/:id",authMiddleware,authorizeRole('admin'), deleteBlog);
+blogRouter.get("/slug/:slug", getBlogBySlug);
 
 export default blogRouter;
