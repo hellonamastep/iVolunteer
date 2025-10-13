@@ -49,13 +49,23 @@ function AdminDashboard() {
 
 function NGODashboard() {
   return (
-    <section className="bg-[#f4f7fb] h-full min-w-[350px]">
-      <Header />
-      <Ngoanalytics />
-      <Eventbutton />
-      <Ngoeventtable />
-      <Footer />
-    </section>
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 min-w-[350px] relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-teal-200/20 to-cyan-200/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-blue-200/20 to-teal-200/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+      
+      <div className="relative z-10">
+        <Header />
+        <div className="pb-8">
+          <Ngoanalytics />
+          <div className="flex justify-center mt-8">
+            <Eventbutton />
+          </div>
+          <Ngoeventtable />
+        </div>
+        <Footer />
+      </div>
+    </div>
   );
 }
 

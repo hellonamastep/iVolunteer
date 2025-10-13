@@ -76,14 +76,14 @@ export const PendingParticipationRequests: React.FC = () => {
 
   if (loadingIncoming) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Users className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Participation Requests</h3>
+      <div className="bg-white rounded-2xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] p-6 h-[250px] flex flex-col">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="w-5 h-5 text-[#4FC3DC]" />
+          <h3 className="text-base font-normal text-[#2C3E50]">Participation Requests</h3>
         </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-500">Loading requests...</span>
+        <div className="flex items-center justify-center flex-1">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4FC3DC]"></div>
+          <span className="ml-2 text-gray-500 text-sm">Loading requests...</span>
         </div>
       </div>
     );
@@ -91,20 +91,20 @@ export const PendingParticipationRequests: React.FC = () => {
 
   if (pendingRequests.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Users className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Participation Requests</h3>
+      <div className="bg-white rounded-2xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] p-6 h-[250px] flex flex-col">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="w-5 h-5 text-[#4FC3DC]" />
+          <h3 className="text-base font-normal text-[#2C3E50]">Participation Requests</h3>
           {stats && stats.pending > 0 && (
-            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+            <span className="bg-[#4FC3DC] text-white text-xs font-medium px-2 py-0.5 rounded-full">
               {stats.pending} pending
             </span>
           )}
         </div>
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center flex-1 flex flex-col items-center justify-center text-gray-500">
           <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p>No pending participation requests</p>
-          <p className="text-sm mt-1">New requests will appear here automatically</p>
+          <p className="text-sm">No pending participation requests</p>
+          <p className="text-xs mt-1">New requests will appear here automatically</p>
         </div>
       </div>
     );
@@ -112,22 +112,22 @@ export const PendingParticipationRequests: React.FC = () => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] p-6 h-[250px] flex flex-col">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Participation Requests</h3>
-            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#4FC3DC]" />
+            <h3 className="text-base font-normal text-[#2C3E50]">Participation Requests</h3>
+            <span className="bg-[#4FC3DC] text-white text-xs font-medium px-2 py-0.5 rounded-full">
               {pendingRequests.length} pending
             </span>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="overflow-y-auto flex-1 space-y-3 pr-2 scrollbar-thin scrollbar-thumb-[#4FC3DC] scrollbar-track-gray-100">
           {pendingRequests.map((request) => (
             <div 
               key={request._id} 
-              className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+              className="bg-[#E8F8F7] rounded-[14px] p-4"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

@@ -275,23 +275,25 @@ const Ngoeventtable = () => {
   };
 
   return (
-    <section ref={tableRef} className="px-4 py-6 md:px-4 md:py-8 rounded-2xl border border-gray-100 md:m-10">
+    <section ref={tableRef} className="px-4 py-6 md:px-8 md:py-10 max-w-[1200px] mx-auto">
       {/* Pending Events Alert */}
       {pendingCount > 0 && (
         <div 
           onClick={handleBannerClick}
-          className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 cursor-pointer hover:bg-yellow-100 transition-colors"
+          className="mb-6 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200/60 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
         >
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-yellow-100 rounded-xl">
+              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+            </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-yellow-900 mb-1">
+              <h4 className="font-bold text-yellow-900 mb-2 text-lg">
                 {pendingCount} Event{pendingCount > 1 ? 's' : ''} Awaiting Approval
               </h4>
-              <p className="text-sm text-yellow-800">
+              <p className="text-sm text-yellow-800 leading-relaxed">
                 You have {pendingCount} event{pendingCount > 1 ? 's' : ''} pending admin approval. 
                 {pendingCount > 1 ? ' They' : ' It'} will be visible to volunteers once approved.
-                <span className="font-semibold ml-1">Click to view details.</span>
+                <span className="font-semibold ml-1 underline">Click to view details.</span>
               </p>
             </div>
           </div>
@@ -302,18 +304,20 @@ const Ngoeventtable = () => {
       {rejectedEvents.length > 0 && (
         <div 
           onClick={handleRejectedBannerClick}
-          className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 cursor-pointer hover:bg-red-100 transition-colors"
+          className="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200/60 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
         >
-          <div className="flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-red-100 rounded-xl">
+              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+            </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-red-900 mb-1">
+              <h4 className="font-bold text-red-900 mb-2 text-lg">
                 {rejectedEvents.length} Event{rejectedEvents.length > 1 ? 's' : ''} Rejected
               </h4>
               <div className="text-sm text-red-800 space-y-2">
                 {rejectedEvents.map((event, index) => (
-                  <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200" : ""}>
-                    <p className="font-medium">
+                  <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
+                    <p className="font-medium leading-relaxed">
                       "{event.title}" was rejected by admin
                       {event.rejectionReason && (
                         <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
@@ -321,7 +325,7 @@ const Ngoeventtable = () => {
                     </p>
                   </div>
                 ))}
-                <p className="font-semibold mt-2">Click to view and manage rejected events.</p>
+                <p className="font-semibold mt-3 underline">Click to view and manage rejected events.</p>
               </div>
             </div>
           </div>
@@ -329,37 +333,39 @@ const Ngoeventtable = () => {
       )}
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Upcoming Events</h2>
-          <p className="text-gray-500 mt-1">Manage and track your upcoming volunteer events</p>
+          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+            Your Events
+          </h2>
+          <p className="text-gray-600 mt-2 text-base">Manage and track your upcoming volunteer events</p>
         </div>
-        <button className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2 shadow-sm">
+        <button className="px-6 py-3 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:scale-105">
           <Calendar className="w-4 h-4" />
           View All Events
         </button>
       </div>
 
       {/* Filters and Search */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col lg:flex-row gap-4 mb-8">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search events..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition"
+            placeholder="Search events by title or location..."
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none bg-white shadow-sm hover:shadow-md transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {["all", "open", "pending", "approved", "rejected"].map((status) => (
             <button
               key={status}
-              className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition ${
+              className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all duration-300 ${
                 filter === status
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-md"
+                  : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-teal-300"
               }`}
               onClick={() => setFilter(status)}
             >
@@ -371,21 +377,21 @@ const Ngoeventtable = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
+      <div className="overflow-x-auto rounded-2xl border border-teal-100 shadow-lg bg-white/80 backdrop-blur-sm">
         <table className="w-full">
           <thead>
-            <tr className="bg-blue-50 text-left text-sm text-gray-700">
+            <tr className="bg-gradient-to-r from-teal-50 to-cyan-50 text-left text-sm text-gray-700 border-b-2 border-teal-200">
               {["title", "date", "location", "volunteers", "status", "action"].map((col) => (
                 <th
                   key={col}
-                  className="p-4 font-semibold cursor-pointer hover:bg-gray-100 transition"
+                  className="p-4 font-bold cursor-pointer hover:bg-teal-100/50 transition-all uppercase tracking-wide"
                   onClick={() => col !== "volunteers" && col !== "action" && requestSort(col as keyof EventItem)}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     {col.charAt(0).toUpperCase() + col.slice(1)}
                     {col !== "volunteers" && col !== "action" && (
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
+                        className={`w-4 h-4 transition-transform duration-200 ${
                           sortConfig.key === col && sortConfig.direction === "descending" ? "rotate-180" : ""
                         }`}
                       />
@@ -397,31 +403,31 @@ const Ngoeventtable = () => {
           </thead>
           <tbody>
             <AnimatePresence>
-              {filteredEvents.map((event) => (
+              {filteredEvents.map((event, index) => (
                 <motion.tr
                   key={event._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="border-t border-gray-100 bg-white hover:bg-gray-50 transition-all"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="border-t border-teal-50 bg-white hover:bg-gradient-to-r hover:from-teal-50/30 hover:to-cyan-50/30 transition-all duration-200"
                 >
-                  <td className="p-4 font-medium text-gray-900">{event.title}</td>
-                  <td className="p-4 text-gray-600">{new Date(event.date).toLocaleDateString()}</td>
+                  <td className="p-4 font-semibold text-gray-900">{event.title}</td>
+                  <td className="p-4 text-gray-600 font-medium">{new Date(event.date).toLocaleDateString()}</td>
                   <td className="p-4 text-gray-600">{event.location}</td>
                   <td className="p-4">
-                    <div className="flex flex-col gap-1.5">
-                      <div className="text-gray-800 font-semibold">
+                    <div className="flex flex-col gap-2">
+                      <div className="text-gray-800 font-bold text-sm">
                         {event.filled}/{event.maxParticipants}
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
                         <div
-                          className={`h-1.5 rounded-full ${
+                          className={`h-2 rounded-full transition-all duration-500 ${
                             event.progress === 100
-                              ? "bg-green-500"
+                              ? "bg-gradient-to-r from-green-400 to-green-500"
                               : event.progress >= 70
-                              ? "bg-blue-500"
-                              : "bg-amber-500"
+                              ? "bg-gradient-to-r from-teal-400 to-cyan-500"
+                              : "bg-gradient-to-r from-amber-400 to-orange-500"
                           }`}
                           style={{ width: `${event.progress}%` }}
                         />
@@ -430,23 +436,23 @@ const Ngoeventtable = () => {
                   </td>
                   <td className="p-4">
                     {event.status === "pending" ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 text-xs font-bold shadow-sm">
                         <AlertCircle className="w-3.5 h-3.5" /> Pending
                       </span>
                     ) : event.status === "rejected" ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-100 to-rose-100 text-red-700 text-xs font-bold shadow-sm">
                         <XCircle className="w-3.5 h-3.5" /> Rejected
                       </span>
                     ) : event.displayStatus === "Full" ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-xs font-bold shadow-sm">
                         <CheckCircle className="w-3.5 h-3.5" /> Full
                       </span>
                     ) : event.displayStatus === "Ongoing" ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-bold shadow-sm">
                         <Clock className="w-3.5 h-3.5" /> Ongoing
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 text-xs font-bold shadow-sm">
                         <Users className="w-3.5 h-3.5" /> Open
                       </span>
                     )}
@@ -454,7 +460,7 @@ const Ngoeventtable = () => {
                   <td className="p-4 text-right">
                     <button 
                       onClick={() => handleManageClick(event)}
-                      className="px-4 py-1.5 rounded-lg text-sm font-medium transition bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                      className="px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 bg-gradient-to-r from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 shadow-md hover:shadow-lg hover:scale-105"
                     >
                       Manage
                     </button>
@@ -466,7 +472,12 @@ const Ngoeventtable = () => {
         </table>
 
         {filteredEvents.length === 0 && (
-          <div className="p-8 text-center text-gray-500">No events found matching your criteria</div>
+          <div className="p-12 text-center">
+            <div className="inline-block p-4 bg-gray-100 rounded-full mb-3">
+              <Calendar className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500 text-lg font-medium">No events found matching your criteria</p>
+          </div>
         )}
       </div>
 

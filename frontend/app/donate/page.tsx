@@ -146,37 +146,104 @@ export default function DonatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 relative overflow-hidden">
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(148, 163, 184, 0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: linear-gradient(to bottom, #2dd4bf, #06b6d4);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(to bottom, #14b8a6, #0891b2);
+        }
+      `}</style>
+      
+      {/* Mascot Images in Background - Dynamic based on filter */}
+      <div className="fixed top-32 left-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
+        <img 
+          src={filter === 'all' ? "/mascots/mascot_donate.png" : 
+               filter === 'active' ? "/mascots/mascot_money.png" : 
+               "/mascots/mascot_thumbsup.png"} 
+          alt="" 
+          className="w-28 h-28 animate-bounce" 
+          style={{ animationDuration: "3s" }} 
+        />
+      </div>
+      <div className="fixed bottom-20 right-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
+        <img 
+          src={filter === 'all' ? "/mascots/mascot_gift.png" : 
+               filter === 'active' ? "/mascots/mascot_happiness.png" : 
+               "/mascots/mascot_star.png"} 
+          alt="" 
+          className="w-36 h-36 animate-pulse" 
+          style={{ animationDuration: "4s" }} 
+        />
+      </div>
+      <div className="fixed top-1/2 right-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
+        <img 
+          src={filter === 'all' ? "/mascots/mascot_love.png" : 
+               filter === 'active' ? "/mascots/mascot_volunteer.png" : 
+               "/mascots/mascot_party.png"} 
+          alt="" 
+          className="w-24 h-24 animate-bounce" 
+          style={{ animationDuration: "5s" }} 
+        />
+      </div>
+      <div className="fixed top-2/3 left-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
+        <img 
+          src={filter === 'all' ? "/mascots/mascot_help.png" : 
+               filter === 'active' ? "/mascots/mascot_happy.png" : 
+               "/mascots/mascot_chear.png"} 
+          alt="" 
+          className="w-28 h-28 animate-pulse" 
+          style={{ animationDuration: "6s" }} 
+        />
+      </div>
+      
       <Header />
-      <main className="container mx-auto px-4 pb-24 max-w-8xl">
-        <div className="pt-8 pb-6">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-              Support Meaningful Causes
-            </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Your contribution can make a real difference. Choose a cause and make an impact today.
-            </p>
+      <main className="container mx-auto px-4 pb-24 max-w-7xl relative z-10">
+        <div className="pt-6 pb-6">
+          {/* Header Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="relative w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center animate-pulse">
+                <span className="text-2xl">💝</span>
+              </div>
+              <div className="text-center">
+                <h1 className="text-3xl font-bold text-slate-800">
+                  Support Meaningful Causes
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  Your contribution can make a real difference
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Filter Section */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-white rounded-lg p-1 shadow-sm border">
-              <div className="flex space-x-1">
+          <div className="flex justify-center mb-6">
+            <div className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg border border-gray-200">
+              <div className="flex gap-1">
                 {[
-                  { value: "all", label: "All Campaigns" },
-                  { value: "active", label: "Active" },
-                  { value: "completed", label: "Completed" }
+                  { value: "all", label: "All Campaigns", gradient: "from-teal-400 to-cyan-500" },
+                  { value: "active", label: "Active", gradient: "from-blue-500 to-indigo-500" },
+                  { value: "completed", label: "Completed", gradient: "from-green-500 to-emerald-500" }
                 ].map((option) => (
                   <Button
                     key={option.value}
                     variant={filter === option.value ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setFilter(option.value as any)}
-                    className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 ${
                       filter === option.value
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
-                        : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                        ? `bg-gradient-to-r ${option.gradient} text-white shadow-md`
+                        : "text-gray-600 hover:text-teal-600 hover:bg-teal-50"
                     }`}
                   >
                     {option.label}
@@ -188,10 +255,10 @@ export default function DonatePage() {
 
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-2 w-full md:gap-8">
+            <div className="grid gap-5 lg:grid-cols-2 w-full">
               {filteredEvents.length > 0 ? (
                 filteredEvents.map((event: DonationEvent) => {
                   const progressPercentage = Math.min((event.collectedAmount / event.goalAmount) * 100, 100);
@@ -207,44 +274,40 @@ export default function DonatePage() {
                           donationRefs.current.delete(event._id);
                         }
                       }}
-                      className={`transition-all duration-300 ${
+                      className={`group transition-all duration-300 ${
                         highlightedDonationId === event._id 
-                          ? 'ring-4 ring-blue-500 ring-offset-2 rounded-xl shadow-2xl' 
+                          ? 'ring-4 ring-pink-500 ring-offset-2 rounded-2xl shadow-2xl' 
                           : ''
                       }`}
                     >
-                      <Card className="border-0 hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
-                        <div className={`absolute top-0 left-0 w-1 h-full ${
-                          isCompleted ? 'bg-green-500' : 'bg-gradient-to-b from-blue-500 to-purple-500'
-                        }`} />
-                        
-                        <CardHeader className="pb-4 relative">
+                      <Card className="border-2 border-pink-100 hover:border-purple-300 hover:shadow-2xl transition-all duration-300 overflow-hidden bg-white rounded-2xl shadow-lg transform hover:-translate-y-1">
+                        <CardHeader className="pb-4 relative bg-gradient-to-br from-pink-50 via-purple-50 to-white">
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
                             <div className="flex-1 pr-8">
-                              <CardTitle className="text-xl font-semibold text-slate-800 mb-2 line-clamp-2">
-                                {event.title}
+                              <CardTitle className="text-xl font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-pink-600 transition-colors duration-300">
+                                💝 {event.title}
                               </CardTitle>
-                            <CardDescription className="text-slate-600">
+                            <CardDescription className="text-slate-600 font-medium">
                               {event.ngo?.name || "Community NGO"} • {event.ngo?.email || "Supporting local causes"}
                             </CardDescription>
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge 
                               variant={isCompleted ? "default" : "secondary"} 
-                              className={`px-3 py-1 text-sm ${
+                              className={`px-3 py-1.5 text-xs font-bold backdrop-blur-sm shadow-md ${
                                 isCompleted 
-                                  ? 'bg-green-100 text-green-800 border-green-200' 
-                                  : 'bg-blue-100 text-blue-800 border-blue-200'
+                                  ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white border-green-300' 
+                                  : 'bg-gradient-to-r from-pink-400 to-purple-500 text-white border-purple-300'
                               }`}
                             >
-                              {isCompleted ? 'Goal Achieved' : event.status}
+                              {isCompleted ? '✓ Goal Achieved' : `🎯 ${event.status}`}
                             </Badge>
                             <button
                               onClick={(e) => handleShare(event, e)}
-                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              className="p-2 hover:bg-pink-100 rounded-full transition-all duration-200 hover:scale-110"
                               title="Share donation event"
                             >
-                              <Share2 className="w-4 h-4 text-gray-600" />
+                              <Share2 className="w-4 h-4 text-pink-600" />
                             </button>
                           </div>
                         </div>
@@ -256,26 +319,28 @@ export default function DonatePage() {
 
                       <CardContent className="pt-0">
                         {/* Progress Section */}
-                        <div className="mb-6">
+                        <div className="mb-6 bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-xl border-2 border-pink-200">
                           <div className="flex justify-between items-center text-sm mb-3">
-                            <span className="text-slate-600 font-medium">Funding Progress</span>
-                            <span className="font-semibold text-slate-800">
+                            <span className="text-slate-700 font-bold flex items-center gap-2">
+                              <span className="text-lg">💰</span> Funding Progress
+                            </span>
+                            <span className="font-bold text-pink-600">
                               {formatCurrency(event.collectedAmount)} / {formatCurrency(event.goalAmount)}
                             </span>
                           </div>
-                          <div className={`w-full h-3 rounded-full ${isCompleted ? 'bg-green-200' : 'bg-slate-200'} overflow-hidden`}>
+                          <div className={`w-full h-4 rounded-full ${isCompleted ? 'bg-green-200' : 'bg-pink-200'} overflow-hidden shadow-inner border border-pink-300`}>
                             <div 
-                              className={`h-full rounded-full transition-all duration-500 ${
+                              className={`h-full rounded-full transition-all duration-500 shadow-md ${
                                 isCompleted 
-                                  ? 'bg-green-500' 
-                                  : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                                  ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
+                                  : 'bg-gradient-to-r from-pink-500 to-purple-600'
                               }`}
                               style={{ width: `${progressPercentage}%` }}
                             />
                           </div>
-                          <div className="flex justify-between text-xs text-slate-500 mt-1">
-                            <span>{progressPercentage.toFixed(1)}% funded</span>
-                            <span>{Math.max(0, (100 - progressPercentage)).toFixed(1)}% to go</span>
+                          <div className="flex justify-between text-xs font-semibold text-pink-700 mt-2">
+                            <span>✓ {progressPercentage.toFixed(1)}% funded</span>
+                            <span>🎯 {Math.max(0, (100 - progressPercentage)).toFixed(1)}% to go</span>
                           </div>
                         </div>
 
@@ -286,7 +351,7 @@ export default function DonatePage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full h-10 font-medium text-slate-700 border-slate-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200"
+                              className="w-full h-12 font-bold text-pink-600 border-2 border-pink-300 hover:border-purple-400 hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 hover:text-purple-700 transition-all duration-300 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transform"
                               onClick={() => window.location.href = `/donate/${event._id}`}
                             >
                               📋 View Full Details & Organization Info
@@ -294,17 +359,20 @@ export default function DonatePage() {
                           </div>
 
                           <div>
-                            <h4 className="text-sm font-medium text-slate-700 mb-3">Quick Donate</h4>
+                            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg">⚡</span>
+                              Quick Donate
+                            </h4>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                               {quickAmounts.map((amount) => (
                                 <Button
                                   key={amount}
                                   variant="outline"
                                   size="sm"
-                                  className={`h-12 font-medium transition-all duration-200 ${
+                                  className={`h-12 font-bold transition-all duration-300 border-2 rounded-xl shadow-md ${
                                     isCompleted 
-                                      ? 'cursor-not-allowed opacity-50' 
-                                      : 'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'
+                                      ? 'cursor-not-allowed opacity-50 border-gray-200' 
+                                      : 'border-pink-200 hover:border-purple-300 hover:bg-gradient-to-r hover:from-pink-400 hover:to-purple-500 hover:text-white hover:shadow-lg hover:scale-105 transform'
                                   }`}
                                   onClick={() => handleDonateClick(event._id, amount)}
                                   disabled={isCompleted}
@@ -316,10 +384,13 @@ export default function DonatePage() {
                           </div>
 
                           <div>
-                            <h4 className="text-sm font-medium text-slate-700 mb-3">Custom Amount</h4>
+                            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-lg">✨</span>
+                              Custom Amount
+                            </h4>
                             <div className="flex flex-col sm:flex-row gap-3">
                               <div className="relative flex-1">
-                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 font-medium">₹</span>
+                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-600 font-bold text-lg">₹</span>
                                 <Input
                                   type="number"
                                   placeholder="Enter custom amount"
@@ -327,25 +398,25 @@ export default function DonatePage() {
                                   onChange={(e) =>
                                     setCustomAmounts({ ...customAmounts, [event._id]: e.target.value })
                                   }
-                                  className="pl-8 h-12 bg-white border-slate-300 focus:border-blue-400"
+                                  className="pl-8 h-12 bg-white border-2 border-pink-300 focus:border-purple-400 rounded-xl shadow-inner font-semibold"
                                   disabled={isCompleted}
                                 />
                               </div>
                               <Button
-                                className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium shadow-md transition-all duration-200"
+                                className="h-12 px-6 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform rounded-xl"
                                 disabled={!customAmounts[event._id] || Number(customAmounts[event._id]) <= 0 || isCompleted}
                                 onClick={() => handleCustomDonate(event._id)}
                               >
-                                Donate Now
+                                💝 Donate Now
                               </Button>
                             </div>
                           </div>
                         </div>
 
                         {isCompleted && (
-                          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <p className="text-green-700 text-sm text-center font-medium">
-                              🎉 Thank you! This campaign has reached its funding goal.
+                          <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-sm">
+                            <p className="text-green-700 text-sm text-center font-semibold">
+                              🎉 Amazing! This campaign has reached its funding goal!
                             </p>
                           </div>
                         )}
@@ -357,38 +428,28 @@ export default function DonatePage() {
               ) : (
                 // No Events Available Message
                 <div className="col-span-2 flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                    <svg 
-                      className="w-12 h-12 text-slate-400" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={1.5} 
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" 
-                      />
-                    </svg>
+                  <div className="bg-white rounded-xl shadow-md border border-gray-200 p-10 max-w-md">
+                    <div className="text-gray-400 text-6xl mb-4">
+                      💝
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {events.length === 0 ? "No Campaigns Available" : "No Campaigns Match Your Filter"}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {events.length === 0 
+                        ? "There are currently no donation campaigns available. Check back soon for new opportunities!"
+                        : "No campaigns match your current filter selection. Try changing the filter to see more options."
+                      }
+                    </p>
+                    {events.length > 0 && filter !== "all" && (
+                      <Button
+                        onClick={() => setFilter("all")}
+                        className="mt-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
+                      >
+                        View All Campaigns
+                      </Button>
+                    )}
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                    {events.length === 0 ? "No Campaigns Available" : "No Campaigns Match Your Filter"}
-                  </h3>
-                  <p className="text-slate-500 max-w-md">
-                    {events.length === 0 
-                      ? "There are currently no donation campaigns available. Please check back later for new opportunities to make a difference."
-                      : "No campaigns match your current filter selection. Try changing the filter to see more options."
-                    }
-                  </p>
-                  {events.length > 0 && filter !== "all" && (
-                    <Button
-                      onClick={() => setFilter("all")}
-                      className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      View All Campaigns
-                    </Button>
-                  )}
                 </div>
               )}
             </div>

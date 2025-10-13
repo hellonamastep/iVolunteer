@@ -197,9 +197,9 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
             <p className="text-gray-600 text-lg">Loading event details...</p>
           </div>
         </div>
@@ -211,19 +211,19 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <div className="text-red-600 text-4xl mb-2">⚠️</div>
-              <h2 className="text-red-800 text-xl font-semibold mb-2">
+            <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
+              <div className="text-red-600 text-5xl mb-4">⚠️</div>
+              <h2 className="text-red-800 text-xl font-bold mb-2">
                 {error ? "Error" : "Event Not Found"}
               </h2>
-              <p className="text-red-600 mb-4">
+              <p className="text-red-600 mb-4 text-sm">
                 {error || "The event you're looking for could not be found."}
               </p>
               <button
                 onClick={() => router.back()}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white px-6 py-2 rounded-lg transition-all shadow-lg"
               >
                 Go Back
               </button>
@@ -247,19 +247,47 @@ const EventDetailsPage: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 py-6 relative overflow-hidden">
+        <style jsx global>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #2dd4bf, #06b6d4);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #14b8a6, #0891b2);
+          }
+        `}</style>
+        
+        {/* Mascot Images in Background */}
+        <div className="fixed top-32 left-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_volunteer.png" alt="" className="w-24 h-24 animate-bounce" style={{ animationDuration: "3s" }} />
+        </div>
+        <div className="fixed bottom-20 right-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_help.png" alt="" className="w-28 h-28 animate-pulse" style={{ animationDuration: "4s" }} />
+        </div>
+        <div className="fixed top-1/2 right-5 opacity-10 z-0 pointer-events-none">
+          <img src="/mascots/mascot_star.png" alt="" className="w-20 h-20 animate-bounce" style={{ animationDuration: "5s" }} />
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+            className="flex items-center text-gray-600 hover:text-teal-600 mb-6 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
           </button>
 
           {/* Event Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             {/* Event Image */}
             {event.image?.url ? (
               <div className="h-64 md:h-80 relative">
@@ -299,37 +327,55 @@ const EventDetailsPage: React.FC = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Description */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">About This Event</h2>
-                <p className="text-gray-600 leading-relaxed">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-cyan-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">📋</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">About This Event</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed text-base">
                   {event.description || "No description available for this event."}
                 </p>
               </div>
 
               {/* Event Details Grid */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Event Details</h2>
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">ℹ️</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Event Details</h2>
+                </div>
                 
                 {/* Event Type */}
                 {event.eventType && (
-                  <div className="mb-6 pb-6 border-b border-gray-100">
-                    <div className="flex items-start space-x-3">
-                      {event.eventType === 'virtual' ? (
-                        <Video className="h-5 w-5 text-blue-600 mt-1" />
-                      ) : event.eventType === 'in-person' ? (
-                        <Building className="h-5 w-5 text-emerald-600 mt-1" />
-                      ) : (
-                        <Globe className="h-5 w-5 text-purple-600 mt-1" />
-                      )}
+                  <div className="mb-6 pb-6 border-b-2 border-gray-100">
+                    <div className="flex items-start space-x-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        event.eventType === 'virtual' 
+                          ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
+                          : event.eventType === 'in-person'
+                          ? 'bg-gradient-to-br from-emerald-400 to-teal-500'
+                          : 'bg-gradient-to-br from-purple-400 to-pink-500'
+                      }`}>
+                        {event.eventType === 'virtual' ? (
+                          <Video className="h-5 w-5 text-white" />
+                        ) : event.eventType === 'in-person' ? (
+                          <Building className="h-5 w-5 text-white" />
+                        ) : (
+                          <Globe className="h-5 w-5 text-white" />
+                        )}
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Event Type</p>
-                        <div className="mt-1">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                        <p className="text-sm font-bold text-gray-900">Event Type</p>
+                        <div className="mt-2">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold shadow-md backdrop-blur-sm ${
                             event.eventType === 'virtual' 
-                              ? 'bg-blue-100 text-blue-800' 
+                              ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white' 
                               : event.eventType === 'in-person'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-purple-100 text-purple-800'
+                              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white'
+                              : 'bg-gradient-to-r from-purple-400 to-pink-500 text-white'
                           }`}>
                             {event.eventType === 'virtual' && <Video className="w-4 h-4 mr-1" />}
                             {event.eventType === 'in-person' && <Building className="w-4 h-4 mr-1" />}
@@ -345,11 +391,13 @@ const EventDetailsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Date & Time */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Calendar className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
+                        <Calendar className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Date</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Date</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.date ? new Date(event.date).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -360,11 +408,13 @@ const EventDetailsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-indigo-50 p-4 rounded-xl border-2 border-indigo-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+                        <Clock className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Time</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Time</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.time ? (() => {
                             // Convert 24-hour format time string (e.g., "14:30") to 12-hour with AM/PM
                             const [hours, minutes] = event.time.split(':').map(Number);
@@ -383,26 +433,30 @@ const EventDetailsPage: React.FC = () => {
 
                   {/* Location & Category */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="h-5 w-5 text-red-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Location</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Location</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.location || "Location not specified"}
                         </p>
                         {event.detailedAddress && (
-                          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
                             {event.detailedAddress}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Tag className="h-5 w-5 text-purple-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <Tag className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Category</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Category</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.category || "General"}
                         </p>
                       </div>
@@ -411,23 +465,27 @@ const EventDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Duration & Points */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t-2 border-gray-100">
                   {event.duration && (
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-orange-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-orange-50 p-4 rounded-xl border-2 border-orange-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-md">
+                        <Clock className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Duration</p>
-                        <p className="text-sm text-gray-600">{event.duration} hours</p>
+                        <p className="text-sm font-bold text-gray-900">Duration</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">⏱️ {event.duration} hours</p>
                       </div>
                     </div>
                   )}
 
                   {event.pointsOffered && (
-                    <div className="flex items-start space-x-3">
-                      <Award className="h-5 w-5 text-yellow-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
+                        <Award className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Points Offered</p>
-                        <p className="text-sm text-gray-600">{event.pointsOffered} points</p>
+                        <p className="text-sm font-bold text-gray-900">Points Offered</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">🏆 {event.pointsOffered} points</p>
                       </div>
                     </div>
                   )}
@@ -436,13 +494,20 @@ const EventDetailsPage: React.FC = () => {
 
               {/* Requirements */}
               {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4">Requirements</h2>
-                  <ul className="space-y-2">
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-teal-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md">
+                      <span className="text-white text-xl">✓</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Requirements</h2>
+                  </div>
+                  <ul className="space-y-3">
                     {event.requirements.map((req: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <Target className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
-                        <span className="text-gray-600 text-sm">{req}</span>
+                      <li key={index} className="flex items-start space-x-3 bg-teal-50 p-3 rounded-xl border-2 border-teal-200">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                          <Target className="h-3 w-3 text-white" />
+                        </div>
+                        <span className="text-gray-700 text-sm font-medium">{req}</span>
                       </li>
                     ))}
                   </ul>
@@ -451,8 +516,13 @@ const EventDetailsPage: React.FC = () => {
 
               {/* NGO Information */}
               {event.organizationId && typeof event.organizationId === 'object' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">About the Organization</h2>
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+                      <span className="text-white text-xl">🏢</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Organization Basic Info */}

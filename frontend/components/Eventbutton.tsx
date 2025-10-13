@@ -7,89 +7,43 @@ const Eventbutton = () => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="md:w-[45%] w-[90%]">
-      <div className="h-full bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
-        <div className="flex flex-col h-full">
-          {/* Header Section */}
-          <div className="flex-1 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-semibold text-gray-800">
+    <div className="w-full flex-1">
+      <div className="h-full bg-white rounded-2xl p-6 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] relative overflow-hidden">
+        
+        <div className="flex flex-col relative z-10">
+          {/* Icon and Text Section */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="w-5 h-5 text-[#4FC3DC]" />
+              <h3 className="text-base font-normal text-[#2C3E50]">
                 Manage Your Volunteer Events
               </h3>
             </div>
-            <p className="text-gray-600 text-lg font-medium leading-relaxed">
-              Create and organize volunteer events to maximize your impact and engage your community
+            <p className="text-[#6B7280] text-sm leading-relaxed mb-6">
+              Create and organize volunteer events to maximize your impact and engage your community effectively
             </p>
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-2 h-2 bg-[#7FD47F] rounded-full"></div>
+              <span className="text-sm font-normal text-[#6B7280]">Ready to create</span>
+            </div>
           </div>
 
           {/* Button Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 text-gray-700">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium">Ready to create</span>
-            </div>
-            
+          <div className="w-full">
             <Link 
               href="/add-event" 
-              className="w-full sm:w-auto"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
               <button
-                className={`
-                  flex items-center justify-center gap-3 w-full
-                  bg-gradient-to-r from-blue-600 to-blue-700
-                  hover:from-blue-700 hover:to-blue-800
-                  text-white font-semibold
-                  py-3.5 px-8
-                  rounded-xl
-                  shadow-sm
-                  hover:shadow-md
-                  transition-all duration-200
-                  transform hover:scale-105
-                  border border-blue-500
-                  whitespace-nowrap
-                  relative overflow-hidden
-                `}
+                className="w-full flex items-center justify-center gap-2 bg-[#4FC3DC] hover:bg-[#3BA5BB] text-white font-medium py-2 px-4 rounded-full transition-all duration-300"
               >
-                {/* Animated background */}
-                <div className={`absolute inset-0 bg-white/20 transform ${isHovered ? 'scale-100' : 'scale-0'} transition-transform duration-300`} />
-                
-                <Plus size={20} className="relative z-10" />
-                <span className="relative z-10">Add Volunteer Event</span>
-                <div className={`relative z-10 transform transition-transform duration-300 ${isHovered ? 'translate-x-1' : 'translate-x-0'}`}>
-                  →
-                </div>
+                <Plus size={16} />
+                <span className="text-sm">Add Volunteer Event</span>
               </button>
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Mobile Floating Action Button */}
-      <div className="lg:hidden fixed bottom-6 right-6 z-50">
-        <Link href="/add-event">
-          <button
-            className={`
-              flex items-center justify-center
-              bg-gradient-to-r from-blue-600 to-blue-700
-              hover:from-blue-700 hover:to-blue-800
-              text-white
-              rounded-full
-              p-5
-              shadow-xl
-              hover:shadow-2xl
-              transition-all duration-200
-              transform hover:scale-110
-              border border-blue-500
-            `}
-          >
-            <Plus size={24} />
-          </button>
-        </Link>
       </div>
     </div>
   );
