@@ -138,8 +138,8 @@ const CreateEventPage = () => {
       const formData = new FormData();
       formData.append("eventImage", eventImage);
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/event/upload-event-image`,
+      const response = await api.post(
+        `/v1/event/upload-event-image`,
         formData,
         {
           headers: {

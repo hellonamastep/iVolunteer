@@ -84,16 +84,16 @@ const TermsAndConditions = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center space-x-2">
                     <Mail className="w-4 h-4" />
-                    <span>namastep@gmail.com</span>
+                    <span>hello.namastep@gmail.com</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone className="w-4 h-4" />
-                    <span>7400452698</span>
+                    <span>+91 93239 51188</span>
                   </div>
-                  <div className="flex items-start space-x-2">
+                  {/* <div className="flex items-start space-x-2">
                     <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>Flat No. 401, Building-7, Annapurna CHS, Hiranandani Gardens, Powai, Mumbai 400076</span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

@@ -58,17 +58,31 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <span className="font-bold text-white text-xl">N</span>
-            </div>
-            <div className="absolute -inset-1.5 bg-blue-100/50 rounded-xl -z-10 group-hover:bg-blue-100/70 transition-colors duration-300" />
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            AMASTEP
-          </span>
-        </Link>
+      <Link href="/" className="flex items-center gap-3 group">
+  <div className="relative">
+    {/* Main Logo */}
+    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg">
+      <span className="font-bold text-white text-xl tracking-tight">N</span>
+    </div>
+    
+    {/* Accent Elements */}
+    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full shadow-sm" />
+    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full" />
+    
+    {/* Glow Effect */}
+    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 blur-sm group-hover:blur-md transition-all duration-500 -z-10" />
+  </div>
+
+  {/* Typography */}
+  <div className="flex flex-col">
+    <span className="text-2xl font-black bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent tracking-tight">
+      NAMASTEP
+    </span>
+    <span className="text-[10px] font-semibold text-slate-500 tracking-[0.2em] uppercase mt-[-2px]">
+      SOCIAL IMPACT
+    </span>
+  </div>
+</Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
