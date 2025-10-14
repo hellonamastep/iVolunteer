@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,24 +51,7 @@ const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, hi
   );
 };
 
-// Loading component for Suspense fallback
-function DonatePageLoading() {
-  return (
-    <>
-      <Header />
-      <div className="min-h-screen py-6" style={{ backgroundColor: '#E8F5F5' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading donation campaigns...</p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// Main component that uses useSearchParams
+// Separate component that uses useSearchParams
 function DonatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,24 +61,20 @@ function DonatePageContent() {
   const [highlightedDonationId, setHighlightedDonationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const quickAmounts = [100, 250, 500, 1000]; // Converted to Rupees
+  const quickAmounts = [100, 250, 500, 1000];
   
-  // Refs for scrolling to specific donation events
   const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
-  // Handle donationId from URL parameter
   useEffect(() => {
     const donationId = searchParams.get('donationId');
     
     if (donationId && events.length > 0) {
-      // Set highlighted donation
       setHighlightedDonationId(donationId);
       
-      // Wait for the donation card to render and then scroll to it
       setTimeout(() => {
         const donationElement = donationRefs.current.get(donationId);
         if (donationElement) {
@@ -105,7 +83,6 @@ function DonatePageContent() {
             block: 'center' 
           });
           
-          // Remove highlight after 3 seconds
           setTimeout(() => {
             setHighlightedDonationId(null);
           }, 3000);
@@ -130,14 +107,13 @@ function DonatePageContent() {
   };
 
   const handleShare = async (event: DonationEvent, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent any parent click handlers
+    e.stopPropagation();
     
     const donationUrl = `${window.location.origin}/donate?donationId=${event._id}`;
     console.log('Sharing donation URL:', donationUrl);
     
     try {
       if (navigator.share) {
-        // Use native share API if available
         await navigator.share({
           title: event.title,
           text: event.description || 'Support this donation cause',
@@ -150,7 +126,6 @@ function DonatePageContent() {
           description: 'Donation event shared successfully',
         });
       } else {
-        // Fallback to copying link to clipboard
         if (!navigator.clipboard) {
           throw new Error('Clipboard API not available');
         }
@@ -166,7 +141,6 @@ function DonatePageContent() {
     } catch (error) {
       console.error('Share failed:', error);
       
-      // Only show error if it's not a user cancellation
       if (error instanceof Error && error.name !== 'AbortError') {
         shadToast({
           title: 'Failed to share',
@@ -177,12 +151,10 @@ function DonatePageContent() {
     }
   };
 
-  // Filter events based on selected filter and search query
   const filteredEvents = useMemo(() => {
     return events.filter((event: DonationEvent) => {
       const isCompleted = event.collectedAmount >= event.goalAmount;
       
-      // Filter by status
       let matchesFilter = true;
       switch (filter) {
         case "active":
@@ -195,7 +167,6 @@ function DonatePageContent() {
           matchesFilter = true;
       }
       
-      // Filter by search query
       const matchesSearch = searchQuery.trim() === '' || 
         event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -205,7 +176,6 @@ function DonatePageContent() {
     });
   }, [events, filter, searchQuery]);
 
-  // Count events by status
   const eventCounts = useMemo(() => {
     const completed = events.filter(e => e.collectedAmount >= e.goalAmount).length;
     const active = events.length - completed;
@@ -221,7 +191,6 @@ function DonatePageContent() {
     };
   }, [events]);
 
-  // Auto-switch filter when searching for campaigns in different status
   useEffect(() => {
     if (searchQuery.trim() === '') {
       return;
@@ -237,7 +206,6 @@ function DonatePageContent() {
       return;
     }
 
-    // Check if current filter has any matching events
     const currentFilterHasMatches = matchingEvents.some(event => {
       const isCompleted = event.collectedAmount >= event.goalAmount;
       if (filter === 'active') return !isCompleted;
@@ -246,7 +214,6 @@ function DonatePageContent() {
     });
 
     if (!currentFilterHasMatches) {
-      // Find which filter has the most matching events
       const activeCount = matchingEvents.filter(e => e.collectedAmount < e.goalAmount).length;
       const completedCount = matchingEvents.filter(e => e.collectedAmount >= e.goalAmount).length;
 
@@ -260,7 +227,6 @@ function DonatePageContent() {
     }
   }, [searchQuery, events, filter]);
 
-  // Format currency in Indian Rupees
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -270,7 +236,6 @@ function DonatePageContent() {
     }).format(amount);
   };
 
-  // Format large numbers (for displaying in K/L/Cr format)
   const formatLargeNumber = (num: number) => {
     if (num >= 10000000) return `₹${(num / 10000000).toFixed(1)}Cr`;
     if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
@@ -305,7 +270,7 @@ function DonatePageContent() {
         }
       `}</style>
       
-      {/* Mascot Images in Background - Dynamic based on filter */}
+      {/* Mascot Images */}
       <div className="fixed top-32 left-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
         <img 
           src={filter === 'all' ? "/mascots/mascot_donate.png" : 
@@ -364,7 +329,7 @@ function DonatePageContent() {
           </div>
         </div>
 
-        {/* Stats Section - Top Cards */}
+        {/* Stats Section */}
         <section className="mb-6 grid grid-cols-5 gap-3">
           <div 
             onClick={() => setFilter('all')}
@@ -437,7 +402,7 @@ function DonatePageContent() {
           </div>
         </section>
 
-        {/* Tab Navigation - Donation Events / Volunteer Events */}
+        {/* Tab Navigation */}
         <div className="mb-6 flex gap-2">
           <button className="px-6 py-2 bg-white text-gray-700 font-medium rounded-lg border-b-2 border-teal-500 shadow-sm">
             Donation Campaigns
@@ -482,7 +447,7 @@ function DonatePageContent() {
           </div>
         </div>
 
-        {/* Filters and Actions */}
+        {/* Filters */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <button
             onClick={() => setFilter('all')}
@@ -530,14 +495,13 @@ function DonatePageContent() {
           </button>
         </div>
 
-        {/* Loading State */}
+        {/* Loading/Empty/Events Grid */}
         {loading ? (
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
             <p className="text-gray-600 text-lg">Loading campaigns...</p>
           </div>
         ) : filteredEvents.length === 0 ? (
-          /* Empty State */
           <div className="text-center py-16">
             <div className="bg-white rounded-xl shadow-md border border-gray-200 p-10 max-w-md mx-auto">
               <div className="text-gray-400 text-6xl mb-4">
@@ -559,7 +523,6 @@ function DonatePageContent() {
             </div>
           </div>
         ) : (
-          /* Events Grid */
           <div>
             <div className="grid gap-5 lg:grid-cols-2 w-full">
               {filteredEvents.map((event: DonationEvent) => {
@@ -648,7 +611,6 @@ function DonatePageContent() {
 
                         {/* Donation Actions */}
                         <div className="space-y-4">
-                          {/* View Details Button */}
                           <div className="flex justify-center mb-4">
                             <Button
                               variant="outline"
@@ -729,7 +691,6 @@ function DonatePageContent() {
                 })}
             </div>
 
-            {/* Footer Note */}
             {filteredEvents.length > 0 && (
               <div className="mt-8 text-center">
                 <p className="text-sm text-gray-500">
@@ -749,10 +710,17 @@ function DonatePageContent() {
   );
 }
 
-// Main export with Suspense boundary
+// Main component with Suspense wrapper
 export default function DonatePage() {
   return (
-    <Suspense fallback={<DonatePageLoading />}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E8F5F5' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
+      </div>
+    }>
       <DonatePageContent />
     </Suspense>
   );
