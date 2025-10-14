@@ -74,7 +74,7 @@ export default function AllEventsPage() {
   }, 0);
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 py-8 px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
         <motion.div
@@ -84,10 +84,10 @@ export default function AllEventsPage() {
         >
           <div className="inline-flex items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-12 bg-gradient-to-b from-[#5D8A6E] to-[#7AA981] rounded-full"></div>
-              <div className="w-3 h-8 bg-gradient-to-b from-[#7AA981] to-[#9BC0A4] rounded-full"></div>
+              <div className="w-3 h-12 bg-gradient-to-b from-[#2563eb] to-[#3b82f6] rounded-full"></div>
+              <div className="w-3 h-8 bg-gradient-to-b from-[#3b82f6] to-[#60a5fa] rounded-full"></div>
             </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-[#5D8A6E] to-[#7AA981] bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-[#2563eb] to-[#3b82f6] bg-clip-text text-transparent">
               All Events & Opportunities
             </h1>
           </div>
@@ -98,22 +98,22 @@ export default function AllEventsPage() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mb-12">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 text-center">
-              <div className="text-3xl font-bold text-[#5D8A6E] mb-2">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 text-center">
+              <div className="text-3xl font-bold text-[#2563eb] mb-2">
                 {totalEvents}
               </div>
               <div className="text-gray-600 text-sm font-medium">
                 Total Events
               </div>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 text-center">
-              <div className="text-3xl font-bold text-[#5D8A6E] mb-2">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 text-center">
+              <div className="text-3xl font-bold text-[#2563eb] mb-2">
                 {featuredEvents}
               </div>
               <div className="text-gray-600 text-sm font-medium">Featured</div>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 text-center">
-              <div className="text-3xl font-bold text-[#5D8A6E] mb-2">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 text-center">
+              <div className="text-3xl font-bold text-[#2563eb] mb-2">
                 {(totalParticipants / 1000).toFixed(1)}K+
               </div>
               <div className="text-gray-600 text-sm font-medium">
@@ -128,7 +128,7 @@ export default function AllEventsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 mb-8"
+          className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 mb-8"
         >
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             {/* Search Bar */}
@@ -139,18 +139,18 @@ export default function AllEventsPage() {
                 placeholder="Search events..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-[#5D8A6E] focus:border-[#5D8A6E] bg-green-50/50 transition-all duration-300"
+                className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-[#2563eb] focus:border-[#2563eb] bg-blue-50/50 transition-all duration-300"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
               {/* Category Filter */}
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-[#5D8A6E]" />
+                <Filter className="w-4 h-4 text-[#2563eb]" />
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-[#5D8A6E] focus:border-[#5D8A6E] bg-green-50/50"
+                  className="px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-[#2563eb] focus:border-[#2563eb] bg-blue-50/50"
                 >
                   {categories.map((category) => (
                     <option key={category} value={category}>
@@ -164,7 +164,7 @@ export default function AllEventsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 border border-green-200 rounded-xl focus:ring-2 focus:ring-[#5D8A6E] focus:border-[#5D8A6E] bg-green-50/50"
+                className="px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-[#2563eb] focus:border-[#2563eb] bg-blue-50/50"
               >
                 <option value="featured">Featured First</option>
                 <option value="date">Date</option>
@@ -172,13 +172,13 @@ export default function AllEventsPage() {
               </select>
 
               {/* View Toggle */}
-              <div className="flex bg-green-100 p-1 rounded-xl">
+              <div className="flex bg-blue-100 p-1 rounded-xl">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-2 rounded-lg transition-all duration-200 ${
                     viewMode === "grid"
-                      ? "bg-white text-[#5D8A6E] shadow-sm"
-                      : "text-[#5D8A6E] hover:text-[#7AA981]"
+                      ? "bg-white text-[#2563eb] shadow-sm"
+                      : "text-[#2563eb] hover:text-[#3b82f6]"
                   }`}
                 >
                   <Grid className="w-4 h-4" />
@@ -187,8 +187,8 @@ export default function AllEventsPage() {
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded-lg transition-all duration-200 ${
                     viewMode === "list"
-                      ? "bg-white text-[#5D8A6E] shadow-sm"
-                      : "text-[#5D8A6E] hover:text-[#7AA981]"
+                      ? "bg-white text-[#2563eb] shadow-sm"
+                      : "text-[#2563eb] hover:text-[#3b82f6]"
                   }`}
                 >
                   <List className="w-4 h-4" />
@@ -217,11 +217,11 @@ export default function AllEventsPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="col-span-full bg-white/90 backdrop-blur-lg rounded-3xl p-16 text-center border border-green-200/50 shadow-2xl"
+                className="col-span-full bg-white/90 backdrop-blur-lg rounded-3xl p-16 text-center border border-blue-200/50 shadow-2xl"
               >
                 <div className="max-w-md mx-auto">
-                  <div className="mx-auto flex items-center justify-center w-28 h-28 rounded-3xl bg-gradient-to-br from-green-50 to-emerald-100 mb-8 shadow-lg">
-                    <Building2 className="w-14 h-14 text-[#5D8A6E]" />
+                  <div className="mx-auto flex items-center justify-center w-28 h-28 rounded-3xl bg-gradient-to-br from-blue-50 to-sky-100 mb-8 shadow-lg">
+                    <Building2 className="w-14 h-14 text-[#2563eb]" />
                   </div>
                   <h3 className="text-3xl font-bold text-gray-900 mb-4">
                     No Events Found
@@ -231,7 +231,7 @@ export default function AllEventsPage() {
                       ? "Try adjusting your search or filters to find more events."
                       : "Check back soon for new events and opportunities."}
                   </p>
-                  <div className="w-32 h-1.5 bg-gradient-to-r from-[#5D8A6E] to-[#7AA981] rounded-full mx-auto shadow-md"></div>
+                  <div className="w-32 h-1.5 bg-gradient-to-r from-[#2563eb] to-[#3b82f6] rounded-full mx-auto shadow-md"></div>
                 </div>
               </motion.div>
             ) : (
@@ -290,12 +290,12 @@ const EventCard = ({
       transition: { duration: 0.3, ease: "easeOut" },
     }}
     className={`
-      group relative bg-white rounded-3xl border-2 border-green-100 hover:border-green-300 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm overflow-hidden
+      group relative bg-white rounded-3xl border-2 border-blue-100 hover:border-blue-300 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm overflow-hidden
       ${viewMode === "list" ? "flex items-start gap-8 p-8" : "p-8"}
     `}
   >
     {/* Background Glow Effect */}
-    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-green-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
     {/* Featured Ribbon */}
     {item.featured && (
@@ -315,14 +315,14 @@ const EventCard = ({
       <div className={viewMode === "list" ? "flex-1" : ""}>
         {/* Category Badge */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-4 h-4 bg-gradient-to-br from-[#5D8A6E] to-[#7AA981] rounded-full shadow-md"></div>
-          <span className="text-sm font-semibold text-[#5D8A6E] bg-green-50/80 px-4 py-2 rounded-2xl border border-green-200/60 backdrop-blur-sm">
+          <div className="w-4 h-4 bg-gradient-to-br from-[#2563eb] to-[#3b82f6] rounded-full shadow-md"></div>
+          <span className="text-sm font-semibold text-[#2563eb] bg-blue-50/80 px-4 py-2 rounded-2xl border border-blue-200/60 backdrop-blur-sm">
             {item.category || "General"}
           </span>
         </div>
         {/* Title and Description */}
         <div className="mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#5D8A6E] transition-colors duration-500 leading-tight mb-4">
+          <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#2563eb] transition-colors duration-500 leading-tight mb-4">
             {item.title}
           </h3>
           <p className="text-gray-600 leading-relaxed text-base line-clamp-3">
@@ -394,22 +394,7 @@ const EventCard = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-6 border-t border-green-100/80 flex gap-4">
-          {/* Contact Button */}
-          {/* <button
-            onClick={() =>
-              toast.success(
-                `Contact ${item.organization} at ${
-                  item.sponsorshipContactNumber || "N/A"
-                }`
-              )
-            }
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-base font-semibold rounded-2xl text-white bg-gradient-to-r from-[#5D8A6E] to-[#7AA981] hover:from-[#4A7A5D] hover:to-[#689870] transition-all duration-500 shadow-lg hover:shadow-xl hover:scale-105"
-          >
-            <Heart className="w-5 h-5" />
-            Contact
-          </button> */}
-
+        <div className="pt-6 border-t border-blue-100/80 flex gap-4">
           {/* Mail Button */}
           <Link
             href={
@@ -418,7 +403,7 @@ const EventCard = ({
                 : "#"
             }
             target="_blank"
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-base font-semibold rounded-2xl text-white bg-gradient-to-r from-[#34A853] to-[#0F9D58] hover:from-[#0C7B3E] hover:to-[#097534] transition-all duration-500 shadow-lg hover:shadow-xl hover:scale-105"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-base font-semibold rounded-2xl text-white bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:from-[#1d4ed8] hover:to-[#2563eb] transition-all duration-500 shadow-lg hover:shadow-xl hover:scale-105"
           >
             <ArrowRight className="w-5 h-5" />
             Mail
@@ -428,6 +413,6 @@ const EventCard = ({
     </div>
 
     {/* Hover Effect Border */}
-    <div className="absolute inset-0 rounded-3xl border-3 border-transparent bg-gradient-to-br from-green-200/50 to-emerald-200/30 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
+    <div className="absolute inset-0 rounded-3xl border-3 border-transparent bg-gradient-to-br from-blue-200/50 to-sky-200/30 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
   </motion.div>
 );

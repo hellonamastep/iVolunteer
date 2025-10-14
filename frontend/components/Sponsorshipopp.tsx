@@ -55,7 +55,7 @@ export default function Sponsorshipopp() {
   ];
 
   return (
-    <section className="bg-gradient-to-br from-green-50 to-emerald-50 py-20 px-4 sm:px-6 lg:px-8">
+    <section className="bg-gradient-to-br from-blue-50 to-sky-50 py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <motion.div
@@ -66,10 +66,10 @@ export default function Sponsorshipopp() {
         >
           <div className="inline-flex items-center gap-4 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-12 bg-gradient-to-b from-[#5D8A6E] to-[#7AA981] rounded-full"></div>
-              <div className="w-3 h-8 bg-gradient-to-b from-[#7AA981] to-[#9BC0A4] rounded-full"></div>
+              <div className="w-3 h-12 bg-gradient-to-b from-[#2563eb] to-[#3b82f6] rounded-full"></div>
+              <div className="w-3 h-8 bg-gradient-to-b from-[#3b82f6] to-[#60a5fa] rounded-full"></div>
             </div>
-            <h2 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-[#5D8A6E] to-[#7AA981] bg-clip-text text-transparent">
+            <h2 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-[#2563eb] to-[#3b82f6] bg-clip-text text-transparent">
               Corporate Sponsorship
             </h2>
           </div>
@@ -89,9 +89,9 @@ export default function Sponsorshipopp() {
           {impactStats.map((stat, index) => (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl p-6 text-center shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300"
+              className="bg-white rounded-2xl p-6 text-center shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300"
             >
-              <div className="text-3xl font-bold text-[#5D8A6E] mb-2">{stat.value}</div>
+              <div className="text-3xl font-bold text-[#2563eb] mb-2">{stat.value}</div>
               <div className="text-gray-600 text-sm font-medium">{stat.label}</div>
             </div>
           ))}
@@ -118,10 +118,10 @@ export default function Sponsorshipopp() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 + index * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group"
+                className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 group"
               >
-                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#5D8A6E] transition-colors duration-300">
-                  <benefit.icon className="w-6 h-6 text-[#5D8A6E] group-hover:text-white transition-colors duration-300" />
+                <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#2563eb] transition-colors duration-300">
+                  <benefit.icon className="w-6 h-6 text-[#2563eb] group-hover:text-white transition-colors duration-300" />
                 </div>
                 <h4 className="text-xl font-bold text-gray-900 mb-3">{benefit.title}</h4>
                 <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
@@ -135,7 +135,7 @@ export default function Sponsorshipopp() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="bg-gradient-to-r from-[#5D8A6E] to-[#7AA981] rounded-3xl p-12 text-center text-white shadow-2xl"
+          className="bg-gradient-to-r from-[#2563eb] to-[#3b82f6] rounded-3xl p-12 text-center text-white shadow-2xl"
         >
           <div className="max-w-3xl mx-auto">
             <div className="flex justify-center mb-6">
@@ -145,13 +145,13 @@ export default function Sponsorshipopp() {
             </div>
             
             <h3 className="text-3xl font-bold mb-4">Ready to Make a Difference?</h3>
-            <p className="text-green-100 text-lg mb-8 leading-relaxed">
+            <p className="text-blue-100 text-lg mb-8 leading-relaxed">
               Join our network of corporate partners and create meaningful impact through strategic sponsorship opportunities. 
               Let's work together to drive positive change in communities.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="group bg-white text-[#5D8A6E] px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-3">
+              <button className="group bg-white text-[#2563eb] px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-3">
                 <Heart className="w-5 h-5" />
                 <Link href="/allsponsorshipevents">
                 Explore Opportunities
@@ -176,11 +176,11 @@ export default function Sponsorshipopp() {
         >
           <p className="text-gray-500 text-sm mb-8">Trusted by leading corporations</p>
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            <Building2 className="w-8 h-8 text-[#5D8A6E]" />
-            <Target className="w-8 h-8 text-[#5D8A6E]" />
-            <Award className="w-8 h-8 text-[#5D8A6E]" />
-            <Users className="w-8 h-8 text-[#5D8A6E]" />
-            <Star className="w-8 h-8 text-[#5D8A6E]" />
+            <Building2 className="w-8 h-8 text-[#2563eb]" />
+            <Target className="w-8 h-8 text-[#2563eb]" />
+            <Award className="w-8 h-8 text-[#2563eb]" />
+            <Users className="w-8 h-8 text-[#2563eb]" />
+            <Star className="w-8 h-8 text-[#2563eb]" />
           </div>
         </motion.div>
       </div>
