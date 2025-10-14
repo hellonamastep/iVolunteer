@@ -21,9 +21,17 @@ export const ParticipationRequestBanner: React.FC = () => {
     }
   }, []);
 
-  const pendingRequests = userRequests.filter(req => req.status === "pending");
+  // Filter requests with proper null checking
+  const pendingRequests = userRequests.filter(req => 
+    req.status === "pending" && 
+    req.eventId && 
+    req.eventId._id
+  );
+
   const recentStatusUpdates = userRequests.filter(req => 
     req.status !== "pending" && 
+    req.eventId && 
+    req.eventId._id &&
     new Date(req.updatedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) && // Last 24 hours
     !dismissedBanners.has(req._id) // Not dismissed
   );
@@ -58,8 +66,8 @@ export const ParticipationRequestBanner: React.FC = () => {
               <div className="text-sm text-yellow-800 space-y-1">
                 {pendingRequests.slice(0, 3).map((request) => (
                   <p key={request._id}>
-                    <span className="font-medium">"{request.eventId.title}"</span> - 
-                    Requested participation for {new Date(request.eventId.date).toLocaleDateString()}
+                    <span className="font-medium">"{request.eventId?.title || "Event"}"</span> - 
+                    Requested participation for {request.eventId?.date ? new Date(request.eventId.date).toLocaleDateString() : "an event"}
                   </p>
                 ))}
                 {pendingRequests.length > 3 && (
@@ -99,11 +107,11 @@ export const ParticipationRequestBanner: React.FC = () => {
                 request.status === "accepted" ? "text-green-800" : "text-red-800"
               }`}>
                 <p className="mb-1">
-                  <span className="font-medium">"{request.eventId.title}"</span> - 
-                  Your participation request has been {request.status === "accepted" ? "accepted" : "rejected"}.
+                  <span className="font-medium">"{request.eventId?.title || "Event"}"</span>
+                  {" "}- Your participation request has been {request.status === "accepted" ? "accepted" : "rejected"}.
                 </p>
                 {request.status === "rejected" && request.rejectionReason && (
-                  <div className="mt-2 p-2 bg-red-100 rounded border">
+                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
                     <p className="text-red-900 font-medium text-xs mb-1">Rejection Reason:</p>
                     <p className="text-red-800 text-sm italic">"{request.rejectionReason}"</p>
                   </div>

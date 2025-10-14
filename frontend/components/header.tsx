@@ -58,17 +58,26 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <span className="font-bold text-white text-xl">N</span>
-            </div>
-            <div className="absolute -inset-1.5 bg-blue-100/50 rounded-xl -z-10 group-hover:bg-blue-100/70 transition-colors duration-300" />
-          </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            AMASTEP
-          </span>
-        </Link>
+        <Link href="/" className="flex items-center gap-3 group">
+  <div className="relative">
+    {/* Premium Badge */}
+    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-700 to-blue-700 flex items-center justify-center group-hover:shadow-lg transition-all duration-300 shadow-md border border-indigo-200/20">
+      <span className="font-bold text-white text-lg tracking-tighter">N</span>
+    </div>
+    
+    {/* Corner Accents */}
+    <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-cyan-300 rounded-sm" />
+    <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-purple-300 rounded-sm" />
+  </div>
+
+  {/* Corporate Typography */}
+  <div className="flex flex-col">
+    <span className="text-xl font-bold text-slate-800 tracking-tight">Namastep</span>
+    <span className="text-[9px] font-semibold text-slate-500 tracking-[0.1em] uppercase">
+      Social Innovation
+    </span>
+  </div>
+</Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
