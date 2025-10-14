@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { NGOProvider } from "@/contexts/ngo-context";
 import { AuthProvider } from "@/contexts/auth-context";
-// import { EventsProvider } from "@/contexts/events-context";
+import { EventsProvider } from "@/contexts/events-context"; // ✅ uncommented
 import { AdminProvider } from "@/contexts/admin-context";
 import { UserProvider } from "@/contexts/user-context";
 import { PostProvider } from "@/contexts/post-context";
@@ -29,21 +29,23 @@ export function Providers({ children }: { children: ReactNode }) {
                   <GroupsProvider>
                     <ParticipationRequestProvider>
                       <DonationEventProvider>
-                      <BlogProvider>
-                        <CorporateEventProvider>
-                          {children}
-                          <ToastContainer
-                            position="top-right"
-                            autoClose={3000}
-                            hideProgressBar
-                            closeOnClick
-                            pauseOnHover
-                            draggable
-                            theme="light"
-                          />
-                        </CorporateEventProvider>
-                      </BlogProvider>
-                        <Toaster />
+                        <BlogProvider>
+                          <CorporateEventProvider>
+                            <EventsProvider> {/* ✅ wrap it here */}
+                              {children}
+                              <ToastContainer
+                                position="top-right"
+                                autoClose={3000}
+                                hideProgressBar
+                                closeOnClick
+                                pauseOnHover
+                                draggable
+                                theme="light"
+                              />
+                              <Toaster />
+                            </EventsProvider>
+                          </CorporateEventProvider>
+                        </BlogProvider>
                       </DonationEventProvider>
                     </ParticipationRequestProvider>
                   </GroupsProvider>
