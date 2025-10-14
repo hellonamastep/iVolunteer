@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter} from "next/navigation";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,10 +51,9 @@ const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, hi
   );
 };
 
-// Create a client component that uses useSearchParams
-function DonatePageContent() {
+export default function DonatePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(window.location.search)
   const { events, fetchEvents, loading, handleRazorpayPayment } = useDonationEvent();
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
@@ -72,30 +70,16 @@ function DonatePageContent() {
   }, []);
 
   // Handle donationId from URL parameter
-  useEffect(() => {
-    const donationId = searchParams.get('donationId');
-    
-    if (donationId && events.length > 0) {
-      // Set highlighted donation
-      setHighlightedDonationId(donationId);
-      
-      // Wait for the donation card to render and then scroll to it
-      setTimeout(() => {
-        const donationElement = donationRefs.current.get(donationId);
-        if (donationElement) {
-          donationElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          
-          // Remove highlight after 3 seconds
-          setTimeout(() => {
-            setHighlightedDonationId(null);
-          }, 3000);
-        }
-      }, 500);
-    }
-  }, [searchParams, events.length]);
+useEffect(() => {
+  const donationId = new URLSearchParams(window.location.search).get('donationId');
+  if (donationId && events.length > 0) {
+    setHighlightedDonationId(donationId);
+    const donationElement = donationRefs.current.get(donationId);
+    if (donationElement) donationElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => setHighlightedDonationId(null), 3000);
+  }
+}, [events]);
+
   
 
   const handleCustomDonate = (eventId: string) => {
@@ -268,7 +252,9 @@ function DonatePageContent() {
   };
 
   return (
-    <div className="min-h-screen py-6 relative overflow-hidden" style={{ backgroundColor: '#E8F5F5' }}>
+    <>
+      <Header />
+      <div className="min-h-screen py-6 relative overflow-hidden" style={{ backgroundColor: '#E8F5F5' }}>
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -726,31 +712,6 @@ function DonatePageContent() {
         )}
       </div>
     </div>
-  );
-}
-
-// Loading component for Suspense fallback
-function DonatePageLoading() {
-  return (
-    <>
-      <Header />
-      <div className="min-h-screen py-6" style={{ backgroundColor: '#E8F5F5' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading donation campaigns...</p>
-          </div>
-        </div>
-      </div>
     </>
-  );
-}
-
-// Main component with Suspense boundary
-export default function DonatePage() {
-  return (
-    <Suspense fallback={<DonatePageLoading />}>
-      <DonatePageContent />
-    </Suspense>
   );
 }
