@@ -140,11 +140,12 @@ export const PendingParticipationRequests: React.FC = () => {
                   <div className="space-y-1 text-sm text-gray-600 mb-3">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      <span className="font-medium">{request.eventId.title}</span>
+                     <span className="font-medium">{request.eventId?.title || "No title"}</span>  
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      <span>{request.eventId.location}</span>
+                    <span>{request.eventId?.location || "No location"}</span>
+
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
