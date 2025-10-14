@@ -5,6 +5,7 @@ import { refreshAccessTokenController } from "../controllers/session.controller.
 import { validate } from "../middlewares/validate.middleware.js";
 import { authValidator } from "../validators/auth.validators.js";
 import { upload } from "../config/cloudinary.js";
+import { otpController } from "../controllers/otp.controller.js";
 
 const router = Router()
 
@@ -31,5 +32,8 @@ router.delete("/profile-picture", authentication, authController.removeProfilePi
 router.delete("/account", authentication, authController.deleteAccount);
 
 router.post("/refresh-access-token", authentication, refreshAccessTokenController);
+
+router.post("/send-otp", otpController.sendOtp);
+router.post("/verify-otp", otpController.verifyOtp);
 
 export default router;

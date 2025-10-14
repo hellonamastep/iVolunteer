@@ -44,7 +44,11 @@ export interface AdminContextType {
 
   pendingEvents: EventItem[];
   fetchPendingEvents: () => Promise<void>;
-  handleApprove: (id: string) => Promise<void>;
+  handleApprove: (id: string, scoring: {
+    baseCategoryOrPoints: keyof typeof basePointsMap | number;
+    difficultyKeyOrMultiplier: keyof typeof difficultyMap | number;
+    hoursWorked: number;
+  }) => Promise<void>;
   handleDeny: (id: string, reason: string) => Promise<void>;
 
   pendingDonationEvents: DonationEventItem[];
@@ -54,6 +58,21 @@ export interface AdminContextType {
     status: "approved" | "rejected"
   ) => Promise<void>;
 }
+
+export const basePointsMap = {
+  small: 50,
+  medium: 100,
+  highImpact: 150,
+  longTerm: 200,
+};
+
+export const difficultyMap = {
+  easy: 1.0,
+  moderate: 1.3,
+  challenging: 1.7,
+  extreme: 2.0,
+};
+
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
@@ -97,21 +116,33 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleApprove = async (id: string) => {
-    if (!isAdmin) return;
-    const token = localStorage.getItem("auth-token");
-    try {
-      await api.put(
-        `/v1/event/status/${id}`,
-        { status: "approved" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setPendingEvents((prev) => prev.filter((e) => e._id !== id));
-    } catch (err) {
-      console.error("Failed to approve event", err);
-    }
-  };
+const handleApprove = async (
+  id: string,
+  scoring: {
+    baseCategoryOrPoints: keyof typeof basePointsMap | number;
+    difficultyKeyOrMultiplier: keyof typeof difficultyMap | number;
+    hoursWorked: number;
+  }
+) => {
+  if (!isAdmin) return;
+  const token = localStorage.getItem("auth-token");
 
+  try {
+    await api.put(
+      `/v1/event/admin/approve-with-scoring/${id}`,
+      {
+        baseCategory: scoring.baseCategoryOrPoints,  // string key or number
+        difficulty: scoring.difficultyKeyOrMultiplier, // string key or number
+        hoursWorked: scoring.hoursWorked || 0, // ensure numeric
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setPendingEvents((prev) => prev.filter((e) => e._id !== id));
+  } catch (err) {
+    console.error("Failed to approve event", err);
+  }
+};
   const handleDeny = async (id: string, reason: string) => {
     if (!isAdmin) return;
     const token = localStorage.getItem("auth-token");
@@ -141,6 +172,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       }>("/v1/donation-event/pending", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched pending donation events:", res.data.events);
       setPendingDonationEvents(res.data.events);
     } catch (err) {
       console.error("Failed to fetch pending donation events", err);

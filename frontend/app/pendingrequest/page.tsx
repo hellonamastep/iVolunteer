@@ -1,33 +1,67 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAdmin, EventItem } from "@/contexts/admin-context";
+import {
+  useAdmin,
+  EventItem,
+  basePointsMap,
+  difficultyMap,
+} from "@/contexts/admin-context";
+import { Calendar, MapPin, Clock, Users, Award, CheckCircle, XCircle, Settings } from "lucide-react";
 
 const PendingEventsPage = () => {
   const { pendingEvents, handleApprove, handleDeny } = useAdmin();
   const [denialReasons, setDenialReasons] = useState<{ [key: string]: string }>({});
   const [showApproveConfirm, setShowApproveConfirm] = useState<string | null>(null);
-  const [showDenyConfirm, setShowDenyConfirm] = useState<string | null>(null);
   const [showRejectInput, setShowRejectInput] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const onApprove = async (id: string) => {
-    setLoadingAction(id);
+  const [selectedBase, setSelectedBase] = useState<{
+    [id: string]: keyof typeof basePointsMap;
+  }>({});
+  const [selectedDifficulty, setSelectedDifficulty] = useState<{
+    [id: string]: keyof typeof difficultyMap;
+  }>({});
+  const [hoursWorked, setHoursWorked] = useState<{ [id: string]: number }>({});
+
+  const calculatePoints = (eventId: string) => {
+    const base = selectedBase[eventId] || "small";
+    const diff = selectedDifficulty[eventId] || "easy";
+    const hours = hoursWorked[eventId] || 0;
+
+    const basePoints = basePointsMap[base];
+    const difficultyMultiplier = difficultyMap[diff];
+    const durationFactor = 1 + hours / 10;
+    const totalPoints = Math.round(
+      basePoints * difficultyMultiplier * durationFactor
+    );
+    return { totalPoints, basePoints, difficultyMultiplier, durationFactor };
+  };
+
+  const onApprove = async (eventId: string) => {
+    if (!selectedBase[eventId] || !selectedDifficulty[eventId]) {
+      alert("Please select category and difficulty");
+      return;
+    }
+
+    setLoadingAction(eventId);
+
     try {
-      await handleApprove(id);
+      await handleApprove(eventId, {
+        baseCategoryOrPoints: selectedBase[eventId],
+        difficultyKeyOrMultiplier: selectedDifficulty[eventId],
+        hoursWorked: hoursWorked[eventId] || 0,
+      });
+
+      setShowApproveConfirm(null);
     } finally {
       setLoadingAction(null);
-      setShowApproveConfirm(null);
     }
   };
 
   const onDeny = async (id: string) => {
     const reason = denialReasons[id];
-    if (!reason?.trim()) {
-      alert("Please enter a denial reason");
-      return;
-    }
-    
+    if (!reason?.trim()) return alert("Please enter a denial reason");
     setLoadingAction(id);
     try {
       await handleDeny(id, reason);
@@ -35,7 +69,6 @@ const PendingEventsPage = () => {
       setShowRejectInput(null);
     } finally {
       setLoadingAction(null);
-      setShowDenyConfirm(null);
     }
   };
 
@@ -54,239 +87,245 @@ const PendingEventsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50/30 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-sm mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-4 mb-6">
+            <div className="w-2 h-12 bg-gradient-to-b from-[#5D8A6E] to-[#7AA981] rounded-full"></div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-[#5D8A6E] bg-clip-text text-transparent">
+              Pending Events
+            </h1>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Pending Events</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Review and manage event submissions awaiting approval. Ensure all events meet community guidelines.
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-8">
+            Review and manage event submissions awaiting approval
           </p>
-          <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 rounded-full">
-            <span className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
-            <span className="text-sm font-medium text-blue-700">
-              {pendingEvents.length} event{pendingEvents.length !== 1 ? 's' : ''} pending review
-            </span>
+          
+          {/* Stats Card */}
+          <div className="inline-flex items-center gap-6 px-8 py-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-green-100 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-[#5D8A6E] rounded-full animate-pulse"></div>
+              <span className="text-lg font-semibold text-gray-700">
+                {pendingEvents.length} pending event{pendingEvents.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <div className="flex items-center gap-2 text-green-600">
+              <Users className="w-5 h-5" />
+              <span className="text-lg font-medium">Requires review</span>
+            </div>
           </div>
         </div>
 
-        {/* Events Table */}
         {pendingEvents.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-16 text-center border border-green-100 shadow-sm">
             <div className="max-w-md mx-auto">
-              <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-50 mb-4">
-                <svg className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="mx-auto flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 mb-6">
+                <CheckCircle className="w-12 h-12 text-green-500" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">All caught up!</h3>
-              <p className="text-gray-500 text-lg">
-                No pending events to review. New submissions will appear here automatically.
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">All caught up!</h3>
+              <p className="text-gray-600 text-lg mb-6">
+                No pending events to review
               </p>
+              <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mx-auto"></div>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-8 py-5 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Event Details
-                    </th>
-                    <th scope="col" className="px-6 py-5 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Organization
-                    </th>
-                    <th scope="col" className="px-6 py-5 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th scope="col" className="px-6 py-5 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pendingEvents.map((event: EventItem) => (
-                    <tr key={event._id} className="hover:bg-gray-50 transition-colors duration-150 group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-start space-x-4">
-                          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm">
-                            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                              {event.title}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                              {event.description || "No description provided"}
-                            </p>
-                            {event.location && (
-                              <div className="flex items-center mt-2 text-sm text-gray-400">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                {event.location}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
-                            <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                          </div>
-                          <span className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded-full">
-                            {event.organization}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="text-sm font-semibold text-gray-900 bg-blue-50 px-3 py-2 rounded-lg inline-block">
-                          {event.date}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-1 font-medium">{event.time}</div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col space-y-3 min-w-[200px]">
-                          {/* Approve Button */}
-                          <button
-                            onClick={() => setShowApproveConfirm(event._id)}
-                            disabled={loadingAction === event._id}
-                            className="group relative inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
-                          >
-                            {loadingAction === event._id ? (
-                              <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Approve Event
-                              </>
-                            )}
-                          </button>
+          <div className="grid  grid-cols-2 gap-6">
+            {pendingEvents.map((event: EventItem) => {
+              const { totalPoints } = calculatePoints(event._id);
+              return (
+                <div key={event._id} className="group relative bg-white rounded-2xl p-6 border-2 border-green-100 hover:border-green-200 hover:shadow-xl transition-all duration-300">
+                  
+                  <div className="space-y-6">
+                    {/* Event Header */}
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#5D8A6E] transition-colors duration-300">
+                        {event.title}
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed">
+                        {event.description || "No description provided"}
+                      </p>
+                    </div>
 
-                          {/* Reject Button & Input */}
-                          {showRejectInput === event._id ? (
-                            <div className="space-y-3 animate-in fade-in duration-200">
-                              <div className="relative">
-                                <textarea
-                                  placeholder="Please provide a reason for rejection (minimum 10 characters)..."
-                                  className="block w-full px-4 py-3 text-sm border border-red-200 rounded-xl placeholder-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 resize-none"
-                                  rows={3}
-                                  value={denialReasons[event._id] || ""}
-                                  onChange={(e) =>
-                                    setDenialReasons((prev) => ({ ...prev, [event._id]: e.target.value }))
-                                  }
-                                  maxLength={500}
-                                  autoFocus
-                                />
-                                <div className="absolute top-2 right-2">
-                                  <span className={`text-xs ${
-                                    (denialReasons[event._id]?.length || 0) >= 10 
-                                      ? 'text-green-500' 
-                                      : 'text-red-400'
-                                  }`}>
-                                    {denialReasons[event._id]?.length || 0}/500
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => cancelRejectProcess(event._id)}
-                                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={() => setShowDenyConfirm(event._id)}
-                                  disabled={!denialReasons[event._id]?.trim() || denialReasons[event._id]?.trim().length < 10}
-                                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200"
-                                >
-                                  Submit Rejection
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => startRejectProcess(event._id)}
-                              disabled={loadingAction === event._id}
-                              className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
-                            >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                              Reject Event
-                            </button>
-                          )}
+                    {/* Organization and Location Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Organization */}
+                      <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-orange-100">
+                          <Users className="w-6 h-6 text-orange-600" />
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Organization</p>
+                          <p className="text-base font-semibold text-gray-900">
+                            {event.organization}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      {event.location && (
+                        <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100">
+                            <MapPin className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-500">Location</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {event.location}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-green-100">
+                      {/* Approve Button */}
+                      <button
+                        onClick={() => setShowApproveConfirm(event._id)}
+                        disabled={loadingAction === event._id}
+                        className="group flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Approve Event
+                      </button>
+
+                      {/* Reject Button */}
+                      <button
+                        onClick={() => startRejectProcess(event._id)}
+                        disabled={loadingAction === event._id}
+                        className="group flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        <XCircle className="w-5 h-5" />
+                        Reject Event
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Approve Confirmation Modal */}
+        {/* Approve Confirmation Modal with Points Configuration */}
         {showApproveConfirm && (
-          <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-gray-200 animate-in zoom-in duration-200">
-              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-2xl mb-6">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-green-200 animate-in zoom-in duration-300">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-2xl mb-4">
+                <Settings className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Approve Event?</h3>
+              <h3 className="text-xl font-bold text-gray-900 text-center mb-3">Configure Points</h3>
               <p className="text-gray-600 text-center mb-2">
-                You are about to approve the event:
+                Set points for:
               </p>
-              <p className="text-lg font-semibold text-gray-900 text-center mb-6">
+              <p className="text-lg font-semibold text-green-600 text-center mb-6">
                 "{getEventById(showApproveConfirm)?.title}"
               </p>
-              <p className="text-sm text-gray-500 text-center mb-6">
-                This event will be published and visible to all users. This action can be reversed later.
-              </p>
-              <div className="flex space-x-4">
+              
+              {/* Points Configuration */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Event Category
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.keys(basePointsMap).map((key) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedBase((prev) => ({
+                          ...prev,
+                          [showApproveConfirm]: key as keyof typeof basePointsMap,
+                        }))}
+                        className={`px-3 py-2 text-sm rounded-lg border transition-all ${
+                          selectedBase[showApproveConfirm] === key
+                            ? "bg-[#5D8A6E] text-white border-[#5D8A6E] shadow-sm"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                        }`}
+                      >
+                        {key}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Difficulty Level
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.keys(difficultyMap).map((key) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedDifficulty((prev) => ({
+                          ...prev,
+                          [showApproveConfirm]: key as keyof typeof difficultyMap,
+                        }))}
+                        className={`px-2 py-2 text-xs rounded-lg border transition-all ${
+                          selectedDifficulty[showApproveConfirm] === key
+                            ? "bg-purple-500 text-white border-purple-500 shadow-sm"
+                            : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                        }`}
+                      >
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Hours Worked
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={hoursWorked[showApproveConfirm] || 0}
+                    onChange={(e) =>
+                      setHoursWorked((prev) => ({
+                        ...prev,
+                        [showApproveConfirm]: Number(e.target.value),
+                      }))
+                    }
+                    placeholder="0"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D8A6E] focus:border-[#5D8A6E] bg-white"
+                  />
+                </div>
+
+                {/* Points Display */}
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-semibold text-gray-700">Final Points:</span>
+                    </div>
+                    <span className="text-lg font-bold text-green-600">
+                      {calculatePoints(showApproveConfirm).totalPoints}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
                 <button
                   onClick={() => setShowApproveConfirm(null)}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 hover:shadow-sm"
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => onApprove(showApproveConfirm)}
-                  disabled={loadingAction === showApproveConfirm}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl disabled:opacity-50 transition-all duration-200 hover:shadow-sm"
+                  disabled={loadingAction === showApproveConfirm || !selectedBase[showApproveConfirm] || !selectedDifficulty[showApproveConfirm]}
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-lg disabled:opacity-50 transition-all duration-300"
                 >
                   {loadingAction === showApproveConfirm ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Approving...
                     </span>
                   ) : (
-                    "Yes, Approve Event"
+                    "Confirm Approve"
                   )}
                 </button>
               </div>
@@ -294,55 +333,56 @@ const PendingEventsPage = () => {
           </div>
         )}
 
-        {/* Deny Confirmation Modal */}
-        {showDenyConfirm && (
-          <div className="fixed inset-0 bg-white bg-opacity-95 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-gray-200 animate-in zoom-in duration-200">
-              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-2xl mb-6">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+        {/* Reject Input Modal */}
+        {showRejectInput && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-red-200 animate-in zoom-in duration-300">
+              <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-2xl mb-4">
+                <XCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">Reject Event?</h3>
+              <h3 className="text-xl font-bold text-gray-900 text-center mb-3">Reject Event?</h3>
               <p className="text-gray-600 text-center mb-2">
-                You are about to reject the event:
+                You are about to reject:
               </p>
-              <p className="text-lg font-semibold text-gray-900 text-center mb-6">
-                "{getEventById(showDenyConfirm)?.title}"
+              <p className="text-lg font-semibold text-red-600 text-center mb-6">
+                "{getEventById(showRejectInput)?.title}"
               </p>
               
-              <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-100">
-                <p className="text-sm font-medium text-red-800 mb-2">Reason for rejection:</p>
-                <p className="text-sm text-red-700">{denialReasons[showDenyConfirm]}</p>
+              <div className="relative mb-6">
+                <textarea
+                  placeholder="Please provide a reason for rejection (minimum 10 characters)..."
+                  className="block w-full px-3 py-3 text-sm border-2 border-red-200 rounded-xl placeholder-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 resize-none bg-white"
+                  rows={4}
+                  value={denialReasons[showRejectInput] || ""}
+                  onChange={(e) =>
+                    setDenialReasons((prev) => ({ ...prev, [showRejectInput]: e.target.value }))
+                  }
+                  autoFocus
+                />
+                <div className="absolute bottom-2 right-2">
+                  <span className={`text-xs ${denialReasons[showRejectInput]?.length >= 10 ? 'text-green-500' : 'text-red-400'}`}>
+                    {denialReasons[showRejectInput]?.length || 0}/10
+                  </span>
+                </div>
               </div>
 
               <p className="text-sm text-gray-500 text-center mb-6">
-                This action cannot be undone. The event organizer will be notified of the rejection reason.
+                This action cannot be undone.
               </p>
               
-              <div className="flex space-x-4">
+              <div className="flex gap-3">
                 <button
-                  onClick={() => setShowDenyConfirm(null)}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 hover:shadow-sm"
+                  onClick={() => cancelRejectProcess(showRejectInput)}
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => onDeny(showDenyConfirm)}
-                  disabled={loadingAction === showDenyConfirm}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-xl disabled:opacity-50 transition-all duration-200 hover:shadow-sm"
+                  onClick={() => onDeny(showRejectInput)}
+                  disabled={!denialReasons[showRejectInput]?.trim() || denialReasons[showRejectInput]?.trim().length < 10}
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg disabled:opacity-50 transition-all duration-300"
                 >
-                  {loadingAction === showDenyConfirm ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Rejecting...
-                    </span>
-                  ) : (
-                    "Yes, Reject Event"
-                  )}
+                  Confirm Reject
                 </button>
               </div>
             </div>

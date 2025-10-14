@@ -27,6 +27,7 @@ const donationEventSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+      fundAccountId: { type: String }, // Razorpay fund account ID for the NGO
 
     // ----- New payment-related fields -----
     paymentMethods: [

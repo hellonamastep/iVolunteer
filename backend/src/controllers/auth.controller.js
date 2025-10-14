@@ -5,6 +5,7 @@ import { setCookies, clearCookies } from "../utils/jwt.utils.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { cloudinary } from "../config/cloudinary.js";
+import { otpService } from "../services/otp.service.js";
 
 const register = asyncHandler(async(req, res) => {
     console.log("Registration request received:", req.body);
@@ -44,20 +45,23 @@ const register = asyncHandler(async(req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
+  // Step 1: Verify user credentials
   const user = await authService.login(req.body);
 
-  const { accessToken, refreshToken } = await createSession(user);
-  setCookies(res, accessToken, refreshToken);
+  // Step 2: Send OTP email
+  await otpService.sendOtp(user.email);
 
+  // Step 3: Return success message without tokens
   return res.status(200).json({
-    user,
-    tokens: {
-      accessToken,
-      refreshToken,
+    user: {
+      email: user.email,
+      name: user.name,
+      role: user.role,
     },
-    message: "Logged in sucessful",
+    message: "OTP sent to your email. Please verify to complete login.",
   });
 });
+
 
 const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, AlertCircle, XCircle, Edit2, Trash2, X as CloseIcon } from "lucide-react";
 import api from "@/lib/api"; // your axios instance
 import { toast } from "react-toastify";
+import Link from "next/link";
 
 interface EventItem {
   _id: string;
@@ -34,7 +35,10 @@ const Ngoeventtable = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "ascending" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "ascending",
+  });
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -50,19 +54,22 @@ const Ngoeventtable = () => {
         console.error("No auth token found");
         return;
       }
-      
+
       // Add cache-busting parameter to prevent 304 responses
       const timestamp = new Date().getTime();
-      const res = await api.get<{ success: boolean; events: any[] }>(`/v1/event/organization?_t=${timestamp}`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-      });
-      
+      const res = await api.get<{ success: boolean; events: any[] }>(
+        `/v1/event/organization?_t=${timestamp}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        }
+      );
+
       console.log("Fetched events:", res.data); // Debug log
-      
+
       // Map backend fields to frontend display fields
       const mappedEvents = res.data.events.map((e) => {
         const participantCount = e.participants?.length || 0;
@@ -143,7 +150,11 @@ const Ngoeventtable = () => {
 
   // Filtering
   const filteredEvents = sortedEvents
-    .filter((event) => (filter === "all" ? true : event.status.toLowerCase() === filter.toLowerCase()))
+    .filter((event) =>
+      filter === "all"
+        ? true
+        : event.status.toLowerCase() === filter.toLowerCase()
+    )
     .filter(
       (event) =>
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,7 +163,8 @@ const Ngoeventtable = () => {
 
   const requestSort = (key: keyof EventItem) => {
     let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") direction = "descending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending")
+      direction = "descending";
     setSortConfig({ key, direction });
   };
 
@@ -342,7 +354,7 @@ const Ngoeventtable = () => {
         </div>
         <button className="px-6 py-3 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:scale-105">
           <Calendar className="w-4 h-4" />
-          View All Events
+          <Link href="/allngoevents">View All Events</Link>
         </button>
       </div>
 

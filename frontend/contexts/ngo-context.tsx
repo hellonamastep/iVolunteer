@@ -4,7 +4,7 @@ import api from "@/lib/api";
 import { toast } from "react-toastify";
 
 export type EventData = {
-  _id?: string; 
+  _id?: string;
   title: string;
   description: string;
   location: string; // Required field, pre-filled from organization city but can be changed
@@ -18,6 +18,8 @@ export type EventData = {
   requirements: string[];
   sponsorshipRequired: boolean;
   sponsorshipAmount: number;
+  sponsorshipContactEmail?: string; // 🆕 Added
+  sponsorshipContactNumber?: string; // 🆕 Added
   image?: { url: string; caption: string };
   eventStatus: string;
   eventType?: string; // Event type field
@@ -66,7 +68,8 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
   const currentUserId = user?._id || "";
 
   // --- Create Event ---
@@ -124,19 +127,21 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       const timestamp = new Date().getTime();
       const res = await api.get<{ success: boolean; events: EventData[] }>(
         `/v1/event/organization?_t=${timestamp}`,
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }, 
-          withCredentials: true 
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+          withCredentials: true,
         }
       );
 
       setOrganizationEvents((res.data as any).events || []);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch organization events");
+      setError(
+        err.response?.data?.message || "Failed to fetch organization events"
+      );
     } finally {
       setLoading(false);
     }
@@ -157,9 +162,9 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       setEvents((prev) =>
         prev.map((e) =>
           e._id === eventId
-            ? { 
-                ...e, 
-                participants: [...(e.participants || []), currentUserId] 
+            ? {
+                ...e,
+                participants: [...(e.participants || []), currentUserId],
               }
             : e
         )
@@ -168,7 +173,8 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       toast.success(res.data.message || "Participation successful!");
       return true;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Participation failed";
+      const errorMessage =
+        err.response?.data?.message || "Participation failed";
       toast.error(errorMessage);
       return false;
     }
@@ -179,18 +185,20 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (!token) throw new Error("No auth token found");
 
-      await api.delete(
-        `/v1/event/leave/${eventId}`,
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
-      );
+      await api.delete(`/v1/event/leave/${eventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
 
       // Update local state - remove current user from participants
       setEvents((prev) =>
         prev.map((e) =>
           e._id === eventId
-            ? { 
-                ...e, 
-                participants: (e.participants || []).filter(id => id !== currentUserId)
+            ? {
+                ...e,
+                participants: (e.participants || []).filter(
+                  (id) => id !== currentUserId
+                ),
               }
             : e
         )
@@ -199,7 +207,8 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       toast.success("Successfully left the event!");
       return true;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to leave event";
+      const errorMessage =
+        err.response?.data?.message || "Failed to leave event";
       toast.error(errorMessage);
       return false;
     }
@@ -217,24 +226,26 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
 
       return (res.data as any).events || [];
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to fetch participated events");
+      toast.error(
+        err.response?.data?.message || "Failed to fetch participated events"
+      );
       return [];
     }
   };
 
   return (
     <NGOContext.Provider
-      value={{ 
-        events, 
+      value={{
+        events,
         organizationEvents,
-        loading, 
-        error, 
-        createEvent, 
+        loading,
+        error,
+        createEvent,
         fetchAvailableEvents,
         fetchOrganizationEvents,
         participateInEvent,
         leaveEvent,
-        getUserParticipatedEvents
+        getUserParticipatedEvents,
       }}
     >
       {children}

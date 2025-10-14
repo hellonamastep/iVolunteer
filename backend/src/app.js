@@ -4,7 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
-
+import path from "path";
 
 import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js"
 import authRouter from "./routes/auth.routes.js"
@@ -26,6 +26,9 @@ import donationEventRouter from "./routes/donationEvent.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import pointsBadgeRouter from "./routes/pointsBadge.routes.js";
 import groupRouter from "./routes/group.routes.js";
+import blogRouter from "./routes/blog.route.js";
+import corporateEventRouter from "./routes/corporateEvent.routes.js";
+import corporateBidRouter from "./routes/corporateBid.routes.js";
 import participationRequestRouter from "./routes/participationRequest.routes.js";
 
 const app = express();
@@ -38,8 +41,8 @@ app.use(
   })
 );
 app.use(morgan("dev"));
-app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 
 function limiter(windowMs, max) {
@@ -59,6 +62,22 @@ const globalRateLimiting = limiter(15 * 60 * 1000, 5000); // 15 minutes, 1000 re
 app.use(globalRateLimiting);
 
 const authLimiter = limiter(15 * 60 * 1000, 100);
+
+app.use("/uploads", (req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
+
+
+app.use(
+  "/uploads",
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+  express.static(path.join(process.cwd(), "uploads"))
+);
+
 
 app.use("/api/v1/auth", authLimiter, authRouter);
 
@@ -81,6 +100,13 @@ app.use("/api/v1/points-badge", globalRateLimiting, pointsBadgeRouter);
 
 // Group routes
 app.use("/api/v1/groups", globalRateLimiting, groupRouter);
+
+// blogs
+app.use("/api/v1/blogs", globalRateLimiting, blogRouter);
+
+// corporate events
+app.use("/api/v1/corporate-events", globalRateLimiting, corporateEventRouter);
+app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
 
 // Participation request routes
 app.use("/api/v1/participation-requests", globalRateLimiting, participationRequestRouter);

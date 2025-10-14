@@ -321,10 +321,11 @@ const AvailableEventsPage: React.FC = () => {
     const currentUserId = user?._id || "";
     return (
       participated[event._id] ||
-      (Array.isArray(event.participants) && 
-       event.participants.some((participant: any) => 
-         participant._id === currentUserId || participant === currentUserId
-       ))
+      (Array.isArray(event.participants) &&
+        event.participants.some(
+          (participant: any) =>
+            participant._id === currentUserId || participant === currentUserId
+        ))
     );
   };
 
@@ -823,6 +824,16 @@ const AvailableEventsPage: React.FC = () => {
                           </span>
                         )}
                       </div>
+
+                      {/* Points Awarded */}
+                      {event.pointsOffered && (
+                        <div className="flex items-center text-gray-600 mt-2">
+                          <DollarSign className="h-4 w-4 mr-3 text-yellow-600" />
+                          <span className="text-sm">
+                            Points: {event.pointsOffered}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Progress Bar */}
                       {maxParticipants !== Infinity && (

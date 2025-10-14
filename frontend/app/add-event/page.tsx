@@ -34,14 +34,14 @@ type EventFormData = {
   duration: number;
   category: string;
   maxParticipants: number;
-  pointsOffered: number;
   requirements: string;
   sponsorshipRequired: boolean;
   sponsorshipAmount: number;
-  imageUrl: string;
-  imageCaption: string;
   eventStatus: string;
   eventType: string;
+  imageCaption?: string;
+  sponsorshipContactEmail?: string;
+  sponsorshipContactNumber?: string;
 };
 
 const CreateEventPage = () => {
@@ -55,7 +55,6 @@ const CreateEventPage = () => {
     setValue,
   } = useForm<EventFormData>({
     defaultValues: {
-      pointsOffered: 50,
       sponsorshipRequired: true,
       sponsorshipAmount: 0,
       duration: 3,
@@ -180,20 +179,22 @@ const CreateEventPage = () => {
         duration: Number(data.duration),
         category: data.category,
         maxParticipants: Number(data.maxParticipants),
-        pointsOffered: Number(data.pointsOffered),
         requirements: requirementInputs.filter((req) => req.trim() !== ""),
         sponsorshipRequired: data.sponsorshipRequired,
-        participants: [],
         sponsorshipAmount: data.sponsorshipRequired
           ? Number(data.sponsorshipAmount)
           : 0,
         image: imageData ? {
           url: imageData.url,
-          caption: data.imageCaption || "Event Image",
+          caption: "Event Image",
           publicId: imageData.publicId,
         } : undefined,
         eventStatus: data.eventStatus,
         eventType: data.eventType,
+        participants: [], // required by EventData
+        pointsOffered: 0, // added default to satisfy TypeScript
+        sponsorshipContactEmail: data.sponsorshipContactEmail,
+        sponsorshipContactNumber: data.sponsorshipContactNumber,
       };
 
       await createEvent(formattedData);
@@ -202,7 +203,6 @@ const CreateEventPage = () => {
       setRequirementInputs([""]); // reset requirements
       removeImage(); // reset image
     } catch (err) {
-      // Error is already handled in the context
       console.error("Error in form submission:", err);
     }
   };
@@ -600,7 +600,6 @@ const CreateEventPage = () => {
                       step={1}
                       inputMode="numeric"
                       onKeyDown={(e) => {
-                        // blocks the minus, plus and exponent
                         if (["-", "+", "e", "E"].includes(e.key))
                           e.preventDefault();
                       }}
@@ -769,30 +768,6 @@ const CreateEventPage = () => {
                     </p>
                   )}
                 </motion.div>
-
-                {/* Points Offered */}
-                <motion.div variants={itemVariants}>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                    Points Offered
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      {...register("pointsOffered", {
-                        required: "Points offered is required",
-                        min: { value: 0, message: "Points cannot be negative" },
-                      })}
-                      className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-4 py-2.5 shadow-sm"
-                      placeholder="Points offered to volunteers"
-                    />
-                    <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  </div>
-                  {errors.pointsOffered && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.pointsOffered.message}
-                    </p>
-                  )}
-                </motion.div>
               </div>
             </section>
 
@@ -812,39 +787,34 @@ const CreateEventPage = () => {
 
               <motion.div variants={itemVariants}>
                 <div className="space-y-2">
-                  {requirementInputs.map((_, index) => (
+                  {requirementInputs.map((req, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <div className="relative flex-grow">
-                        <input
-                          type="text"
-                          value={requirementInputs[index]}
-                          onChange={(e) => {
-                            const newRequirements = [...requirementInputs];
-                            newRequirements[index] = e.target.value;
-                            setRequirementInputs(newRequirements);
-                          }}
-                          className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-4 py-2.5 shadow-sm placeholder:text-gray-400"
-                          placeholder="Enter a requirement (e.g., Gloves, Trash Bags)"
-                        />
-                        <AlertCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      </div>
-                      {requirementInputs.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeRequirementInput(index)}
-                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition"
-                        >
-                          ×
-                        </button>
-                      )}
+                      <input
+                        type="text"
+                        value={req}
+                        onChange={(e) => {
+                          const newReqs = [...requirementInputs];
+                          newReqs[index] = e.target.value;
+                          setRequirementInputs(newReqs);
+                        }}
+                        className="flex-1 rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none px-3 py-2 shadow-sm"
+                        placeholder={`Requirement ${index + 1}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeRequirementInput(index)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        &times;
+                      </button>
                     </div>
                   ))}
                   <button
                     type="button"
                     onClick={addRequirementInput}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs font-medium"
+                    className="text-blue-600 hover:underline text-sm"
                   >
-                    <PlusCircle className="w-3 h-3 mr-1" /> Add Requirement
+                    + Add requirement
                   </button>
                 </div>
               </motion.div>
@@ -864,49 +834,80 @@ const CreateEventPage = () => {
                 </div>
               </header>
 
-              <motion.div variants={itemVariants} className="pt-1">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    {...register("sponsorshipRequired")}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Sponsorship Required
-                  </span>
+              <motion.div variants={itemVariants}>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" {...register("sponsorshipRequired")} />
+                  Sponsorship Required
                 </label>
-              </motion.div>
 
-              {/* Sponsorship Amount - only show if sponsorship is required */}
-              {sponsorshipRequired && (
-                <motion.div
-                  variants={itemVariants}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                    Sponsorship Amount ($)
-                  </label>
-                  <div className="relative">
+                {sponsorshipRequired && (
+                  <div className="mt-2">
                     <input
                       type="number"
                       {...register("sponsorshipAmount", {
-                        min: { value: 0, message: "Amount cannot be negative" },
+                        required: "Sponsorship amount is required",
+                        min: { value: 0, message: "Cannot be negative" },
                       })}
-                      className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none pl-10 pr-4 py-2.5 shadow-sm"
-                      placeholder="Enter sponsorship amount"
+                      placeholder="Sponsorship Amount"
+                      className="w-full rounded-xl border-gray-200 focus:!border-blue-500 focus:!ring-2 focus:!ring-blue-400 focus:!outline-none px-3 py-2 shadow-sm"
                     />
-                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    {errors.sponsorshipAmount && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.sponsorshipAmount.message}
+                      </p>
+                    )}
                   </div>
-                  {errors.sponsorshipAmount && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.sponsorshipAmount.message}
+                )}
+              </motion.div>
+            </section>
+
+            {/* Conditional fields */}
+            {watch("sponsorshipRequired") && (
+              <>
+                <div>
+                  <label className="block font-semibold mb-1">
+                    Sponsorship Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    {...register("sponsorshipContactEmail", {
+                      required: "Email is required when sponsorship is enabled",
+                    })}
+                    className="border p-2 rounded w-full"
+                    placeholder="Enter contact email"
+                  />
+                  {errors.sponsorshipContactEmail && (
+                    <p className="text-red-500 text-sm">
+                      {errors.sponsorshipContactEmail.message}
                     </p>
                   )}
-                </motion.div>
-              )}
-            </section>
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">
+                    Sponsorship Contact Number
+                  </label>
+                  <input
+                    type="text"
+                    {...register("sponsorshipContactNumber", {
+                      required:
+                        "Contact number is required when sponsorship is enabled",
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: "Please enter a valid 10-digit number",
+                      },
+                    })}
+                    className="border p-2 rounded w-full"
+                    placeholder="Enter contact number"
+                  />
+                  {errors.sponsorshipContactNumber && (
+                    <p className="text-red-500 text-sm">
+                      {errors.sponsorshipContactNumber.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Submit */}
             <motion.div

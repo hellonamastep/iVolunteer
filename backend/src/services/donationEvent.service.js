@@ -24,9 +24,10 @@ export const getEventByIdService = async (eventId) => {
 
 export const getPendingEventsService = async () => {
   return DonationEvent.find({ approvalStatus: "pending" })
-    .populate("ngoId", "name email")
+    .populate("ngoId", "name organizationType email")
     .sort({ createdAt: -1 });
 };
+
 
 export const updateEventApprovalService = async (eventId, status) => {
   return DonationEvent.findByIdAndUpdate(

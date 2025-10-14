@@ -12,8 +12,6 @@ import Howitworks from "@/components/Howitworks";
 import Hero from "@/components/ui/Hero";
 
 import Adminstats from "@/components/Adminstats";
-import Approvalqueueadmin from "@/components/Approvalqueueadmin";
-import CSRAnalytics from "@/components/Csranalytics";
 import Dailyquote from "@/components/Dailyquote";
 import Eventbutton from "@/components/Eventbutton";
 import Ngoanalytics from "@/components/Ngoanalytics";
@@ -21,7 +19,6 @@ import Ngoeventtable from "@/components/Ngoeventtable";
 import Sponsorshipopp from "@/components/Sponsorshipopp";
 import Useractivity from "@/components/Useractivity";
 import Useranalytics from "@/components/Useranalytics";
-import Usermanagementtable from "@/components/Usermanagementtable";
 import Userrewardstoredash from "@/components/Userrewardstoredash";
 import Donationeventbutton from "@/components/Donationeventbutton";
 import PointsDisplay from "@/components/PointsDisplay.";
@@ -29,29 +26,47 @@ import { motion } from "framer-motion";
 import PendingRequestsCTA from "@/components/PendingRequestsCTA";
 import PendingGroupsCTA from "@/components/PendingGroupsCTA";
 import Donationreqcta from "@/components/Donationreqcta";
+import Eventcompltreqcta from "@/components/Eventcompltreqcta";
+import Addblogcta from "@/components/Addblogcta";
+import Manageblogscta from "@/components/Manageblogscta";
+import Copeventdash from "@/components/Copeventdash";
+import Managecopeventcta from "@/components/Managecopeventcta";
 import { PendingParticipationRequests } from "@/components/PendingParticipationRequests";
 
 // Dashboard components
 function AdminDashboard() {
   return (
-    <section className="bg-[#f4f7fb] h-full w-full min-w-[350px]">
+    <section className=" h-full w-full min-w-[350px] bg-white">
       <Header />
-      <div className="p-6 mt-6">
-        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-        <p className="text-gray-500 text-xl mt-1">
-          A powerful yet effortless way to manage the iVolunteer platform.
-        </p>
-      </div>
-
       <Adminstats />
 
-      <Donationreqcta />
-      <PendingRequestsCTA />
+      <div className="flex justify-center  m-6 md:m-0">
+        <div className="max-w-7xl w-full space-y-6">
+          {/* Header Section */}
+          <div className="text-center mb-2 mt-20">
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+              Quick Actions
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-lg max-w-2xl mx-auto">
+              Manage pending requests and review submissions that need your
+              attention
+            </p>
+          </div>
+
+          {/* CTA Grid */}
+          <div className="grid md:grid-cols-2 gap-6 mb-3 mt-14">
+            <Donationreqcta />
+            <PendingRequestsCTA />
+          </div>
+        </div>
+      </div>
       <PendingGroupsCTA />
 
-      <div className="mt-16">
+      <Eventcompltreqcta />
+      <Addblogcta />
+      <Manageblogscta />
+      <Managecopeventcta />
       <Footer />
-      </div>
     </section>
   );
 }
@@ -410,7 +425,8 @@ function NGODashboard() {
             <Eventbutton />
             <Donationeventbutton />
           </div>
-          <Ngoeventtable />
+    
+      <Ngoeventtable />
           
           {/* Inspirational Quote Section */}
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-8">
@@ -659,10 +675,19 @@ function VolunteerDashboard() {
 
 function CorporateDashboard() {
   return (
-    <section>
+    <section className="bg-gradient-to-br from-emerald-50 to-green-50">
       <Header />
+      {/* <div className="p-8">
+        <h1 className="text-5xl font-bold text-emerald-700 mb-4">
+          Corporate Dashboard
+        </h1>
+        <p className="text-emerald-600 text-lg font-light">
+          Welcome back. Here's what's happening.
+        </p>
+      </div> */}
       <Sponsorshipopp />
-      <CSRAnalytics />
+      <Copeventdash />
+      {/* <CSRAnalytics /> */}
       <Footer />
     </section>
   );

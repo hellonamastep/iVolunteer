@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
-import { usePoints } from "./points-context"; // <-- import points context
+import { usePoints } from "./points-context";
+import api from "@/lib/api";
 
 export type UserRole = "user" | "ngo" | "admin" | "corporate";
 
@@ -27,6 +28,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
+  verifyOtp: (email: string, otp: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
 }
@@ -62,8 +64,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // ✅ Correctly usePoints inside component
   const { earnPoints } = usePoints();
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email: string;
       name: string;
       role: UserRole;
-      coins?: number; // Add coins field for registration response
+      coins?: number;
     };
     tokens: {
       accessToken: string;
@@ -106,16 +106,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (signupData: SignupData): Promise<boolean> => {
     setIsLoading(true);
     try {
-      console.log("Attempting signup for:", { name: signupData.name, email: signupData.email, role: signupData.role });
       const { data } = await axios.post<AuthResponse>(
         "http://localhost:5000/api/v1/auth/register",
         signupData,
-        { withCredentials: true } // if your backend uses cookies for JWT
+        { withCredentials: true }
       );
 
-      console.log("Signup response received:", data);
-
-      // Map the response user to our User interface
       const mappedUser: User = {
         _id: data.user.userId,
         id: data.user.userId,
@@ -123,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         name: data.user.name,
         role: data.user.role,
         points: 0,
-        coins: data.user.coins || 50, // Use coins from response (should be 50 for new users)
+        coins: data.user.coins || 50,
         volunteeredHours: 0,
         totalRewards: 0,
         completedEvents: [],
@@ -132,22 +128,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         cloudinaryPublicId: (data.user as any).cloudinaryPublicId || undefined,
       };
 
-      console.log("Mapped user object with coins:", mappedUser.coins);
-
       setUser(mappedUser);
       localStorage.setItem("auth-user", JSON.stringify(mappedUser));
       localStorage.setItem("auth-token", data.tokens.accessToken);
       localStorage.setItem("refresh-token", data.tokens.refreshToken);
 
-      // ✅ Award points after registration
-      if (earnPoints) {
-        await earnPoints("register"); // PTS001
-      }
+      if (earnPoints) await earnPoints("register");
 
-      // Show welcome bonus notification
-      console.log("Showing welcome toast notification");
-      
-      // Use setTimeout to ensure the toast appears after state updates
       setTimeout(() => {
         toast({
           title: "🎉 Welcome to iVolunteer!",
@@ -159,49 +146,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
       return true;
     } catch (err: any) {
-      console.error(
-        "Signup failed:",
-        err.response?.data?.message || err.message
-      );
-      
-      // Show specific error message from backend with better formatting
-      let errorMessage = err.response?.data?.message || err.message || "An unexpected error occurred during signup";
-      
-      // Parse and improve validation error messages
-      if (errorMessage.includes("fails to match the required pattern")) {
-        if (errorMessage.includes("address.zip")) {
-          errorMessage = "Invalid ZIP/PIN code format. For India, please enter a 6-digit PIN code.";
-        } else if (errorMessage.includes("contactNumber")) {
-          errorMessage = "Invalid contact number format. Please enter a valid phone number with at least 10 digits.";
-        } else if (errorMessage.includes("websiteUrl")) {
-          errorMessage = "Invalid website URL format. Please enter a valid URL starting with http:// or https://";
-        } else {
-          errorMessage = "Please check the format of your input fields and try again.";
-        }
-      } else if (errorMessage.includes("must contain at least 10 words")) {
-        errorMessage = "Organization description is too short. Please provide at least 10 words describing your organization.";
-      } else if (errorMessage.includes("An account with this email already exists")) {
-        errorMessage = "An account with this email already exists. Please try logging in or use a different email address.";
-      } else if (errorMessage.includes("is required")) {
-        // Extract field name from required error
-        const fieldMatch = errorMessage.match(/"([^"]+)" is required/);
-        if (fieldMatch) {
-          const fieldName = fieldMatch[1].replace(/([A-Z])/g, ' $1').toLowerCase();
-          errorMessage = `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required for your registration.`;
-        }
-      }
-      
+      console.error("Signup failed:", err.response?.data?.message || err.message);
       toast({
         title: "Registration Failed",
-        description: errorMessage,
+        description: err.response?.data?.message || err.message || "Please try again.",
         variant: "destructive",
       });
-      
       setIsLoading(false);
       return false;
     }
   };
 
+  // Step 1: Request OTP
   const login = async (
     email: string,
     password: string,
@@ -209,9 +165,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { data } = await axios.post<AuthResponse>(
+      await axios.post(
         "http://localhost:5000/api/v1/auth/login",
         { email, password, role },
+        { withCredentials: true }
+      );
+
+      toast({
+        title: "OTP Sent",
+        description: "Check your email for the OTP to complete login.",
+        variant: "default",
+      });
+
+      setIsLoading(false);
+      return true;
+    } catch (err: any) {
+      console.error("Login failed:", err.response?.data?.message || err.message);
+      toast({
+        title: "Login Failed",
+        description: err.response?.data?.message || "Please try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return false;
+    }
+  };
+
+  // Step 2: Verify OTP
+  const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const { data } = await api.post<AuthResponse>(
+        "/v1/auth/verify-otp",
+        { email, otp },
         { withCredentials: true }
       );
 
@@ -233,37 +219,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       setUser(mappedUser);
       localStorage.setItem("auth-user", JSON.stringify(mappedUser));
-      if (data.tokens) {
-        localStorage.setItem("auth-token", data.tokens.accessToken);
-        localStorage.setItem("refresh-token", data.tokens.refreshToken);
-      }
+      localStorage.setItem("auth-token", data.tokens.accessToken);
+      localStorage.setItem("refresh-token", data.tokens.refreshToken);
 
       setIsLoading(false);
       return true;
     } catch (err: any) {
-      console.error(
-        "Login failed:",
-        err.response?.data?.message || err.message
-      );
-      
-      // Show specific error message from backend with better formatting
-      let errorMessage = err.response?.data?.message || err.message || "An unexpected error occurred during login";
-      
-      // Parse and improve login error messages
-      if (errorMessage.includes("User does not exist")) {
-        errorMessage = "No account found with this email address. Please check your email or sign up for a new account.";
-      } else if (errorMessage.includes("Invalid password")) {
-        errorMessage = "Incorrect password. Please check your password and try again.";
-      } else if (errorMessage.includes("validation")) {
-        errorMessage = "Please check your email and password format and try again.";
-      }
-      
+      console.error("OTP verification failed:", err.response?.data?.message || err.message);
       toast({
-        title: "Login Failed",
-        description: errorMessage,
+        title: "OTP Verification Failed",
+        description: err.response?.data?.message || "Please try again.",
         variant: "destructive",
       });
-      
       setIsLoading(false);
       return false;
     }
@@ -278,7 +245,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, verifyOtp, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

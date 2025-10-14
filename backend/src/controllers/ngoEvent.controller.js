@@ -53,7 +53,7 @@ export const addEvent = asyncHandler(async (req, res) => {
   });
 });
 
-// Get all published events (filtered by city for non-admin users)
+// ngoEvent.controller.js (filtered by city for non-admin users)
 const getAllPublishedEvents = asyncHandler(async (req, res) => {
   // Check if user wants to see all events (showAll=true parameter)
   const shouldShowAll = req.query.showAll === 'true';
@@ -93,6 +93,7 @@ const getAllPublishedEvents = asyncHandler(async (req, res) => {
     events,
   });
 });
+
 
 // Get events for corporate sponsorship
 const getSponsorshipEvents = asyncHandler(async (req, res) => {
@@ -195,45 +196,31 @@ const migrateParticipantsData = asyncHandler(async (req, res) => {
 });
 
 const getEventsByOrganization = asyncHandler(async (req, res) => {
-  const organizationId = req.user._id; // Use _id instead of id
-  console.log(`[DEBUG] Fetching events for organization: ${organizationId}`);
-  console.log(`[DEBUG] User object keys:`, Object.keys(req.user));
-  console.log(`[DEBUG] User role:`, req.user.role);
-  console.log(`[DEBUG] User name:`, req.user.name);
-  console.log(`[DEBUG] Full user object:`, JSON.stringify(req.user, null, 2));
-  
+  const organizationId = req.user._id;
+
   const events = await ngoEventService.getEventsByOrganization(organizationId);
-  console.log(`[DEBUG] Found ${events.length} events for organization ${organizationId}`);
 
-  // Also check if there are any events with different organizationId formats
-  const allEvents = await Event.find({});
-  console.log(`[DEBUG] Total events in database: ${allEvents.length}`);
-  const eventsWithOrgId = allEvents.filter(event => 
-    event.organizationId && event.organizationId.toString() === organizationId.toString()
-  );
-  console.log(`[DEBUG] Events matching organizationId: ${eventsWithOrgId.length}`);
+  console.log(`[DEBUG] Found ${events.length} approved upcoming/ongoing events for org ${organizationId}`);
 
-  // Set cache control headers to prevent caching issues
   res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
   });
 
   res.status(200).json({
     success: true,
     events,
-    timestamp: new Date().toISOString(), // Add timestamp to ensure uniqueness
     count: events.length,
+    timestamp: new Date().toISOString(),
     debug: {
       organizationId: organizationId.toString(),
-      totalEventsInDb: allEvents.length,
-      eventsMatchingOrgId: eventsWithOrgId.length,
       userRole: req.user.role,
-      userName: req.user.name
-    }
+      userName: req.user.name,
+    },
   });
 });
+
 
 
 // Admin: approve or reject event
@@ -364,6 +351,134 @@ const deleteEvent = asyncHandler(async (req, res) => {
 });
 
 
+// NGO submits completion proof
+const requestCompletion = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "Proof image is required" });
+  }
+
+  const event = await Event.findById(eventId);
+  if (!event) throw new ApiError(404, "Event not found");
+  if (event.organizationId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Only event creator can request completion");
+  }
+  if (event.completionStatus === "pending") {
+    throw new ApiError(400, "Completion request already submitted");
+  }
+
+  // Save proof
+  event.completionProof = { url: req.file.path };
+  event.completionStatus = "pending"; // mark request as pending
+  await event.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Completion request submitted, pending admin approval",
+    event,
+  });
+});
+
+
+// Admin reviews completion
+// ngoEvent.controller.js
+// Admin reviews completion
+export const reviewCompletion = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const { eventId } = req.params;
+  const { decision } = req.body; // "accepted" | "rejected"
+
+  const event = await ngoEventService.reviewEventCompletion(eventId, decision);
+
+  res.status(200).json({
+    success: true,
+    message: `Completion request ${decision}`,
+    event,
+  });
+});
+
+
+
+
+// Admin fetches all pending requests
+const getAllCompletionRequests = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const requests = await ngoEventService.getAllCompletionRequests();
+
+  res.status(200).json({
+    success: true,
+    requests,
+    count: requests.length,
+  });
+});
+
+// Admin: get all accepted/rejected completion request history (optional filter by NGO)
+const getCompletionRequestHistory = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const ngoId = req.query.ngoId; // optional query param to filter by NGO
+
+  const events = await ngoEventService.getCompletionRequestHistory(ngoId);
+
+  res.status(200).json({
+    success: true,
+    count: events.length,
+    events,
+  });
+});
+
+// Admin: get completed events of a specific NGO
+const getCompletedEventsByNgo = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const ngoId = req.params.ngoId;
+  if (!ngoId) {
+    return res.status(400).json({ success: false, message: "NGO ID is required" });
+  }
+
+  const events = await ngoEventService.getCompletedEventsByNgo(ngoId);
+
+  res.status(200).json({
+    success: true,
+    count: events.length,
+    events,
+  });
+});
+
+const approveEventWithScoring = asyncHandler(async (req, res) => {
+  // admin only (ensure auth + role check in route/middleware)
+  const { eventId } = req.params;
+  const { baseCategory, difficulty, hoursWorked } = req.body;
+
+  // allow baseCategory to be category string or numeric basePoints
+  const event = await ngoEventService.approveEventWithScoring(
+    eventId,
+    baseCategory,   // string key like 'small'|'medium'|'highImpact'|'longTerm' OR numeric basePoints
+    difficulty,     // 'easy'|'moderate'|'challenging'|'extreme' OR numeric multiplier
+    hoursWorked     // number of hours (can be admin-approved hours)
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Event approved and scoring rule applied successfully.",
+    event,
+  });
+});
+
+
+
+
 export const ngoEventController = {
   addEvent,
   getAllPublishedEvents,
@@ -381,4 +496,10 @@ export const ngoEventController = {
   uploadEventImage,
   updateEvent,
   deleteEvent,
+  requestCompletion,
+  reviewCompletion,
+  getAllCompletionRequests,
+    getCompletionRequestHistory,
+  getCompletedEventsByNgo,
+  approveEventWithScoring,
 };

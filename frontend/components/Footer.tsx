@@ -1,5 +1,6 @@
 import React from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import Link from "next/link";
 
 const Footer = () => {
   return (
@@ -21,12 +22,28 @@ const Footer = () => {
 
         {/* Right: Links */}
         <div className="flex items-center gap-6">
-          <a href="#" className="text-sm text-[#6B7280] hover:text-[#2C3E50] transition">
+          <Link href="/termsofservice" className="text-sm hover:text-gray-900 transition">
             Terms of Service
-          </a>
-          <a href="#" className="text-sm text-[#6B7280] hover:text-[#2C3E50] transition">
+          </Link>
+          <Link href="/privacypolicy" className="text-sm hover:text-gray-900 transition">
             Privacy Policy
-          </a>
+          </Link>
+
+          {/* Social Media */}
+          <div className="flex items-center gap-4 ml-4">
+            <a href="#" className="hover:text-blue-600 transition">
+              <FaFacebookF size={16} />
+            </a>
+            <a href="#" className="hover:text-sky-500 transition">
+              <FaTwitter size={16} />
+            </a>
+            <a href="#" className="hover:text-pink-500 transition">
+              <FaInstagram size={16} />
+            </a>
+            <a href="#" className="hover:text-blue-700 transition">
+              <FaLinkedinIn size={16} />
+            </a>
+          </div>
         </div>
       </div>
     </footer>
