@@ -14,7 +14,7 @@ export interface Event {
   title: string;
   organization: string;
   organizationId: string;
-  location: string;
+  location: string; // Required field, pre-filled from organization city but can be changed
   date: string;
   time: string;
   participants: number;
@@ -25,6 +25,8 @@ export interface Event {
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   applications: string[];
+  eventType?: string; // Event type field
+  rejectionReason?: string; // Rejection reason from admin
 }
 
 export interface EventApplication {
@@ -58,7 +60,7 @@ interface EventsContextType {
     userEmail: string
   ) => Promise<boolean>;
   approveEvent: (eventId: string) => Promise<boolean>;
-  rejectEvent: (eventId: string) => Promise<boolean>;
+  rejectEvent: (eventId: string, rejectionReason?: string) => Promise<boolean>;
   getEventsByOrganization: (organizationId: string) => Event[];
   getApplicationsByEvent: (eventId: string) => EventApplication[];
   getApplicationsByUser: (userId: string) => EventApplication[];
@@ -72,11 +74,22 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   const [applications, setApplications] = useState<EventApplication[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch all approved events for public display
+  // Fetch all approved events for public display (filtered by user's city)
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/v1/event/all-event");
+      const token = localStorage.getItem('auth-token');
+      
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch("http://localhost:5000/api/v1/event/all-event", {
+        headers,
+        credentials: 'include'
+      });
+      
       if (response.ok) {
         const data = await response.json();
         setEvents(data.events || []);
@@ -247,7 +260,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const rejectEvent = async (eventId: string): Promise<boolean> => {
+  const rejectEvent = async (eventId: string, rejectionReason?: string): Promise<boolean> => {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
@@ -258,7 +271,10 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ status: "rejected" })
+          body: JSON.stringify({ 
+            status: "rejected",
+            rejectionReason: rejectionReason || ""
+          })
         }
       );
       if (response.ok) {

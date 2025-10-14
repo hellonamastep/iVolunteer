@@ -52,6 +52,10 @@ const eventSchema = new mongoose.Schema(
       required: [true, "Event location is required"],
       trim: true,
     },
+    detailedAddress: {
+      type: String,
+      trim: true,
+    },
     date: {
       type: Date,
       required: [true, "Event date is required"],
@@ -110,6 +114,11 @@ const eventSchema = new mongoose.Schema(
       },
       default: "approved",
     },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Rejection reason cannot exceed 500 characters"],
+    },
     eventStatus: {
       type: String,
       enum: {
@@ -117,6 +126,15 @@ const eventSchema = new mongoose.Schema(
         message: "{VALUE} is not a valid event status",
       },
       default: "upcoming",
+    },
+    eventType: {
+      type: String,
+      enum: {
+        values: ["community", "virtual", "in-person"],
+        message: "{VALUE} is not a valid event type",
+      },
+      required: [true, "Event type is required"],
+      default: "community",
     },
     pointsOffered: {
       type: Number,
@@ -137,6 +155,11 @@ const eventSchema = new mongoose.Schema(
         ref: "Application",
       },
     ],
+    image: {
+      url: String,
+      caption: String,
+      publicId: String,
+    },
     images: [
       {
         url: String,

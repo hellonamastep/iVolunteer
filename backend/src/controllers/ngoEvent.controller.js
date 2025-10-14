@@ -1,16 +1,43 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ngoEventService } from "../services/ngoEvent.service.js";
 import { Event } from "../models/Event.js";
+import { cloudinary } from "../config/cloudinary.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 
 export const addEvent = asyncHandler(async (req, res) => {
   const organizationId = req.user._id;
   const organizationName = req.user.name;
+  
+  // Get default city from the user's profile based on their role
+  let defaultCity;
+  
+  // Admin events use 'global' as location to be visible to everyone
+  if (req.user.role === 'admin') {
+    defaultCity = 'global';
+  } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+    defaultCity = req.user.address?.city;
+  } else {
+    defaultCity = req.user.city;
+  }
+
+  // Use location from request body if provided, otherwise use default city
+  const location = req.body.location || defaultCity;
+
+  // Ensure location exists
+  if (!location) {
+    return res.status(400).json({
+      success: false,
+      message: "Location is required. Please update your profile with city information or provide a location.",
+    });
+  }
 
   const eventData = {
     ...req.body,
     organizationId,
     organization: organizationName,
+    location, // Use provided location or default to organization's city
   };
 
   const event = await ngoEventService.createEvent(
@@ -26,9 +53,41 @@ export const addEvent = asyncHandler(async (req, res) => {
   });
 });
 
-// ngoEvent.controller.js
+// ngoEvent.controller.js (filtered by city for non-admin users)
 const getAllPublishedEvents = asyncHandler(async (req, res) => {
-  const events = await ngoEventService.getAllPublishedEvents();
+  // Check if user wants to see all events (showAll=true parameter)
+  const shouldShowAll = req.query.showAll === 'true';
+  
+  // Build query filter based on user role
+  let locationFilter = null;
+  
+  // Admins can see all events, others see events from their city + global events
+  // Unless showAll is explicitly requested
+  if (req.user && req.user.role !== 'admin' && !shouldShowAll) {
+    // Get the user's city
+    let userCity;
+    if (req.user.role === 'user') {
+      userCity = req.user.city;
+    } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+      userCity = req.user.address?.city;
+    }
+
+    if (userCity) {
+      // Filter by user's city OR global events
+      locationFilter = {
+        $or: [
+          { location: new RegExp(`^${userCity.trim()}$`, 'i') },
+          { location: 'global' }
+        ]
+      };
+      console.log('User city for events:', userCity);
+      console.log('Filtered view - showing local + global events');
+    }
+  } else {
+    console.log(shouldShowAll ? 'Show all requested - showing all events' : 'Admin user - showing all events');
+  }
+  
+  const events = await ngoEventService.getAllPublishedEvents(locationFilter);
   res.status(200).json({
     success: true,
     events,
@@ -65,6 +124,27 @@ const participateInEvent = asyncHandler(async (req, res) => {
     message: "Successfully joined the event!",
     event: result.event,
     pointsEarned: result.pointsEarned
+  });
+});
+
+// Request participation in an event
+const requestParticipation = asyncHandler(async (req, res) => {
+  const eventId = req.params.eventId;
+  const userId = req.user._id;
+  const { message } = req.body;
+
+  const { participationRequestService } = await import("../services/participationRequest.service.js");
+  
+  const participationRequest = await participationRequestService.createParticipationRequest(
+    eventId,
+    userId,
+    message
+  );
+  
+  res.status(201).json({
+    success: true,
+    message: "Participation request submitted successfully!",
+    participationRequest
   });
 });
 
@@ -146,9 +226,9 @@ const getEventsByOrganization = asyncHandler(async (req, res) => {
 // Admin: approve or reject event
 const updateEventStatus = asyncHandler(async (req, res) => {
   const { eventId } = req.params;
-  const { status } = req.body;
+  const { status, rejectionReason } = req.body;
 
-  const event = await ngoEventService.updateEventStatus(eventId, status);
+  const event = await ngoEventService.updateEventStatus(eventId, status, rejectionReason);
 
   res.status(200).json({
     success: true,
@@ -161,6 +241,113 @@ const updateEventStatus = asyncHandler(async (req, res) => {
 const getPendingEvents = asyncHandler(async (req, res) => {
   const events = await ngoEventService.getPendingEvents();
   res.status(200).json({ success: true, events });
+});
+
+// Get user's default location (city) for event creation
+const getDefaultLocation = asyncHandler(async (req, res) => {
+  let defaultCity;
+  if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+    defaultCity = req.user.address?.city;
+  } else {
+    defaultCity = req.user.city;
+  }
+
+  if (!defaultCity) {
+    return res.status(404).json({
+      success: false,
+      message: "No city information found in your profile. Please update your profile.",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    defaultLocation: defaultCity,
+  });
+});
+
+// Upload event image to Cloudinary
+const uploadEventImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(400, "No file uploaded");
+  }
+
+  try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'iVolunteer_events',
+      transformation: [
+        { width: 1200, height: 630, crop: "fill" }
+      ],
+      public_id: `event_${req.user._id}_${Date.now()}`
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { 
+        url: result.secure_url, 
+        publicId: result.public_id 
+      }, "Event image uploaded successfully"));
+  } catch (error) {
+    console.error("Error uploading event image:", error);
+    throw new ApiError(500, "Failed to upload event image");
+  }
+});
+
+// Update event (for organization owners)
+const updateEvent = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user._id;
+
+  // Find the event
+  const event = await Event.findById(eventId);
+  
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  // Check if the user is the owner of the event
+  if (event.organizationId.toString() !== userId.toString()) {
+    throw new ApiError(403, "You are not authorized to update this event");
+  }
+
+  // Update the event with new data
+  const updatedEvent = await Event.findByIdAndUpdate(
+    eventId,
+    { $set: req.body },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Event updated successfully",
+    event: updatedEvent,
+  });
+});
+
+// Delete event (for organization owners)
+const deleteEvent = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user._id;
+
+  // Find the event
+  const event = await Event.findById(eventId);
+  
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  // Check if the user is the owner of the event
+  if (event.organizationId.toString() !== userId.toString()) {
+    throw new ApiError(403, "You are not authorized to delete this event");
+  }
+
+  // Delete the event
+  await Event.findByIdAndDelete(eventId);
+
+  res.status(200).json({
+    success: true,
+    message: "Event deleted successfully",
+  });
 });
 
 
@@ -298,12 +485,17 @@ export const ngoEventController = {
   getSponsorshipEvents,
   getEventById,
   participateInEvent,
+  requestParticipation,
   leaveEvent,
   getUserParticipatedEvents,
   migrateParticipantsData,
   getEventsByOrganization,
   updateEventStatus,
   getPendingEvents,
+  getDefaultLocation,
+  uploadEventImage,
+  updateEvent,
+  deleteEvent,
   requestCompletion,
   reviewCompletion,
   getAllCompletionRequests,

@@ -7,7 +7,7 @@ export type EventData = {
   _id?: string;
   title: string;
   description: string;
-  location: string;
+  location: string; // Required field, pre-filled from organization city but can be changed
   date: string;
   time: string;
   duration: number;
@@ -22,6 +22,7 @@ export type EventData = {
   sponsorshipContactNumber?: string; // 🆕 Added
   image?: { url: string; caption: string };
   eventStatus: string;
+  eventType?: string; // Event type field
   organization?: string; // Organization name
   organizationId?: {
     _id?: string;
@@ -50,7 +51,7 @@ export type NGOContextType = {
   loading: boolean;
   error: string | null;
   createEvent: (data: EventData) => Promise<void>;
-  fetchAvailableEvents: () => Promise<void>;
+  fetchAvailableEvents: (showAll?: boolean) => Promise<void>;
   fetchOrganizationEvents: () => Promise<void>;
   participateInEvent: (eventId: string) => Promise<boolean>;
   leaveEvent: (eventId: string) => Promise<boolean>;
@@ -96,13 +97,14 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // --- Fetch All Published Events ---
-  const fetchAvailableEvents = async () => {
+  const fetchAvailableEvents = async (showAll = false) => {
     try {
       setLoading(true);
       setError(null);
 
+      const showAllParam = showAll ? '?showAll=true' : '';
       const res = await api.get<{ success: boolean; events: EventData[] }>(
-        "/v1/event/all-event",
+        `/v1/event/all-event${showAllParam}`,
         { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
       );
 

@@ -27,6 +27,39 @@ const registerSchema = Joi.object({
         "any.only": "Role must be one of: user, ngo, admin, corporate"
     }),
 
+    // Volunteer (user) specific fields (conditionally required when role is 'user')
+    age: Joi.when('role', {
+        is: 'user',
+        then: Joi.number().integer().min(13).max(120).required().messages({
+            "any.required": "Age is required for volunteers",
+            "number.base": "Age must be a number",
+            "number.min": "You must be at least 13 years old to register",
+            "number.max": "Please enter a valid age"
+        }),
+        otherwise: Joi.number().optional()
+    }),
+
+    city: Joi.when('role', {
+        is: 'user',
+        then: Joi.string().trim().min(2).max(100).required().messages({
+            "any.required": "City is required for volunteers",
+            "string.empty": "City cannot be empty",
+            "string.min": "City name must be at least 2 characters long",
+            "string.max": "City name cannot exceed 100 characters"
+        }),
+        otherwise: Joi.string().optional()
+    }),
+
+    profession: Joi.when('role', {
+        is: 'user',
+        then: Joi.string().trim().max(100).required().messages({
+            "any.required": "Profession is required for volunteers",
+            "string.empty": "Profession cannot be empty",
+            "string.max": "Profession cannot exceed 100 characters"
+        }),
+        otherwise: Joi.string().optional()
+    }),
+
     // NGO-specific fields (conditionally required when role is 'ngo')
     organizationType: Joi.when('role', {
         is: 'ngo',

@@ -8,12 +8,14 @@ import { AdminProvider } from "@/contexts/admin-context";
 import { UserProvider } from "@/contexts/user-context";
 import { PostProvider } from "@/contexts/post-context";
 import { ToastContainer } from "react-toastify";
+import { Toaster } from "@/components/ui/toaster";
 import { CorporateProvider } from "@/contexts/corporate-context";
 import { DonationEventProvider } from "@/contexts/donationevents-context";
 import { PointsProvider } from "@/contexts/points-context";
 import { GroupsProvider } from "@/contexts/groups-context";
 import { BlogProvider } from "@/contexts/blog-context";
 import { CorporateEventProvider } from "@/contexts/corporateEvent-context";
+import { ParticipationRequestProvider } from "@/contexts/participation-request-context";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -25,22 +27,25 @@ export function Providers({ children }: { children: ReactNode }) {
               <CorporateProvider>
                 <PostProvider>
                   <GroupsProvider>
-                    <DonationEventProvider>
+                    <ParticipationRequestProvider>
+                      <DonationEventProvider>
                       <BlogProvider>
                         <CorporateEventProvider>
-                        {children}
-                        <ToastContainer
-                          position="top-right"
-                          autoClose={3000}
-                          hideProgressBar
-                          closeOnClick
-                          pauseOnHover
-                          draggable
-                          theme="light"
-                        />
+                          {children}
+                          <ToastContainer
+                            position="top-right"
+                            autoClose={3000}
+                            hideProgressBar
+                            closeOnClick
+                            pauseOnHover
+                            draggable
+                            theme="light"
+                          />
                         </CorporateEventProvider>
                       </BlogProvider>
-                    </DonationEventProvider>
+                        <Toaster />
+                      </DonationEventProvider>
+                    </ParticipationRequestProvider>
                   </GroupsProvider>
                 </PostProvider>
               </CorporateProvider>

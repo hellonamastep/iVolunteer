@@ -19,6 +19,9 @@ export interface User {
   totalRewards: number;
   completedEvents: string[];
   createdAt: string;
+  profilePicture?: string;  // Add profile picture field
+  cloudinaryPublicId?: string;  // Add cloudinary ID field
+  city?: string;  // Add city field for regional filtering
 }
 
 interface AuthContextType {
@@ -35,6 +38,11 @@ interface SignupData {
   email: string;
   password: string;
   role: UserRole;
+  // Volunteer-specific fields
+  age?: number;
+  city?: string;
+  profession?: string;
+  // NGO-specific fields
   organizationType?: string;
   websiteUrl?: string;
   yearEstablished?: number;
@@ -116,6 +124,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         totalRewards: 0,
         completedEvents: [],
         createdAt: new Date().toISOString(),
+        profilePicture: (data.user as any).profilePicture || undefined,
+        cloudinaryPublicId: (data.user as any).cloudinaryPublicId || undefined,
       };
 
       setUser(mappedUser);
@@ -203,6 +213,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         totalRewards: 0,
         completedEvents: [],
         createdAt: new Date().toISOString(),
+        profilePicture: (data.user as any).profilePicture || undefined,
+        cloudinaryPublicId: (data.user as any).cloudinaryPublicId || undefined,
       };
 
       setUser(mappedUser);

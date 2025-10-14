@@ -80,6 +80,11 @@ const groupSchema = new mongoose.Schema({
             'Other'
         ]
     },
+    city: {
+        type: String,
+        required: true,
+        trim: true
+    },
     imageUrl: {
         type: String
     },
@@ -89,6 +94,16 @@ const groupSchema = new mongoose.Schema({
     isPrivate: {
         type: Boolean,
         default: false
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    rejectionReason: {
+        type: String,
+        trim: true,
+        maxlength: 500
     },
     maxMembers: {
         type: Number,

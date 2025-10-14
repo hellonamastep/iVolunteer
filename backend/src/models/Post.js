@@ -69,13 +69,20 @@ const postSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    city: {
+        type: String,
+        required: true,
+        trim: true
+    },
     imageUrl: {
         type: String,
-        required: true
+        required: false,
+        default: null
     },
     cloudinaryPublicId: {
         type: String,
-        required: true
+        required: false,
+        default: null
     },
     comments: [commentSchema],
     reactions: [reactionSchema],
@@ -84,20 +91,23 @@ const postSchema = new mongoose.Schema({
         default: Date.now
     },
     updatedAt: {
-        type: Date,
-        default: Date.now
+        type: Date
     }
 });
 
-// Update the updatedAt timestamp on save
+// Update the updatedAt timestamp only when modifying existing posts
 postSchema.pre('save', function(next) {
-    this.updatedAt = Date.now();
+    // Only set updatedAt if this is not a new document
+    if (!this.isNew) {
+        this.updatedAt = Date.now();
+    }
     next();
 });
 
 // Add indexes for better query performance
 postSchema.index({ user: 1, createdAt: -1 });
 postSchema.index({ createdAt: -1 });
+postSchema.index({ city: 1, createdAt: -1 }); // Index for city-based filtering
 
 const Post = mongoose.model('Post', postSchema);
 

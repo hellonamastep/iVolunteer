@@ -36,6 +36,34 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "ngo", "admin", "corporate"],
       default: "user",
     },
+    profilePicture: {
+      type: String,
+      default: null,
+    },
+    cloudinaryPublicId: {
+      type: String,
+      default: null,
+    },
+    // Volunteer (user) specific fields
+    age: {
+      type: Number,
+      required: function() { return this.role === 'user'; },
+      min: [13, "Age must be at least 13"],
+      max: [120, "Age must be less than 120"]
+    },
+    city: {
+      type: String,
+      required: function() { return this.role === 'user'; },
+      trim: true,
+      minlength: [2, "City name must be at least 2 characters"],
+      maxlength: [100, "City name cannot exceed 100 characters"]
+    },
+    profession: {
+      type: String,
+      required: function() { return this.role === 'user'; },
+      trim: true,
+      maxlength: [100, "Profession cannot exceed 100 characters"]
+    },
     // NGO-specific fields
     organizationType: {
         type: String,

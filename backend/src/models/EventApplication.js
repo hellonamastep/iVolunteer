@@ -1,5 +1,5 @@
 // models/EventApplication.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const eventApplicationSchema = new mongoose.Schema(
   {

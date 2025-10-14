@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { setCookies, clearCookies } from "../utils/jwt.utils.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { cloudinary } from "../config/cloudinary.js";
 import { otpService } from "../services/otp.service.js";
 
 const register = asyncHandler(async(req, res) => {
@@ -119,6 +120,108 @@ const resetPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password reset successfull"));
 });
 
+const updateProfile = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+  const updateData = req.body;
+
+  // Remove sensitive fields that shouldn't be updated via this endpoint
+  delete updateData.password;
+  delete updateData.role;
+  delete updateData.email; // Email shouldn't be changed here
+  delete updateData.points;
+  delete updateData.coins;
+  delete updateData.completedEvents;
+
+  const updatedUser = await authService.updateProfile(id, updateData);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { user: updatedUser }, "Profile updated successfully"));
+});
+
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+
+  if (!req.file) {
+    throw new ApiError(400, "No file uploaded");
+  }
+
+  try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'iVolunteer_profiles',
+      transformation: [
+        { width: 500, height: 500, crop: "fill", gravity: "face" }
+      ],
+      public_id: `profile_${id}_${Date.now()}`
+    });
+
+    // Delete old profile picture if exists
+    const user = await authService.getUser(id);
+    if (user.cloudinaryPublicId) {
+      await cloudinary.uploader.destroy(user.cloudinaryPublicId);
+    }
+
+    // Update user with new profile picture
+    const updatedUser = await authService.updateProfile(id, {
+      profilePicture: result.secure_url,
+      cloudinaryPublicId: result.public_id
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user: updatedUser }, "Profile picture uploaded successfully"));
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw new ApiError(500, "Failed to upload profile picture");
+  }
+});
+
+const removeProfilePicture = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+
+  try {
+    // Get user to check if they have a profile picture
+    const user = await authService.getUser(id);
+    
+    if (!user.cloudinaryPublicId) {
+      throw new ApiError(400, "No profile picture to remove");
+    }
+
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(user.cloudinaryPublicId);
+
+    // Update user - remove profile picture
+    const updatedUser = await authService.updateProfile(id, {
+      profilePicture: null,
+      cloudinaryPublicId: null
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user: updatedUser }, "Profile picture removed successfully"));
+  } catch (error) {
+    console.error("Error removing profile picture:", error);
+    throw new ApiError(500, "Failed to remove profile picture");
+  }
+});
+
+const deleteAccount = asyncHandler(async (req, res) => {
+  const id = req.user?._id;
+  const { password } = req.body;
+
+  if (!password) {
+    throw new ApiError(400, "Password is required to delete account");
+  }
+
+  await authService.deleteAccount(id, password);
+  clearCookies(res);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Account deleted successfully"));
+});
+
 export const authController = {
   register,
   login,
@@ -127,4 +230,8 @@ export const authController = {
   changePassword,
   forgetPasswordRequest,
   resetPassword,
+  updateProfile,
+  uploadProfilePicture,
+  removeProfilePicture,
+  deleteAccount,
 };

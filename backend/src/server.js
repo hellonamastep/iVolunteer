@@ -135,4 +135,7 @@ const gracefulShutdown = async(signal) => {
 
 }
 
-server()
+server().catch((error) => {
+    console.error("Fatal error in server startup:", error);
+    process.exit(1);
+});

@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { usePathname } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -100,17 +101,22 @@ export function Header() {
           <div className="ml-4 flex items-center gap-2">
             {user ? (
               <div className="flex items-center gap-3 bg-white rounded-xl p-2 pl-3 border border-gray-100">
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
-                  <span className="text-white font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                <Link href="/profile" className="flex-shrink-0 cursor-pointer group" title="View Profile">
+                  <Avatar className="w-9 h-9 shadow-sm group-hover:shadow-md transition-shadow duration-200 ring-2 ring-gray-100">
+                    <AvatarImage src={(user as any).profilePicture} alt={user.name} />
+                    <AvatarFallback className="text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <User className="w-5 h-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
 
                 <div className="flex-1 min-w-0 hidden lg:block">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-gray-800 truncate text-sm">
-                      {user.name}
-                    </span>
+                    <Link href="/profile" className="hover:text-blue-600 transition-colors">
+                      <span className="font-semibold text-gray-800 truncate text-sm">
+                        {user.name}
+                      </span>
+                    </Link>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {user.role}
                     </span>
@@ -194,12 +200,17 @@ export function Header() {
 
               {user ? (
                 <div className="px-4 py-3 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        {user.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                  <Link 
+                    href="/profile" 
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 mb-3 hover:bg-white p-2 rounded-lg transition-colors"
+                  >
+                    <Avatar className="w-10 h-10 ring-2 ring-white shadow-sm">
+                      <AvatarImage src={(user as any).profilePicture} alt={user.name} />
+                      <AvatarFallback className="text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                        <User className="w-5 h-5" />
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-800">
@@ -211,7 +222,7 @@ export function Header() {
                       </div>
                       <p className="text-gray-500 text-sm">{user.email}</p>
                     </div>
-                  </div>
+                  </Link>
                   <button
                     onClick={() => {
                       logout();

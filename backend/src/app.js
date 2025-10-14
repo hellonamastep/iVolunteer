@@ -29,6 +29,7 @@ import groupRouter from "./routes/group.routes.js";
 import blogRouter from "./routes/blog.route.js";
 import corporateEventRouter from "./routes/corporateEvent.routes.js";
 import corporateBidRouter from "./routes/corporateBid.routes.js";
+import participationRequestRouter from "./routes/participationRequest.routes.js";
 
 const app = express();
 
@@ -106,6 +107,9 @@ app.use("/api/v1/blogs", globalRateLimiting, blogRouter);
 // corporate events
 app.use("/api/v1/corporate-events", globalRateLimiting, corporateEventRouter);
 app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
+
+// Participation request routes
+app.use("/api/v1/participation-requests", globalRateLimiting, participationRequestRouter);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

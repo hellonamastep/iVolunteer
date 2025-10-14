@@ -137,9 +137,9 @@ const DonationDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
             <p className="text-gray-600 text-lg">Loading donation details...</p>
           </div>
         </div>
@@ -151,19 +151,19 @@ const DonationDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <div className="text-red-600 text-4xl mb-2">⚠️</div>
-              <h2 className="text-red-800 text-xl font-semibold mb-2">
+            <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
+              <div className="text-red-600 text-5xl mb-4">⚠️</div>
+              <h2 className="text-red-800 text-xl font-bold mb-2">
                 {error ? "Error" : "Donation Event Not Found"}
               </h2>
-              <p className="text-red-600 mb-4">
+              <p className="text-red-600 mb-4 text-sm">
                 {error || "The donation event you're looking for could not be found."}
               </p>
               <button
                 onClick={() => router.back()}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6 py-2 rounded-lg transition-all shadow-lg"
               >
                 Go Back
               </button>
@@ -181,21 +181,49 @@ const DonationDetailsPage: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 py-6 relative overflow-hidden">
+        <style jsx global>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #2dd4bf, #06b6d4);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #14b8a6, #0891b2);
+          }
+        `}</style>
+        
+        {/* Mascot Images in Background */}
+        <div className="fixed top-32 left-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_donate.png" alt="" className="w-24 h-24 animate-bounce" style={{ animationDuration: "3s" }} />
+        </div>
+        <div className="fixed bottom-20 right-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_gift.png" alt="" className="w-28 h-28 animate-pulse" style={{ animationDuration: "4s" }} />
+        </div>
+        <div className="fixed top-1/2 right-5 opacity-10 z-0 pointer-events-none">
+          <img src="/mascots/mascot_love.png" alt="" className="w-20 h-20 animate-bounce" style={{ animationDuration: "5s" }} />
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+            className="flex items-center text-gray-600 hover:text-pink-600 mb-6 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Donations
           </button>
 
           {/* Donation Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             {/* Header Image/Gradient */}
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 h-64 md:h-80 flex items-center justify-center">
+            <div className="bg-gradient-to-r from-pink-500 to-purple-600 h-64 md:h-80 flex items-center justify-center">
               <div className="text-center text-white">
                 <Heart className="h-16 w-16 mx-auto mb-4 opacity-80" />
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{donationEvent.title}</h1>
@@ -218,17 +246,27 @@ const DonationDetailsPage: React.FC = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Description */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">About This Campaign</h2>
-                <p className="text-gray-600 leading-relaxed">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-pink-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">💝</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">About This Campaign</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed text-base">
                   {donationEvent.description || "No description available for this donation campaign."}
                 </p>
               </div>
 
               {/* NGO Information */}
               {donationEvent.ngoId && typeof donationEvent.ngoId === 'object' && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">About the Organization</h2>
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+                      <span className="text-white text-xl">🏢</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Organization Basic Info */}
@@ -390,11 +428,13 @@ const DonationDetailsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Campaign Duration */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Calendar className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
+                        <Calendar className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Start Date</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Start Date</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {new Date(donationEvent.startDate).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -405,11 +445,13 @@ const DonationDetailsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-red-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <Clock className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">End Date</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">End Date</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {new Date(donationEvent.endDate).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -423,21 +465,25 @@ const DonationDetailsPage: React.FC = () => {
 
                   {/* Financial Goals */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Target className="h-5 w-5 text-green-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-green-50 p-4 rounded-xl border-2 border-green-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-md">
+                        <Target className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Goal Amount</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Goal Amount</p>
+                        <p className="text-lg text-green-700 font-bold mt-1">
                           ₹{donationEvent.goalAmount.toLocaleString()}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <TrendingUp className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <TrendingUp className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Collected Amount</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Collected Amount</p>
+                        <p className="text-lg text-purple-700 font-bold mt-1">
                           ₹{donationEvent.collectedAmount.toLocaleString()}
                         </p>
                       </div>
@@ -450,26 +496,33 @@ const DonationDetailsPage: React.FC = () => {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Donation Progress Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Donation Progress</h3>
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-pink-100 p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">📊</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Donation Progress</h3>
+                </div>
                 
                 {/* Progress Stats */}
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center justify-between text-gray-600">
+                <div className="space-y-4 mb-6 bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-xl border-2 border-pink-200">
+                  <div className="flex items-center justify-between text-gray-700">
                     <div className="flex items-center">
-                      <IndianRupee className="h-4 w-4 mr-2 text-green-600" />
-                      <span className="text-sm">
-                        ₹{donationEvent.collectedAmount.toLocaleString()} raised of ₹{donationEvent.goalAmount.toLocaleString()}
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mr-2">
+                        <IndianRupee className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="text-sm font-bold">
+                        ₹{donationEvent.collectedAmount.toLocaleString()} of ₹{donationEvent.goalAmount.toLocaleString()}
                       </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-500">{progress}%</span>
+                    <span className="text-sm font-bold text-pink-600 bg-white px-3 py-1 rounded-full shadow-sm">{progress}%</span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full bg-pink-200 rounded-full h-4 shadow-inner border border-pink-300">
                     <div
-                      className={`h-3 rounded-full transition-all duration-300 ${
-                        isCompleted ? "bg-green-500" : progress > 75 ? "bg-blue-500" : "bg-green-400"
+                      className={`h-4 rounded-full transition-all duration-500 shadow-md ${
+                        isCompleted ? "bg-gradient-to-r from-green-400 to-emerald-500" : progress > 75 ? "bg-gradient-to-r from-blue-500 to-purple-600" : "bg-gradient-to-r from-pink-500 to-purple-600"
                       }`}
                       style={{ width: `${progress}%` }}
                     />
@@ -477,9 +530,9 @@ const DonationDetailsPage: React.FC = () => {
 
                   {/* Remaining Amount */}
                   {!isCompleted && (
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium text-gray-900">₹{remainingAmount.toLocaleString()}</span> more needed
+                    <div className="text-center bg-white px-4 py-2 rounded-lg border-2 border-pink-200">
+                      <p className="text-sm text-gray-700 font-bold">
+                        🎯 <span className="text-pink-600">₹{remainingAmount.toLocaleString()}</span> more needed
                       </p>
                     </div>
                   )}
@@ -489,43 +542,56 @@ const DonationDetailsPage: React.FC = () => {
                 {!isCompleted ? (
                   <div className="space-y-4">
                     {/* Quick Amount Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
-                      {quickAmounts.slice(0, 4).map((amount) => (
-                        <Button
-                          key={amount}
-                          onClick={() => handleQuickDonate(amount)}
-                          disabled={donating}
-                          variant="outline"
-                          className="text-sm py-2 px-3 hover:bg-green-50 hover:border-green-300"
-                        >
-                          ₹{amount}
-                        </Button>
-                      ))}
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg">⚡</span>
+                        Quick Donate
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {quickAmounts.slice(0, 4).map((amount) => (
+                          <Button
+                            key={amount}
+                            onClick={() => handleQuickDonate(amount)}
+                            disabled={donating}
+                            variant="outline"
+                            className="text-sm font-bold py-3 px-3 border-2 border-pink-200 hover:border-purple-300 hover:bg-gradient-to-r hover:from-pink-400 hover:to-purple-500 hover:text-white hover:shadow-lg hover:scale-105 transform transition-all duration-300 rounded-xl"
+                          >
+                            ₹{amount}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Custom Amount */}
-                    <div className="space-y-2">
-                      <Input
-                        type="number"
-                        placeholder="Enter custom amount"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        className="text-center"
-                      />
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-lg">✨</span>
+                        Custom Amount
+                      </h4>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-600 font-bold text-lg">₹</span>
+                        <Input
+                          type="number"
+                          placeholder="Enter custom amount"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                          className="pl-8 text-center font-semibold border-2 border-pink-300 focus:border-purple-400 rounded-xl shadow-inner h-12"
+                        />
+                      </div>
                       <Button
                         onClick={handleCustomDonate}
                         disabled={donating || !customAmount}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform"
                       >
                         {donating ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                             Processing...
                           </>
                         ) : (
                           <>
-                            <Heart className="h-4 w-4 mr-2" />
-                            Donate Now
+                            <Heart className="h-5 w-5 mr-2" />
+                            💝 Donate Now
                           </>
                         )}
                       </Button>
@@ -533,10 +599,12 @@ const DonationDetailsPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                      <h4 className="font-medium text-green-900 mb-1">Goal Achieved!</h4>
-                      <p className="text-sm text-green-700">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-300 shadow-lg">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-md">
+                        <CheckCircle className="h-8 w-8 text-white" />
+                      </div>
+                      <h4 className="font-bold text-green-900 mb-2 text-lg">🎉 Goal Achieved!</h4>
+                      <p className="text-sm text-green-700 font-medium">
                         Thank you for helping us reach our goal. Your support made this possible!
                       </p>
                     </div>

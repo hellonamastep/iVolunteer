@@ -35,74 +35,63 @@ const rewards = [
 
 const Userrewardstoredash = () => {
   return (
-    <div className="px-4 py-8 md:px-8 md:py-12 lg:px-16 bg-gray-50">
+    <div className="px-4 py-6 md:px-8">
       <div className="max-w-8xl mx-auto">
-        <div className="flex items-center gap-3 mb-2">
-          <Gift className="w-8 h-8 text-blue-600" />
-          <h2 className="text-3xl font-bold text-gray-800">Rewards Store</h2>
-        </div>
-        <p className="text-gray-600 mb-8 max-w-3xl">
-          Exchange your hard-earned coins for exciting rewards and merchandise.
-        </p>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {rewards.map((reward) => (
-            <div
-              key={reward.id}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 flex flex-col"
-            >
-              <div className="relative">
-                <div className="h-48 relative overflow-hidden">
-                  <Image
-                    src={reward.image}
-                    alt={reward.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-                  
-                  {reward.popular && (
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-amber-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
-                        <Zap className="w-3 h-3" fill="currentColor" />
-                        Popular
-                      </span>
-                    </div>
-                  )}
-                </div>
+        <div className="bg-gradient-to-r from-[#7FD47F]/20 to-[#F9D71C]/20 border-2 border-[#7FD47F] rounded-2xl p-6 mb-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-28 h-28 opacity-10">
+            <Gift className="w-full h-full text-[#7FD47F]" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="w-5 h-5 text-[#7FD47F]" />
+              <h2 className="text-xl font-normal text-[#2C3E50]">Rewards Store</h2>
+            </div>
+            <p className="text-[#6B7280] text-sm mb-4">
+              Exchange your well-earned coins for exciting rewards and merchandise. Stay tuned! 🎉
+            </p>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 bg-white/60 px-3 py-2 rounded-full">
+                <span className="text-sm text-[#EC4899]">🎁 Exclusive Merch</span>
               </div>
-              
-              <div className="p-5 flex flex-col flex-grow">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  {reward.title}
-                </h3>
-                
-                <div className="mt-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1 text-amber-600 font-medium">
-                      <Coins className="w-5 h-5" />
-                      <span>{reward.coins} coins</span>
-                    </div>
-                  </div>
-                  
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                    <Gift className="w-4 h-4" />
-                    Redeem Now
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 bg-white/60 px-3 py-2 rounded-full">
+                <span className="text-sm text-[#4FC3DC]">🎟️ Gift Cards</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/60 px-3 py-2 rounded-full">
+                <span className="text-sm text-[#7B68EE]">🏅 Special Badges</span>
               </div>
             </div>
-          ))}
+          </div>
         </div>
+
+        <h3 className="text-lg font-normal text-[#2C3E50] mb-4">Something Awesome is Coming!</h3>
+        <p className="text-[#6B7280] text-sm mb-6">
+          We're working hard to bring you amazing rewards. Keep collecting coins and stay tuned for the big reveal! 🎊
+        </p>
         
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-4">Want to see more rewards?</p>
-          <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-2 mx-auto">
-            View all rewards
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+        <div className="bg-[#E8F8F7]/50 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+          <div className="w-32 h-32 bg-[#4FC3DC]/20 rounded-full flex items-center justify-center mb-6">
+            <svg className="w-16 h-16 text-[#4FC3DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </button>
+          </div>
+          <h3 className="text-2xl font-medium text-[#2C3E50] mb-3">Something Awesome is Coming!</h3>
+          <p className="text-[#6B7280] text-base mb-8 max-w-2xl">
+            We're working hard to bring you amazing rewards. Keep collecting coins and stay tuned for the big reveal! 🎊
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center mb-8">
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+              <span className="text-lg">🎁</span>
+              <span className="text-sm text-[#2C3E50] font-medium">Exclusive Merch</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+              <span className="text-lg">🎟️</span>
+              <span className="text-sm text-[#2C3E50] font-medium">Gift Cards</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
+              <span className="text-lg">🏅</span>
+              <span className="text-sm text-[#2C3E50] font-medium">Special Badges</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
