@@ -36,7 +36,8 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: "http://localhost:3000", // frontend URL
+    // origin: "http://localhost:3000", // frontend URL
+    origin: "https://namastep-irod.onrender.com",
     credentials: true,
   })
 );
