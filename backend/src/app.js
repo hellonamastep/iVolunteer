@@ -34,13 +34,24 @@ import participationRequestRouter from "./routes/participationRequest.routes.js"
 const app = express();
 
 app.use(helmet());
+const allowedOrigins = ["http://localhost:3000", "https://namastep.vercel.app"];
+
+
 app.use(
   cors({
-     origin: "http://localhost:3000", // frontend URL
-    origin: "https://namastep.vercel.app/",
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = "The CORS policy for this site does not allow access from the specified origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
+
 app.use(morgan("dev"));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
