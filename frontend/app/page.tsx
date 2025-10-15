@@ -54,8 +54,8 @@ function NGODashboard() {
       <Header />
       <Ngoanalytics />
       <div className="flex md:flex-row flex-col w-full md:justify-around justify-center items-center">
-      <Eventbutton />
-      <Donationeventbutton/>
+        <Eventbutton />
+        <Donationeventbutton />
       </div>
       <Ngoeventtable />
       <Footer />
@@ -94,8 +94,8 @@ function LandingPage() {
       <Header />
       <Hero />
       <Gamified />
-      <Howitworks />
       <Coinsystem />
+      <Howitworks />
       <Faq />
       <Footer />
     </div>
