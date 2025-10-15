@@ -81,7 +81,7 @@ api.interceptors.response.use(
       try {
         // Try to refresh the token
         const refreshResponse = await axios.post(
-          `${(process.env.API_BASE_URL || "https://namastep-irod.onrender.com").replace('/api', '')}/api/v1/auth/refresh-access-token`,
+          `${(process.env.API_BASE_URL || "https://namastep-irod.onrender.com/api").replace('/api', '')}/api/v1/auth/refresh-access-token`,
           {},
           { withCredentials: true }
         );

@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const { data } = await api.post<AuthResponse>(
-        "/v1/auth/register",
+        "api/v1/auth/register",
         signupData,
         { withCredentials: true }
       );
