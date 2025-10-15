@@ -21,6 +21,7 @@ import {
 import { toast } from "react-toastify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
+import api from "@/lib/api";
 
 type FormValues = {
   name?: string;
@@ -171,8 +172,8 @@ export default function AuthPage() {
             formData.append("profilePicture", profilePicture);
 
             const token = localStorage.getItem("auth-token");
-            await axios.post(
-              `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/upload-profile-picture`,
+            await api.post(
+              `/auth/upload-profile-picture`,
               formData,
               {
                 headers: {

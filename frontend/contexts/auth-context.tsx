@@ -106,8 +106,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (signupData: SignupData): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { data } = await axios.post<AuthResponse>(
-        "http://localhost:5000/api/v1/auth/register",
+      const { data } = await api.post<AuthResponse>(
+        "/v1/auth/register",
         signupData,
         { withCredentials: true }
       );
@@ -165,8 +165,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
-      await axios.post(
-        "http://localhost:5000/api/v1/auth/login",
+      await api.post(
+        "/v1/auth/login",
         { email, password, role },
         { withCredentials: true }
       );
