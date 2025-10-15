@@ -6,10 +6,13 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import path from "path";
 
-import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js"
-import authRouter from "./routes/auth.routes.js"
-import postRouter from "./routes/post.routes.js"
-import rewardsRouter from "./routes/rewards.routes.js"
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./middlewares/globalErrorHandler.js";
+import authRouter from "./routes/auth.routes.js";
+import postRouter from "./routes/post.routes.js";
+import rewardsRouter from "./routes/rewards.routes.js";
 
 // import {
 //   errorHandler,
@@ -34,8 +37,12 @@ import participationRequestRouter from "./routes/participationRequest.routes.js"
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = ["http://localhost:3000", "https://namastep.vercel.app","https://namasteps.vercel.app/"];
-
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://namastep.vercel.app",
+  "https://namastep-eight.vercel.app",
+  "https://namastep.vercel.app/"
+];
 
 app.use(
   cors({
@@ -43,7 +50,8 @@ app.use(
       // allow requests with no origin (like Postman)
       if (!origin) return callback(null, true);
       if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = "The CORS policy for this site does not allow access from the specified origin.";
+        const msg =
+          "The CORS policy for this site does not allow access from the specified origin.";
         return callback(new Error(msg), false);
       }
       return callback(null, true);
@@ -67,8 +75,6 @@ function limiter(windowMs, max) {
   });
 }
 
-
-
 // global limiter, applies to all routes
 const globalRateLimiting = limiter(15 * 60 * 1000, 5000); // 15 minutes, 1000 requests
 app.use(globalRateLimiting);
@@ -80,7 +86,6 @@ app.use("/uploads", (req, res, next) => {
   next();
 });
 
-
 app.use(
   "/uploads",
   cors({
@@ -89,7 +94,6 @@ app.use(
   }),
   express.static(path.join(process.cwd(), "uploads"))
 );
-
 
 app.use("/api/v1/auth", authLimiter, authRouter);
 
@@ -118,13 +122,16 @@ app.use("/api/v1/blogs", globalRateLimiting, blogRouter);
 
 // corporate events
 app.use("/api/v1/corporate-events", globalRateLimiting, corporateEventRouter);
-app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
+app.use("/api/v1/corporate-bids", globalRateLimiting, corporateBidRouter);
 
 // Participation request routes
-app.use("/api/v1/participation-requests", globalRateLimiting, participationRequestRouter);
+app.use(
+  "/api/v1/participation-requests",
+  globalRateLimiting,
+  participationRequestRouter
+);
 
 app.use(errorHandler);
 app.use(notFoundHandler);
-
 
 export { app };
