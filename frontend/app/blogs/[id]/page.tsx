@@ -98,7 +98,7 @@ export default function BlogDetailsPage() {
             src={
               blog.imageUrl.startsWith("http")
                 ? blog.imageUrl
-                : `http://localhost:5000/${blog.imageUrl}`
+                : `https://namastep-irod.onrender.com/${blog.imageUrl}`
             }
             alt={blog.title}
             fill

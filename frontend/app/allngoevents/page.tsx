@@ -33,7 +33,7 @@ const Allngopublisheventcta = () => {
       if (!token) return;
 
       const res = await api.get<{ success: boolean; events: any[] }>(
-        `http://localhost:5000/api/v1/event/organization`,
+        `/v1/event/organization`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -95,7 +95,7 @@ const Allngopublisheventcta = () => {
       formData.append("completionProof", proofFile);
 
       await api.post(
-        `http://localhost:5000/api/v1/event/end/${selectedEventId}`,
+        `/v1/event/end/${selectedEventId}`,
         formData,
         {
           headers: {
