@@ -34,7 +34,7 @@ import participationRequestRouter from "./routes/participationRequest.routes.js"
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = ["http://localhost:3000", "https://namastep.vercel.app", "https://namastep-eight.vercel.app","https://namastep.vercel.app/"];
+const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app/"];
 
 
 app.use(
