@@ -12,7 +12,7 @@ const eventRouter = express.Router();
 eventRouter.post("/add-event", authMiddleware, ngoEventController.addEvent);
 eventRouter.get("/sponsorship", ngoEventController.getSponsorshipEvents);
 // Events are now filtered by city - requires authentication
-eventRouter.get("/all-event", authMiddleware, ngoEventController.getAllPublishedEvents);
+eventRouter.get("/all-event", ngoEventController.getAllPublishedEvents);
 // Upload event image
 eventRouter.post(
   "/upload-event-image",
