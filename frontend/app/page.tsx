@@ -647,8 +647,13 @@ function VolunteerDashboard() {
         }}
       />
       
-      <div className="relative z-10">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-50">
         <Header />
+      </div>
+      
+      {/* Main Content */}
+      <div className="relative z-10 pt-24">
         <div className="px-4 md:px-8 mt-6">
           <motion.h2
             initial={{ opacity: 0, y: 10 }}

@@ -357,7 +357,7 @@ export default function PostsPage() {
     }
 
     return (
-        <div className="page-container min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 overflow-hidden">
+        <div className="page-container min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
@@ -438,7 +438,7 @@ export default function PostsPage() {
 
             <main className="main-content relative z-10 px-4 sm:px-6 md:px-8 pb-24 max-w-7xl mx-auto pt-[72px]">
 
-                <section className="hero-section z-40 my-10">
+                <section className="hero-section z-40 mt-10 mb-6">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div className="flex items-center gap-3">
@@ -497,67 +497,65 @@ export default function PostsPage() {
                 </section>
 
                 {/* Navigation Tabs - Sticky */}
-                <section className="tabs-section z-30 border-b border-gray-200 bg-white/90 backdrop-blur-sm my-8">
-                    <div className="sticky top-[100px] max-w-7xl mx-auto">
+                <section className="tabs-section sticky top-[72px] z-30 border-b border-gray-200 bg-white/90 backdrop-blur-sm">
+                    <div className="max-w-7xl mx-auto py-0">
                         <div className="flex gap-8 px-6 overflow-x-auto">
-                            <div className="flex gap-8 px-6 overflow-x-auto">
-                                <button
-                                    onClick={() => setActiveTab('posts')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'posts'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <FileText className="w-5 h-5" />
-                                    Posts
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('groups')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'groups'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <Users className="w-5 h-5" />
-                                    Groups
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('people')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'people'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <MapPin className="w-5 h-5" />
-                                    People Nearby
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('leaderboard')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'leaderboard'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <Trophy className="w-5 h-5" />
-                                    Leaderboard
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('blogs')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'blogs'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <BookOpen className="w-5 h-5" />
-                                    Blogs
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setActiveTab('posts')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'posts'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <FileText className="w-5 h-5" />
+                                Posts
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('groups')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'groups'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <Users className="w-5 h-5" />
+                                Groups
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('people')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'people'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <MapPin className="w-5 h-5" />
+                                People Nearby
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('leaderboard')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'leaderboard'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <Trophy className="w-5 h-5" />
+                                Leaderboard
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('blogs')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'blogs'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <BookOpen className="w-5 h-5" />
+                                Blogs
+                            </button>
                         </div>
                     </div>
                 </section>
 
                 {/* Desktop Filters Bar - Horizontal on top - Sticky */}
-                <section className="desktop-filters hidden lg:block z-20 px-4 sm:px-6 md:px-8 -mx-4 sm:-mx-6 md:-mx-8">
+                <section className="desktop-filters hidden lg:block z-20 px-4 sm:px-6 md:px-8 -mx-4 sm:-mx-6 md:-mx-8 mt-6">
                     <div className="max-w-7xl mx-auto">
                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-teal-100 my-6">
                             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-teal-100">

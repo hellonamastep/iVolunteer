@@ -4,10 +4,34 @@ export const createEvent = async (req, res) => {
   try {
     const ngoId = req.user._id;
     const eventData = req.body;
+    
+    // Handle file uploads from req.files (multer)
+    if (req.files) {
+      // Cover image
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        eventData.coverImage = req.files.coverImage[0].path;
+      }
+      
+      // Government ID
+      if (req.files.governmentId && req.files.governmentId[0]) {
+        eventData.governmentId = req.files.governmentId[0].path;
+      }
+      
+      // Proof of Need
+      if (req.files.proofOfNeed && req.files.proofOfNeed[0]) {
+        eventData.proofOfNeed = req.files.proofOfNeed[0].path;
+      }
+      
+      // Supporting Media (multiple files)
+      if (req.files.supportingMedia) {
+        eventData.supportingMedia = req.files.supportingMedia.map(file => file.path);
+      }
+    }
 
     const event = await eventService.createEventService(ngoId, eventData);
     res.status(201).json({ success: true, event });
   } catch (err) {
+    console.error('Create event error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

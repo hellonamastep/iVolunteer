@@ -115,10 +115,10 @@ const Ngoanalytics = () => {
               animate={isVisible ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: index * 0.1, duration: 0.5 }}
               whileHover={{ scale: 1.05, y: -5 }}
-              className={`${stat.bg} rounded-2xl p-6 flex flex-col justify-between shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-hidden relative cursor-pointer transition-all duration-300 hover:shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.15),0px_4px_6px_-2px_rgba(0,0,0,0.1)] hover:brightness-105 hover:saturate-150`}
+              className={`${stat.bg} rounded-2xl p-5 flex flex-col justify-between shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-hidden relative cursor-pointer transition-all duration-300 hover:shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.15),0px_4px_6px_-2px_rgba(0,0,0,0.1)] hover:brightness-105 hover:saturate-150`}
             >
               <div className="relative z-10">
-                <div className="flex justify-between items-start mb-10">
+                <div className="flex justify-between items-start mb-7">
                   <div className="flex-1">
                     {stat.icon}
                   </div>
@@ -127,12 +127,12 @@ const Ngoanalytics = () => {
                   </div>
                 </div>
                 
-                <div className="mb-6">
-                  <p className={`text-3xl font-medium ${stat.color} mb-4`}>{stat.value}</p>
+                <div className="">
+                  <p className={`text-3xl font-medium ${stat.color} mb-3`}>{stat.value}</p>
                   <p className="text-xs font-normal text-[#6B7280] uppercase tracking-wide">{stat.title}</p>
                 </div>
                 
-                <div className="flex items-center pt-4 border-t border-gray-100">
+                <div className="flex items-center pt-3 border-t border-gray-100">
                   <div className={`flex items-center text-xs font-normal ${stat.trend.isPositive ? 'text-[#7FD47F]' : 'text-[#EF4444]'}`}>
                     <span>+{stat.trend.value}%</span>
                   </div>
