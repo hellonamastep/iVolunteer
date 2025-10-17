@@ -402,13 +402,22 @@ const requestEventCompletion = async (eventId, organizationId, proofImage) => {
 // };
 const getAllCompletionRequests = async () => {
   try {
-    return await Event.find({ completionStatus: "pending" })
-      .populate("organizationId", "name email")
-      .populate("participants", "_id name email")
+    const requests = await Event.find({ completionStatus: "pending" })
+      .populate({
+        path: "organizationId",
+        select: "name email",
+      })
+      .populate({
+        path: "participants",
+        select: "_id name email",
+      })
       .sort({ updatedAt: -1 });
-  } catch (error) {
-    console.error("Error fetching completion requests from DB:", error); // ✅ log exact DB error
-    throw error; // let controller handle it
+
+    // Remove events with missing organization to prevent broken data
+    return requests.filter(r => r.organizationId != null);
+  } catch (err) {
+    console.error("Error fetching completion requests:", err);
+    throw new Error("Failed to fetch completion requests");
   }
 };
 
