@@ -392,36 +392,16 @@ const requestEventCompletion = async (eventId, organizationId, proofImage) => {
 };
 
 // ngoEvent.service.js
-// const getAllCompletionRequests = async () => {
-//   return await Event.find({
-//     completionStatus: "pending", // ✅ correct condition
-//   })
-//     .populate("organizationId", "name email")
-//     .populate("participants", "_id name email")
-//     .sort({ updatedAt: -1 });
-// };
-
-export const getAllCompletionRequests = async () => {
-  try {
-    const requests = await Event.find({ completionStatus: "pending" })
-      .populate("organizationId", "name email")
-      .populate("participants", "_id name email")
-      .sort({ updatedAt: -1 })
-      .lean();
-
-    return requests;
-  } catch (err) {
-    console.error("Error fetching completion requests:", err);
-    throw new ApiError(500, "Failed to fetch completion requests");
-  }
+const getAllCompletionRequests = async () => {
+  return await Event.find({
+    completionStatus: "pending", // ✅ correct condition
+  })
+    .populate("organizationId", "name email")
+    .populate("participants", "_id name email")
+    .sort({ updatedAt: -1 });
 };
 
-// ✅ Approve or reject a specific completion request
-export const reviewEventCompletion = async (eventId, decision) => {
-  if (!mongoose.Types.ObjectId.isValid(eventId)) {
-    throw new ApiError(400, "Invalid eventId");
-  }
-
+const reviewEventCompletion = async (eventId, decision) => {
   const event = await Event.findById(eventId).populate("participants");
   if (!event) throw new ApiError(404, "Event not found");
 
@@ -430,21 +410,22 @@ export const reviewEventCompletion = async (eventId, decision) => {
   }
 
   if (decision === "accepted") {
-    event.completionStatus = "accepted";
-    event.eventStatus = "completed";
+    event.completionStatus = "accepted"; // admin approved
+    event.eventStatus = "completed"; // lifecycle field
 
-    const totalPoints = event.scoringRule?.totalPoints || 0;
+     const totalPoints = event.scoringRule?.totalPoints || 0;
 
-    for (const participant of event.participants) {
-      const user = await mongoose.model("User").findById(participant._id);
-      if (user) {
-        user.points += totalPoints;
-        await user.save();
-      }
+    // Award points to participants
+   for (const userId of event.participants) {
+    const user = await mongoose.model("User").findById(userId);
+    if (user) {
+      user.points += totalPoints;
+      await user.save();
     }
+  }
   } else if (decision === "rejected") {
-    event.completionStatus = "rejected";
-    event.eventStatus = "ongoing";
+    event.completionStatus = "rejected"; // admin rejected
+    event.eventStatus = "ongoing"; // back to ongoing
   } else {
     throw new ApiError(400, "Invalid decision value");
   }
@@ -452,41 +433,6 @@ export const reviewEventCompletion = async (eventId, decision) => {
   await event.save();
   return event;
 };
-
-
-
-// const reviewEventCompletion = async (eventId, decision) => {
-//   const event = await Event.findById(eventId).populate("participants");
-//   if (!event) throw new ApiError(404, "Event not found");
-
-//   if (event.completionStatus !== "pending") {
-//     throw new ApiError(400, "No pending completion request for this event");
-//   }
-
-//   if (decision === "accepted") {
-//     event.completionStatus = "accepted"; // admin approved
-//     event.eventStatus = "completed"; // lifecycle field
-
-//      const totalPoints = event.scoringRule?.totalPoints || 0;
-
-//     // Award points to participants
-//    for (const userId of event.participants) {
-//     const user = await mongoose.model("User").findById(userId);
-//     if (user) {
-//       user.points += totalPoints;
-//       await user.save();
-//     }
-//   }
-//   } else if (decision === "rejected") {
-//     event.completionStatus = "rejected"; // admin rejected
-//     event.eventStatus = "ongoing"; // back to ongoing
-//   } else {
-//     throw new ApiError(400, "Invalid decision value");
-//   }
-
-//   await event.save();
-//   return event;
-// };
 
 // Get all completion requests (approved/rejected) history (admin)
 const getCompletionRequestHistory = async (ngoId) => {
