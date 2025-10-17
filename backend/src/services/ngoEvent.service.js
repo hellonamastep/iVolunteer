@@ -392,14 +392,26 @@ const requestEventCompletion = async (eventId, organizationId, proofImage) => {
 };
 
 // ngoEvent.service.js
+// const getAllCompletionRequests = async () => {
+//   return await Event.find({
+//     completionStatus: "pending", // ✅ correct condition
+//   })
+//     .populate("organizationId", "name email")
+//     .populate("participants", "_id name email")
+//     .sort({ updatedAt: -1 });
+// };
 const getAllCompletionRequests = async () => {
-  return await Event.find({
-    completionStatus: "pending", // ✅ correct condition
-  })
-    .populate("organizationId", "name email")
-    .populate("participants", "_id name email")
-    .sort({ updatedAt: -1 });
+  try {
+    return await Event.find({ completionStatus: "pending" })
+      .populate("organizationId", "name email")
+      .populate("participants", "_id name email")
+      .sort({ updatedAt: -1 });
+  } catch (error) {
+    console.error("Error fetching completion requests from DB:", error); // ✅ log exact DB error
+    throw error; // let controller handle it
+  }
 };
+
 
 const reviewEventCompletion = async (eventId, decision) => {
   const event = await Event.findById(eventId).populate("participants");

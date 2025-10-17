@@ -405,19 +405,33 @@ export const reviewCompletion = asyncHandler(async (req, res) => {
 
 
 // Admin fetches all pending requests
+// const getAllCompletionRequests = asyncHandler(async (req, res) => {
+//   if (req.user.role !== "admin") {
+//     return res.status(403).json({ success: false, message: "Unauthorized" });
+//   }
+
+//   const requests = await ngoEventService.getAllCompletionRequests();
+
+//   res.status(200).json({
+//     success: true,
+//     requests,
+//     count: requests.length,
+//   });
+// });
 const getAllCompletionRequests = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ success: false, message: "Unauthorized" });
   }
 
-  const requests = await ngoEventService.getAllCompletionRequests();
-
-  res.status(200).json({
-    success: true,
-    requests,
-    count: requests.length,
-  });
+  try {
+    const requests = await ngoEventService.getAllCompletionRequests();
+    res.status(200).json({ success: true, requests, count: requests.length });
+  } catch (error) {
+    console.error("Error in getAllCompletionRequests:", error); // ✅ log the full error
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
+
 
 // Admin: get all accepted/rejected completion request history (optional filter by NGO)
 const getCompletionRequestHistory = asyncHandler(async (req, res) => {
