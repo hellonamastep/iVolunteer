@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDonationEvent } from "@/contexts/donationevents-context";
 import { toast } from "react-toastify";
 import {
@@ -61,6 +62,21 @@ const IMAGES_STORAGE_KEY = "donation_event_images";
 
 const AddEventPage: React.FC = () => {
   const { addEvent } = useDonationEvent();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams.get('source') || 'fundraiser'; // Default to fundraiser
+  
+  // Determine if this is a fundraiser or donation event based on source
+  const isFundraiser = source === 'fundraiser';
+  const formTitle = isFundraiser ? "Create Your Fundraiser" : "Create Donation Campaign";
+  const titleLabel = isFundraiser ? "Fundraiser Title" : "Campaign Title";
+  const whyRaisingLabel = isFundraiser ? "Why are you raising funds?" : "Campaign Purpose";
+  const whoBenefitsLabel = isFundraiser ? "Who will benefit from this fundraiser?" : "Who will benefit from this campaign?";
+  const submitButtonText = isFundraiser ? "Submit Fundraiser Application" : "Submit Campaign Application";
+  const previewText = isFundraiser ? "See how your fundraiser will look to donors" : "See how your campaign will look to donors";
+  const leaveConfirmTitle = isFundraiser ? "Leave Fundraiser Creation?" : "Leave Campaign Creation?";
+  const defaultTitlePlaceholder = isFundraiser ? "Your Fundraiser Title" : "Your Campaign Title";
+  
   const [activeStep, setActiveStep] = useState(1);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [governmentIdPreview, setGovernmentIdPreview] = useState<string | null>(null);
@@ -118,23 +134,39 @@ const AddEventPage: React.FC = () => {
         if (savedDraft) {
           const draftData = JSON.parse(savedDraft);
           
-          // Restore form fields (excluding FileList fields)
-          Object.keys(draftData).forEach((key) => {
-            if (key !== 'coverImage' && key !== 'governmentId' && key !== 'proofOfNeed' && key !== 'supportingMedia') {
-              setValue(key as any, draftData[key]);
+          // Check if draft has meaningful data (not just defaults and _savedAt)
+          const meaningfulKeys = Object.keys(draftData).filter(
+            key => key !== '_savedAt' && 
+                   key !== 'displayRaisedAmount' && 
+                   key !== 'allowAnonymous' && 
+                   key !== 'enableComments' && 
+                   key !== 'paymentMethod' && 
+                   key !== 'minimumDonation' &&
+                   draftData[key] !== undefined &&
+                   draftData[key] !== null &&
+                   draftData[key] !== ''
+          );
+          
+          // Only restore if there's meaningful data
+          if (meaningfulKeys.length > 0) {
+            // Restore form fields (excluding FileList fields)
+            Object.keys(draftData).forEach((key) => {
+              if (key !== 'coverImage' && key !== 'governmentId' && key !== 'proofOfNeed' && key !== 'supportingMedia') {
+                setValue(key as any, draftData[key]);
+              }
+            });
+            
+            // Restore image previews
+            if (savedImages) {
+              const imageData = JSON.parse(savedImages);
+              if (imageData.coverImage) setCoverImagePreview(imageData.coverImage);
+              if (imageData.governmentId) setGovernmentIdPreview(imageData.governmentId);
+              if (imageData.proofOfNeed) setProofOfNeedPreview(imageData.proofOfNeed);
             }
-          });
-          
-          // Restore image previews
-          if (savedImages) {
-            const imageData = JSON.parse(savedImages);
-            if (imageData.coverImage) setCoverImagePreview(imageData.coverImage);
-            if (imageData.governmentId) setGovernmentIdPreview(imageData.governmentId);
-            if (imageData.proofOfNeed) setProofOfNeedPreview(imageData.proofOfNeed);
+            
+            toast.info("Draft restored successfully!", { autoClose: 2000 });
+            setLastSaved(new Date(draftData._savedAt));
           }
-          
-          toast.info("Draft restored successfully!", { autoClose: 2000 });
-          setLastSaved(new Date(draftData._savedAt));
         }
       } catch (error) {
         console.error("Error loading draft:", error);
@@ -364,7 +396,15 @@ const AddEventPage: React.FC = () => {
   const confirmDocumentUpload = () => {
     if (!pendingDocument) return;
 
-    const { preview, type } = pendingDocument;
+    const { file, preview, type } = pendingDocument;
+
+    // Create a DataTransfer object to hold the file (needed for React Hook Form FileList)
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const fileList = dataTransfer.files;
+
+    // Set the file in React Hook Form
+    setValue(type, fileList, { shouldValidate: true });
 
     // Set the appropriate preview
     if (type === 'governmentId') {
@@ -506,16 +546,6 @@ const AddEventPage: React.FC = () => {
         formData.append('bankAccount[accountHolder]', data.accountHolder);
       }
       
-      // Add files
-      if (data.coverImage && data.coverImage.length > 0) {
-        formData.append('coverImage', data.coverImage[0]);
-      }
-      if (data.governmentId && data.governmentId.length > 0) {
-        formData.append('governmentId', data.governmentId[0]);
-      }
-      if (data.proofOfNeed && data.proofOfNeed.length > 0) {
-        formData.append('proofOfNeed', data.proofOfNeed[0]);
-      }
       // Use supportingMediaFiles array instead of form FileList
       if (supportingMediaFiles.length > 0) {
         supportingMediaFiles.forEach(file => {
@@ -530,6 +560,8 @@ const AddEventPage: React.FC = () => {
       localStorage.removeItem(IMAGES_STORAGE_KEY);
       
       toast.success("Donation campaign created successfully!");
+      
+      // Reset form state
       reset();
       setActiveStep(1);
       setCoverImagePreview(null);
@@ -538,6 +570,11 @@ const AddEventPage: React.FC = () => {
       setSupportingMediaFiles([]);
       setSupportingMediaPreviews([]);
       setLastSaved(null);
+      
+      // Redirect to donation events page after 1.5 seconds
+      setTimeout(() => {
+        router.push('/donate');
+      }, 1500);
     } catch (err: any) {
       console.error('Submit error:', err);
       toast.error(err.response?.data?.message || "Failed to create campaign");
@@ -570,7 +607,7 @@ const AddEventPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] font-['Manrope']">
+    <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6]">
       {/* Header */}
       <div className="bg-transparent py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -585,35 +622,11 @@ const AddEventPage: React.FC = () => {
                 <span>Back</span>
               </button>
             </div>
-            <div className="text-center flex-1">
-              <h1 className="text-xl font-semibold text-gray-700">Create Your Fundraiser</h1>
+            <div className="text-center flex-1 justify-center">
+              <h1 className="text-xl font-semibold text-gray-700">{formTitle}</h1>
               <p className="text-sm text-gray-600 mt-1">Make doing good fun, rewarding & impactful</p>
             </div>
-            <div className="flex-1 flex justify-end items-center space-x-2">
-              {lastSaved && (
-                <div 
-                  className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full"
-                  title={`Storage: ${storageUsage.usedMB}MB / ${storageUsage.totalMB}MB used`}
-                >
-                  <Save className="h-3 w-3 mr-1" />
-                  <span>Saved {new Date(lastSaved).toLocaleTimeString()}</span>
-                  {storageUsage.usedMB > 0 && (
-                    <span className="ml-1.5 text-[10px] opacity-70">
-                      ({storageUsage.usedMB}MB)
-                    </span>
-                  )}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={clearDraft}
-                className="text-xs text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition-colors flex items-center"
-                title="Clear draft and free up storage"
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Clear
-              </button>
-            </div>
+            <div className="flex-1"></div>
           </div>
         </div>
       </div>
@@ -672,7 +685,7 @@ const AddEventPage: React.FC = () => {
                     {/* Title */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Fundraiser Title <span className="text-red-500">*</span>
+                        {titleLabel} <span className="text-red-500">*</span>
                       </label>
                       <input
                         {...register("title", {
@@ -828,7 +841,7 @@ const AddEventPage: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Why are you raising funds? <span className="text-red-500">*</span>
+                        {whyRaisingLabel} <span className="text-red-500">*</span>
                       </label>
                       <p className="text-xs text-gray-600 mb-2">Share your story. Be specific about the situation, challenges, and impact.</p>
                       <textarea
@@ -846,7 +859,7 @@ const AddEventPage: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Who will benefit from this fundraiser? <span className="text-red-500">*</span>
+                        {whoBenefitsLabel} <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         {...register("whoBenefits", {
@@ -1516,7 +1529,7 @@ const AddEventPage: React.FC = () => {
                         ) : (
                           <>
                             <CheckCircle className="h-5 w-5" />
-                            <span>Submit Fundraiser Application</span>
+                            <span>{submitButtonText}</span>
                           </>
                         )}
                       </button>
@@ -1559,7 +1572,7 @@ const AddEventPage: React.FC = () => {
                 </svg>
                 <h3 className="text-xl font-semibold text-white">Live Preview</h3>
               </div>
-              <p className="text-sm text-white/90">See how your fundraiser will look to donors</p>
+              <p className="text-sm text-white/90">{previewText}</p>
             </div>
 
             {/* Preview Card */}
@@ -1580,7 +1593,7 @@ const AddEventPage: React.FC = () => {
                 <div className="p-6 space-y-4">
                   {/* Title */}
                   <h4 className="text-xl font-semibold text-gray-800">
-                    {watchedFields.title || "Your Fundraiser Title"}
+                    {watchedFields.title || defaultTitlePlaceholder}
                   </h4>
 
                   {/* Description */}
@@ -1631,7 +1644,7 @@ const AddEventPage: React.FC = () => {
                 <AlertCircle className="h-6 w-6 text-yellow-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Leave Fundraiser Creation?</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{leaveConfirmTitle}</h3>
                 <p className="text-sm text-gray-600">
                   Are you sure you want to leave this page?
                 </p>

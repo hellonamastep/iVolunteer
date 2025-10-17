@@ -26,6 +26,7 @@ import {
 import { toast } from "react-toastify";
 import { toast as shadToast } from "@/hooks/use-toast";
 import { useDonationEvent, DonationEvent } from "@/contexts/donationevents-context";
+import { FundraiserSection } from "@/components/FundraiserSection";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
@@ -60,6 +61,7 @@ export default function DonatePage() {
   const [highlightedDonationId, setHighlightedDonationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showFundraiser, setShowFundraiser] = useState(false);
   const quickAmounts = [100, 250, 500, 1000]; // Converted to Rupees
   
   // Refs for scrolling to specific donation events
@@ -346,6 +348,7 @@ export default function DonatePage() {
         </div>
 
         {/* Stats Section - Top Cards */}
+        <div className="hidden">
         <section className="mb-6 grid grid-cols-5 gap-3">
           <div 
             onClick={() => setFilter('all')}
@@ -417,6 +420,7 @@ export default function DonatePage() {
             <p className="text-2xl font-bold text-white">{formatLargeNumber(eventCounts.totalGoal)}</p>
           </div>
         </section>
+        </div>
 
         {/* Tab Navigation - Donation Events / Volunteer Events */}
         <div className="mb-6 flex gap-2">
@@ -430,6 +434,12 @@ export default function DonatePage() {
             Volunteer Events
           </button>
         </div>
+
+        {/* Fundraiser Section */}
+        <FundraiserSection 
+          isVisible={showFundraiser} 
+          onClose={() => setShowFundraiser(false)} 
+        />
 
         {/* Search Bar */}
         <div className="mb-6">
@@ -499,6 +509,17 @@ export default function DonatePage() {
           >
             <CheckCircle className="w-4 h-4" />
             Completed ({eventCounts.completed})
+          </button>
+
+          <button
+            onClick={() => setShowFundraiser(!showFundraiser)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              showFundraiser 
+                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-500' 
+                : 'bg-white text-gray-700 border-gray-200'
+            }`}
+          >
+            💰 Raise Fund
           </button>
           
           <button

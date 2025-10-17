@@ -5,6 +5,11 @@ export const createEvent = async (req, res) => {
     const ngoId = req.user._id;
     const eventData = req.body;
     
+    // Convert trustScore from string to number (FormData sends as string)
+    if (eventData.trustScore) {
+      eventData.trustScore = Number(eventData.trustScore);
+    }
+    
     // Handle file uploads from req.files (multer)
     if (req.files) {
       // Cover image

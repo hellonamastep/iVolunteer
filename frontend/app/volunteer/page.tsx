@@ -22,6 +22,7 @@ import {
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
+import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { toast } from "@/hooks/use-toast";
 
 // Helper component to highlight matching text
@@ -72,6 +73,7 @@ const AvailableEventsPage: React.FC = () => {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSpecialEvents, setShowSpecialEvents] = useState(false);
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -479,6 +481,7 @@ const AvailableEventsPage: React.FC = () => {
           <ParticipationRequestBanner />
 
           {/* Stats Section - Top Cards */}
+          <div className="hidden">
           <section className="mb-6 grid grid-cols-5 gap-3">
             <div 
               onClick={() => {
@@ -575,8 +578,9 @@ const AvailableEventsPage: React.FC = () => {
               <p className="text-3xl font-bold text-white">{eventCounts.community}</p>
             </div>
           </section>
+          </div>
 
-          {/* Tab Navigation - Volunteer Events / Donation Form */}
+          {/* Tab Navigation - Volunteer Events / Donation Events */}
           <div className="mb-6 flex gap-2">
             <button className="px-6 py-2 bg-white text-gray-700 font-medium rounded-lg border-b-2 border-teal-500 shadow-sm">
               Volunteer Events
@@ -585,9 +589,15 @@ const AvailableEventsPage: React.FC = () => {
               onClick={() => router.push("/donate")}
               className="px-6 py-2 bg-white/70 text-gray-600 font-medium rounded-lg hover:bg-white transition-colors"
             >
-              Donation Form
+              Donation Campaigns
             </button>
           </div>
+
+          {/* Special Events Section */}
+          <SpecialEventsSection 
+            isVisible={showSpecialEvents} 
+            onClose={() => setShowSpecialEvents(false)} 
+          />
 
           {/* Search Bar */}
           <div className="mb-6">
@@ -662,6 +672,17 @@ const AvailableEventsPage: React.FC = () => {
               }`}
             >
               ★ Shortlisted (0)
+            </button>
+
+            <button
+              onClick={() => setShowSpecialEvents(!showSpecialEvents)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                showSpecialEvents 
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
+            >
+              ✨ Special Event
             </button>
             
             <button
