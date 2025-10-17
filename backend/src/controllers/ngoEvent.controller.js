@@ -420,11 +420,16 @@ export const reviewCompletion = asyncHandler(async (req, res) => {
 // });
 const getAllCompletionRequests = asyncHandler(async (req, res) => {
   try {
+    if (!req.user) {
+      console.error("req.user is undefined!");
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
     if (req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
     const requests = await ngoEventService.getAllCompletionRequests();
+    console.log("Requests fetched:", requests);
 
     return res.status(200).json({
       success: true,
@@ -437,6 +442,7 @@ const getAllCompletionRequests = asyncHandler(async (req, res) => {
       success: false,
       message: "Failed to fetch event completion requests",
       error: err.message,
+      stack: err.stack,
     });
   }
 });
