@@ -403,23 +403,18 @@ const requestEventCompletion = async (eventId, organizationId, proofImage) => {
 const getAllCompletionRequests = async () => {
   try {
     const requests = await Event.find({ completionStatus: "pending" })
-      .populate({
-        path: "organizationId",
-        select: "name email",
-      })
-      .populate({
-        path: "participants",
-        select: "_id name email",
-      })
-      .sort({ updatedAt: -1 });
+      .populate("organizationId", "name email") // may fail if org doesn't exist
+      .populate("participants", "_id name email") // may fail if participants missing
+      .sort({ updatedAt: -1 })
+      .lean(); // safer, returns plain JS objects
 
-    // Remove events with missing organization to prevent broken data
-    return requests.filter(r => r.organizationId != null);
+    return requests;
   } catch (err) {
     console.error("Error fetching completion requests:", err);
-    throw new Error("Failed to fetch completion requests");
+    return []; // return empty array instead of crashing
   }
 };
+
 
 
 const reviewEventCompletion = async (eventId, decision) => {
