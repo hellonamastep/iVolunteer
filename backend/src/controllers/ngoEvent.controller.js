@@ -384,22 +384,22 @@ const requestCompletion = asyncHandler(async (req, res) => {
 // Admin reviews completion
 // ngoEvent.controller.js
 // Admin reviews completion
-export const reviewCompletion = asyncHandler(async (req, res) => {
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ success: false, message: "Unauthorized" });
-  }
+// export const reviewCompletion = asyncHandler(async (req, res) => {
+//   if (req.user.role !== "admin") {
+//     return res.status(403).json({ success: false, message: "Unauthorized" });
+//   }
 
-  const { eventId } = req.params;
-  const { decision } = req.body; // "accepted" | "rejected"
+//   const { eventId } = req.params;
+//   const { decision } = req.body; // "accepted" | "rejected"
 
-  const event = await ngoEventService.reviewEventCompletion(eventId, decision);
+//   const event = await ngoEventService.reviewEventCompletion(eventId, decision);
 
-  res.status(200).json({
-    success: true,
-    message: `Completion request ${decision}`,
-    event,
-  });
-});
+//   res.status(200).json({
+//     success: true,
+//     message: `Completion request ${decision}`,
+//     event,
+//   });
+// });
 
 
 
@@ -418,34 +418,47 @@ export const reviewCompletion = asyncHandler(async (req, res) => {
 //     count: requests.length,
 //   });
 // });
-const getAllCompletionRequests = asyncHandler(async (req, res) => {
-  try {
-    if (!req.user) {
-      console.error("req.user is undefined!");
-      return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
-    }
 
-    const requests = await ngoEventService.getAllCompletionRequests();
-    console.log("Requests fetched:", requests);
+// ✅ GET all pending completion requests
+export const getAllCompletionRequests = asyncHandler(async (req, res) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
 
-    return res.status(200).json({
-      success: true,
-      requests,
-      count: requests.length,
-    });
-  } catch (err) {
-    console.error("Error in getAllCompletionRequests:", err);
-    return res.status(500).json({
+  const requests = await ngoEventService.getAllCompletionRequests();
+
+  return res.status(200).json({
+    success: true,
+    count: requests.length,
+    requests,
+  });
+});
+
+// ✅ PUT review (approve/reject) a completion request
+export const reviewCompletion = asyncHandler(async (req, res) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Unauthorized" });
+  }
+
+  const { eventId } = req.params;
+  const { decision } = req.body; // "accepted" | "rejected"
+
+  if (!eventId || !decision) {
+    return res.status(400).json({
       success: false,
-      message: "Failed to fetch event completion requests",
-      error: err.message,
-      stack: err.stack,
+      message: "Missing eventId or decision",
     });
   }
+
+  const event = await ngoEventService.reviewEventCompletion(eventId, decision);
+
+  return res.status(200).json({
+    success: true,
+    message: `Completion request ${decision}`,
+    event,
+  });
 });
+
 
 
 
