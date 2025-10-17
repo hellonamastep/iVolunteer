@@ -9,13 +9,11 @@ import { upload } from "../config/cloudinary.js";
 
 const eventRouter = express.Router();
 
-// ---------------- NGO Routes ----------------
+/* ---------------- NGO ROUTES ---------------- */
 
 // Add a new event
 eventRouter.post("/add-event", authMiddleware, ngoEventController.addEvent);
-eventRouter.get("/sponsorship", ngoEventController.getSponsorshipEvents);
-// Events are now filtered by city - requires authentication
-eventRouter.get("/all-event", ngoEventController.getAllPublishedEvents);
+
 // Upload event image
 eventRouter.post(
   "/upload-event-image",
@@ -23,13 +21,63 @@ eventRouter.post(
   upload.single("eventImage"),
   ngoEventController.uploadEventImage
 );
+
 // Get user's default location for event creation
 eventRouter.get(
   "/default-location",
   authMiddleware,
   ngoEventController.getDefaultLocation
 );
-// Admin: get all pending events
+
+// Get all published events
+eventRouter.get("/all-event", ngoEventController.getAllPublishedEvents);
+
+// Get sponsorship-related events
+eventRouter.get("/sponsorship", ngoEventController.getSponsorshipEvents);
+
+// Get events by organization (specific NGO)
+eventRouter.get(
+  "/organization",
+  authMiddleware,
+  ngoEventController.getEventsByOrganization
+);
+
+// Participation-related routes
+eventRouter.post(
+  "/participate/:eventId",
+  authMiddleware,
+  ngoEventController.participateInEvent
+);
+eventRouter.post(
+  "/request-participation/:eventId",
+  authMiddleware,
+  ngoEventController.requestParticipation
+);
+eventRouter.delete(
+  "/leave/:eventId",
+  authMiddleware,
+  ngoEventController.leaveEvent
+);
+
+// NGO ends event (requests completion)
+eventRouter.post(
+  "/end/:eventId",
+  authMiddleware,
+  authorizeRole("ngo"),
+  upload.single("completionProof"),
+  ngoEventController.requestCompletion
+);
+
+// Migrate participants (debug/maintenance)
+eventRouter.post(
+  "/migrate-participants",
+  authMiddleware,
+  ngoEventController.migrateParticipantsData
+);
+
+/* ---------------- ADMIN ROUTES ---------------- */
+
+// Get all pending events
 eventRouter.get(
   "/pending",
   authMiddleware,
@@ -37,25 +85,63 @@ eventRouter.get(
   ngoEventController.getPendingEvents
 );
 
-// Get events by organization (must come before /:eventId route)
-eventRouter.get(
-  "/organization",
+// Approve / reject event
+eventRouter.put(
+  "/status/:eventId",
   authMiddleware,
-  ngoEventController.getEventsByOrganization
+  authorizeRole("admin"),
+  ngoEventController.updateEventStatus
 );
 
-// Debug route to test event creation
+// Get all end-event completion requests
+eventRouter.get(
+  "/review-completion",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.getAllCompletionRequests
+);
+
+// Review / Approve / Reject completion request
+eventRouter.put(
+  "/review-completion/:eventId",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.reviewCompletion
+);
+
+// Completion history (admin)
+eventRouter.get(
+  "/history/completion-requests",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.getCompletionRequestHistory
+);
+
+// Completed events by NGO
+eventRouter.get(
+  "/history/completed-events/:ngoId",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.getCompletedEventsByNgo
+);
+
+// Approve with scoring
+eventRouter.put(
+  "/admin/approve-with-scoring/:eventId",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.approveEventWithScoring
+);
+
+/* ---------------- DEBUG ROUTE ---------------- */
+
 eventRouter.post(
   "/test-create",
   authMiddleware,
   authorizeRole("ngo"),
   async (req, res) => {
     try {
-      console.log(
-        "[DEBUG] Test event creation - User:",
-        req.user._id,
-        req.user.name
-      );
+      console.log("[DEBUG] Test event creation - User:", req.user._id, req.user.name);
 
       const testEvent = {
         title: "Test Event - " + new Date().toISOString(),
@@ -79,10 +165,6 @@ eventRouter.post(
         success: true,
         message: "Test event created successfully",
         event,
-        debug: {
-          organizationId: req.user._id.toString(),
-          eventId: event._id.toString(),
-        },
       });
     } catch (error) {
       console.error("[DEBUG] Test event creation failed:", error);
@@ -95,105 +177,15 @@ eventRouter.post(
   }
 );
 
-eventRouter.get("/:eventId", ngoEventController.getEventById); // Get single event
+/* ---------------- DYNAMIC ROUTES (MUST BE LAST) ---------------- */
+
+// Get single event by ID
+eventRouter.get("/:eventId", ngoEventController.getEventById);
 
 // Update event (for organization owners)
 eventRouter.put("/:eventId", authMiddleware, ngoEventController.updateEvent);
 
 // Delete event (for organization owners)
 eventRouter.delete("/:eventId", authMiddleware, ngoEventController.deleteEvent);
-
-// Participation routes
-eventRouter.post(
-  "/participate/:eventId",
-  authMiddleware,
-  ngoEventController.participateInEvent
-);
-eventRouter.post(
-  "/request-participation/:eventId",
-  authMiddleware,
-  ngoEventController.requestParticipation
-);
-eventRouter.delete(
-  "/leave/:eventId",
-  authMiddleware,
-  ngoEventController.leaveEvent
-);
-
-// End event request (NGO)
-eventRouter.post(
-  "/end/:eventId",
-  authMiddleware,
-  authorizeRole("ngo"),
-  upload.single("completionProof"),
-  ngoEventController.requestCompletion
-);
-
-// Migration route
-eventRouter.post(
-  "/migrate-participants",
-  authMiddleware,
-  ngoEventController.migrateParticipantsData
-);
-
-// ---------------- Admin Routes ----------------
-
-// Get all pending events
-eventRouter.get(
-  "/pending",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.getPendingEvents
-);
-
-// Approve/reject event
-eventRouter.put(
-  "/status/:eventId",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.updateEventStatus
-);
-
-// Get all end-event completion requests
-eventRouter.get(
-  "/review-completion",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.getAllCompletionRequests
-);
-
-// Review/Approve/Reject completion request
-eventRouter.put(
-  "/review-completion/:eventId",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.reviewCompletion
-);
-
-// ---------------- Dynamic Routes ----------------
-
-// Get single event by ID (must be last)
-eventRouter.get("/:eventId", ngoEventController.getEventById);
-
-eventRouter.get(
-  "/history/completion-requests",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.getCompletionRequestHistory
-);
-
-eventRouter.get(
-  "/history/completed-events/:ngoId",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.getCompletedEventsByNgo
-);
-
-eventRouter.put(
-  "/admin/approve-with-scoring/:eventId",
-  authMiddleware,
-  authorizeRole("admin"),
-  ngoEventController.approveEventWithScoring
-);
 
 export default eventRouter;

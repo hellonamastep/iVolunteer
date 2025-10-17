@@ -382,8 +382,7 @@ const requestCompletion = asyncHandler(async (req, res) => {
 });
 
 
-// Admin reviews completion
-// ngoEvent.controller.js
+
 // Admin reviews completion
 export const reviewCompletion = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
