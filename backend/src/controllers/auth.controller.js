@@ -9,6 +9,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { cloudinary } from "../config/cloudinary.js";
 import { otpService } from "../services/otp.service.js";
+
 // new
 import { sendPasswordResetEmail, sendPasswResetSuccessEmail } from "../services/email.service.js";
 
@@ -56,7 +57,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Email and name are required");
   }
 
-  const { user, tokens } = await oAuthService.googleLogin({
+  const { user, tokens } = await authService.googleLogin({
     email,
     name,
     profilePicture,
