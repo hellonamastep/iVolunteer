@@ -36,8 +36,9 @@ app.set('trust proxy', 1);
 
 app.use(
   helmet({
-    crossOriginEmbedderPolicy: false,
+    crossOriginEmbedderPolicy: false, // Keep this false
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Add this
   })
 );
 

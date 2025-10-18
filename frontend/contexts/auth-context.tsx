@@ -211,39 +211,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 };
 
-//   try {
-//     if (!credentialResponse?.credential) {
-//       console.error("Google credential missing");
-//       return false;
-//     }
-
-//     const decoded: any = jwtDecode(credentialResponse.credential);
-
-//     const res = await fetch(`https://namastep-irod.onrender.com/api/v1/auth/google-login`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         email: decoded.email,
-//         name: decoded.name,
-//         profilePicture: decoded.picture,
-//       }),
-//     });
-
-//     if (!res.ok) {
-//       console.error("Google login failed");
-//       return false;
-//     }
-
-//     const data = await res.json();
-//     localStorage.setItem("accessToken", data.tokens.accessToken);
-//     localStorage.setItem("refreshToken", data.tokens.refreshToken);
-
-//     return true;
-//   } catch (err) {
-//     console.error("Error in googleLogin:", err);
-//     return false;
-//   }
-// };
 
 // const googleLogin = async (credentialResponse: any): Promise<boolean> => {
 //   try {
@@ -267,15 +234,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 //       }
 //     );
 
-//     const data = await res.json();
+//     const result = await res.json();
 
-//     if (!res.ok || !data.tokens) {
-//       console.error("Google login failed", data);
+//     if (!res.ok || !result.success || !result.data?.tokens) {
+//       console.error("Google login failed", result);
 //       return false;
 //     }
 
-//     localStorage.setItem("accessToken", data.tokens.accessToken);
-//     localStorage.setItem("refreshToken", data.tokens.refreshToken);
+//     localStorage.setItem("accessToken", result.data.tokens.accessToken);
+//     localStorage.setItem("refreshToken", result.data.tokens.refreshToken);
+
 
 //     return true;
 //   } catch (err) {
@@ -283,7 +251,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 //     return false;
 //   }
 // };
-
 
 const googleLogin = async (credentialResponse: any): Promise<boolean> => {
   try {
@@ -298,7 +265,10 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
       "https://namastep-irod.onrender.com/api/v1/auth/google-login",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // Important for cookies
         body: JSON.stringify({
           email: decoded.email,
           name: decoded.name,
@@ -314,9 +284,9 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
       return false;
     }
 
+    // Store tokens
     localStorage.setItem("accessToken", result.data.tokens.accessToken);
     localStorage.setItem("refreshToken", result.data.tokens.refreshToken);
-
 
     return true;
   } catch (err) {
@@ -324,7 +294,6 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
     return false;
   }
 };
-
 
   const logout = () => {
     setUser(null);
