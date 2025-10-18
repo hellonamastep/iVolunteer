@@ -44,24 +44,48 @@ const register = asyncHandler(async(req, res) => {
     });
 });
 
+// const login = asyncHandler(async (req, res) => {
+//   // Step 1: Verify user credentials
+//   const user = await authService.login(req.body);
+
+//   // Step 2: Send OTP email
+//   // await otpService.sendOtp(user.email);
+
+//   // Step 3: Return success message without tokens
+//   return res.status(200).json({
+//     user: {
+//       email: user.email,
+//       name: user.name,
+//       role: user.role,
+//     },
+//     message: "OTP sent to your email. Please verify to complete login.",
+//   });
+// });
+
 const login = asyncHandler(async (req, res) => {
-  // Step 1: Verify user credentials
+  // Step 1: Validate credentials
   const user = await authService.login(req.body);
 
-  // Step 2: Send OTP email
-  await otpService.sendOtp(user.email);
+  // Step 2: Create session tokens
+  const { accessToken, refreshToken } = await createSession(user);
 
-  // Step 3: Return success message without tokens
+  // Step 3: Set cookies for frontend
+  setCookies(res, accessToken, refreshToken);
+
+  // Step 4: Return user info + tokens
   return res.status(200).json({
     user: {
+      userId: user._id,
       email: user.email,
       name: user.name,
       role: user.role,
+      coins: user.coins,
+      profilePicture: user.profilePicture,
     },
-    message: "OTP sent to your email. Please verify to complete login.",
+    tokens: { accessToken, refreshToken },
+    message: "Login successful!",
   });
 });
-
 
 const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;

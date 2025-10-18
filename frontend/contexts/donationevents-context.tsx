@@ -159,7 +159,9 @@ export const DonationEventProvider = ({ children }: Props) => {
   };
 
   // -------------------- Handle Razorpay Payment --------------------
-  const handleRazorpayPayment = async (eventId: string, amount: number) => {
+ // In your handleRazorpayPayment function
+const handleRazorpayPayment = async (eventId: string, amount: number) => {
+  try {
     const loaded = await loadRazorpayScript();
     if (!loaded) {
       toast.error("Razorpay SDK failed to load. Check your connection.");
@@ -167,7 +169,10 @@ export const DonationEventProvider = ({ children }: Props) => {
     }
 
     const order = await createRazorpayOrder(eventId, amount);
-    if (!order) return;
+    if (!order) {
+      toast.error("Failed to create payment order");
+      return;
+    }
 
     if (typeof window === "undefined" || !(window as any).Razorpay) {
       toast.error("Razorpay SDK not available.");
@@ -176,25 +181,14 @@ export const DonationEventProvider = ({ children }: Props) => {
 
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-      amount: order.amount, // in paise
+      amount: order.amount,
       currency: order.currency,
       name: "iVolunteer",
       description: "Donation",
       order_id: order.orderId,
       handler: async (response: any) => {
         try {
-          // Define the API response type
-          interface DonationResponse {
-            success: boolean;
-            donation: {
-              _id: string;
-              amount: number;
-              eventId: string;
-            };
-          }
-
-          // Tell TypeScript the response type
-          const res = await api.post<DonationResponse>("/v1/donation/donate", {
+          const res = await api.post("/v1/donation/donate", {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
@@ -202,19 +196,16 @@ export const DonationEventProvider = ({ children }: Props) => {
             amount,
           });
 
-          toast.success("Donation successful!");
-
-          // Safely call earnPoints if donation ID exists
-          if (res.data.donation?._id) {
-            earnPoints("everyDonation", res.data.donation._id);
-            toast.success("10+ points");
+          if (res.data.success) {
+            toast.success("Donation successful!");
+            if (res.data.donation?._id) {
+              earnPoints("everyDonation", res.data.donation._id);
+            }
+            fetchEvents();
           }
-
-          // Refresh events once
-          fetchEvents();
-        } catch (err) {
+        } catch (err: any) {
           console.error("Payment verification failed:", err);
-          toast.error("Payment verification failed");
+          toast.error(err.response?.data?.message || "Payment verification failed");
         }
       },
       prefill: {
@@ -225,8 +216,16 @@ export const DonationEventProvider = ({ children }: Props) => {
     };
 
     const rzp = new (window as any).Razorpay(options);
+    rzp.on('payment.failed', (response: any) => {
+      console.error("Payment failed:", response.error);
+      toast.error(`Payment failed: ${response.error.description}`);
+    });
     rzp.open();
-  };
+  } catch (error) {
+    console.error("Payment initialization error:", error);
+    toast.error("Failed to initialize payment");
+  }
+};
 
   return (
     <DonationEventContext.Provider

@@ -355,14 +355,18 @@ const CreateEventPage: React.FC = () => {
         const formData = new FormData();
         formData.append("image", eventImage[0]);
 
-        const uploadResponse = await api.post("/v1/upload/single", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
-          },
-        });
+        const response = await api.post(
+          "/v1/upload/single",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+            },
+          }
+        );
 
-        imageData = uploadResponse.data;
+        imageData = response.data;
       }
 
       // Determine category value

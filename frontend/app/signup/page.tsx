@@ -1,3 +1,6 @@
+
+
+
 "use client";
 
 import React, { useState } from "react";
@@ -94,13 +97,7 @@ export default function SignupPage() {
   ];
 
   // Match exact backend enum values for organization size
-  const organizationSizeOptions = [
-    "1-10",
-    "11-50",
-    "51-100",
-    "101-500",
-    "500+",
-  ];
+  const organizationSizeOptions = ["1-10", "11-50", "51-100", "101-500", "500+"];
 
   const selectedRole = watch("role");
   const watchedFields = watch();
@@ -239,6 +236,7 @@ export default function SignupPage() {
       }
 
       console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
+      console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
 
       const success = await signup(signupData);
       if (success) {
@@ -259,13 +257,13 @@ export default function SignupPage() {
       {/* Header */}
       <div className="flex flex-col items-center mb-8">
         <div className="relative">
-         <Image
-                  src="/images/auth.png"
-                  alt="Namastep Logo"
-                  width={150} // optional but recommended
-                  height={150} // optional but recommended
-                  priority // optional (for above-the-fold images)
-                />
+          <Image
+            src="/images/auth.png"
+            alt="Namastep Logo"
+            width={150}
+            height={150}
+            priority
+          />
           <div className="absolute -inset-2 bg-[#50C878]/20 rounded-full blur-sm animate-pulse"></div>
         </div>
         <h1 className="text-[#50C878] font-extrabold text-3xl tracking-wide drop-shadow-sm">
@@ -300,9 +298,7 @@ export default function SignupPage() {
                     </div>
                     <span
                       className={`text-xs mt-2 font-medium ${
-                        activeStep >= step.number
-                          ? "text-[#3ABBA5]"
-                          : "text-gray-400"
+                        activeStep >= step.number ? "text-[#3ABBA5]" : "text-gray-400"
                       }`}
                     >
                       {step.title}
@@ -311,9 +307,7 @@ export default function SignupPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`w-12 h-1 rounded-full transition-all duration-300 ${
-                        activeStep > step.number
-                          ? "bg-[#3ABBA5]"
-                          : "bg-gray-200"
+                        activeStep > step.number ? "bg-[#3ABBA5]" : "bg-gray-200"
                       }`}
                     ></div>
                   )}
@@ -330,14 +324,9 @@ export default function SignupPage() {
             <p className="text-gray-600 text-lg">
               {activeStep === 1 && "Choose your account type to get started"}
               {activeStep === 2 && "Tell us about yourself"}
-              {activeStep === 3 &&
-                selectedRole === "ngo" &&
-                "Organization information"}
-              {activeStep === 4 &&
-                selectedRole === "ngo" &&
-                "Additional details"}
-              {activeStep === (selectedRole === "ngo" ? 5 : 3) &&
-                "Complete your profile"}
+              {activeStep === 3 && selectedRole === "ngo" && "Organization information"}
+              {activeStep === 4 && selectedRole === "ngo" && "Additional details"}
+              {activeStep === (selectedRole === "ngo" ? 5 : 3) && "Complete your profile"}
             </p>
           </div>
 
@@ -393,20 +382,14 @@ export default function SignupPage() {
                           <div className="flex flex-col items-center text-center space-y-3">
                             <div
                               className={`p-3 rounded-full transition-colors ${
-                                isSelected
-                                  ? "bg-[#3ABBA5] text-white"
-                                  : "bg-gray-100 text-gray-600"
+                                isSelected ? "bg-[#3ABBA5] text-white" : "bg-gray-100 text-gray-600"
                               }`}
                             >
                               <Icon className="w-8 h-8" />
                             </div>
-                            <h3 className="font-bold text-gray-800 text-lg">
-                              {opt.label}
-                            </h3>
+                            <h3 className="font-bold text-gray-800 text-lg">{opt.label}</h3>
                             <p className="text-sm text-gray-600">
-                              {opt.value === "user"
-                                ? "Join as an individual volunteer"
-                                : "Register your organization"}
+                              {opt.value === "user" ? "Join as an individual volunteer" : "Register your organization"}
                             </p>
                           </div>
                           {isSelected && (
@@ -419,11 +402,7 @@ export default function SignupPage() {
                     );
                   })}
                 </div>
-                {errors.role && (
-                  <p className="text-red-500 text-sm text-center animate-shake">
-                    {errors.role.message}
-                  </p>
-                )}
+                {errors.role && <p className="text-red-500 text-sm text-center animate-shake">{errors.role.message}</p>}
               </div>
             )}
 
@@ -434,42 +413,27 @@ export default function SignupPage() {
                   {/* Name Field */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      {selectedRole === "ngo"
-                        ? "Organization Name"
-                        : "Full Name"}{" "}
-                      *
+                      {selectedRole === "ngo" ? "Organization Name" : "Full Name"} *
                     </label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
                         type="text"
-                        placeholder={
-                          selectedRole === "ngo"
-                            ? "Enter organization name"
-                            : "Enter your full name"
-                        }
+                        placeholder={selectedRole === "ngo" ? "Enter organization name" : "Enter your full name"}
                         {...register("name", {
                           required: "This field is required",
                         })}
                         className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.name
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.name ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                     </div>
-                    {errors.name && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    {errors.name && <p className="text-red-500 text-sm animate-shake">{errors.name.message}</p>}
                   </div>
 
                   {/* Email Field */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Email *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Email *</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
@@ -680,14 +644,12 @@ export default function SignupPage() {
                         {...register("password", {
                           required: "Password is required",
                           minLength: {
-                            value: 6,
-                            message: "Minimum 6 characters",
+                            value: 8,
+                            message: "Minimum 8 characters",
                           },
                         })}
                         className={`w-full pl-12 pr-12 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.password
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.password ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                       <button
@@ -695,25 +657,15 @@ export default function SignupPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.password.message}
-                      </p>
-                    )}
+                    {errors.password && <p className="text-red-500 text-sm animate-shake">{errors.password.message}</p>}
                   </div>
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Confirm Password *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Confirm Password *</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
@@ -721,42 +673,80 @@ export default function SignupPage() {
                         placeholder="••••••••"
                         {...register("confirmPassword", {
                           required: "Please confirm your password",
-                          validate: (val) =>
-                            val === watchedFields.password ||
-                            "Passwords do not match",
+                          validate: (val) => val === watchedFields.password || "Passwords do not match",
                         })}
                         className={`w-full pl-12 pr-12 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.confirmPassword
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.confirmPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                        {!errors.confirmPassword &&
-                          watchedFields.confirmPassword && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
+                        {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-5 w-5 text-green-500" />}
                         <button
                           type="button"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.confirmPassword.message}
-                      </p>
-                    )}
+                    {errors.confirmPassword && <p className="text-red-500 text-sm animate-shake">{errors.confirmPassword.message}</p>}
                   </div>
+
+                  {/* Volunteer-specific fields: only show when role === 'user' */}
+                  {selectedRole === "user" && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">Age *</label>
+                        <div className="relative">
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="number"
+                            placeholder="e.g., 25"
+                            {...register("age", {
+                              required: "Age is required for volunteers",
+                              valueAsNumber: true,
+                              min: { value: 1, message: "Invalid age" },
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.age && <p className="text-red-500 text-sm animate-shake">{errors.age.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">City *</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Your city"
+                            {...register("city", {
+                              required: "City is required for volunteers",
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.city && <p className="text-red-500 text-sm animate-shake">{errors.city.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">Profession *</label>
+                        <div className="relative">
+                          <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Your profession"
+                            {...register("profession", {
+                              required: "Profession is required for volunteers",
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.profession && <p className="text-red-500 text-sm animate-shake">{errors.profession.message}</p>}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -765,16 +755,12 @@ export default function SignupPage() {
             {activeStep === 3 && selectedRole === "ngo" && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-2xl p-6 border border-[#3ABBA5]/20">
-                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">
-                    Organization Information
-                  </h3>
+                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">Organization Information</h3>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Organization Type */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Organization Type *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Organization Type *</label>
                       <select
                         {...register("organizationType", {
                           required: "Please select organization type",
@@ -793,18 +779,12 @@ export default function SignupPage() {
                         <option value="society">Society</option>
                         <option value="other">Other</option>
                       </select>
-                      {errors.organizationType && (
-                        <p className="text-red-500 text-sm animate-shake">
-                          {errors.organizationType.message}
-                        </p>
-                      )}
+                      {errors.organizationType && <p className="text-red-500 text-sm animate-shake">{errors.organizationType.message}</p>}
                     </div>
 
                     {/* Contact Number */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Contact Number *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Contact Number *</label>
                       <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -828,18 +808,12 @@ export default function SignupPage() {
                           }`}
                         />
                       </div>
-                      {errors.contactNumber && (
-                        <p className="text-red-500 text-sm animate-shake">
-                          {errors.contactNumber.message}
-                        </p>
-                      )}
+                      {errors.contactNumber && <p className="text-red-500 text-sm animate-shake">{errors.contactNumber.message}</p>}
                     </div>
 
                     {/* Website */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Website URL
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Website URL</label>
                       <div className="relative">
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -853,9 +827,7 @@ export default function SignupPage() {
 
                     {/* Year Established */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Year Established
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Year Established</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -870,9 +842,7 @@ export default function SignupPage() {
 
                   {/* Organization Description */}
                   <div className="space-y-2 mt-4">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Organization Description *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Organization Description *</label>
                     <textarea
                       placeholder="Describe your organization's mission, vision, and activities..."
                       rows={4}
@@ -907,15 +877,11 @@ export default function SignupPage() {
             {activeStep === 4 && selectedRole === "ngo" && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-2xl p-6 border border-[#3ABBA5]/20">
-                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">
-                    Additional Details
-                  </h3>
+                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">Additional Details</h3>
 
                   {/* Organization Size */}
                   <div className="space-y-2 mb-6">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Organization Size *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Organization Size *</label>
                     <div className="relative">
                       <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <select
@@ -936,27 +902,18 @@ export default function SignupPage() {
                         ))}
                       </select>
                     </div>
-                    {errors.organizationSize && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.organizationSize.message}
-                      </p>
-                    )}
+                    {errors.organizationSize && <p className="text-red-500 text-sm animate-shake">{errors.organizationSize.message}</p>}
                   </div>
 
                   {/* Focus Areas */}
                   <div className="space-y-2 mb-6">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Focus Areas * (Select at least one)
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Focus Areas * (Select at least one)</label>
                     <div className="relative">
                       <Target className="absolute left-4 top-4 text-gray-400 h-5 w-5" />
                       <div className="pl-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {focusAreaOptions.map((area) => (
-                            <label
-                              key={area}
-                              className="flex items-center space-x-3 cursor-pointer"
-                            >
+                            <label key={area} className="flex items-center space-x-3 cursor-pointer">
                               <input
                                 type="checkbox"
                                 value={area}
@@ -966,32 +923,20 @@ export default function SignupPage() {
                               />
                               <div
                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                  selectedFocusAreas.includes(area)
-                                    ? "bg-[#3ABBA5] border-[#3ABBA5]"
-                                    : "border-gray-300 bg-white"
+                                  selectedFocusAreas.includes(area) ? "bg-[#3ABBA5] border-[#3ABBA5]" : "border-gray-300 bg-white"
                                 }`}
                               >
-                                {selectedFocusAreas.includes(area) && (
-                                  <CheckCircle className="w-3 h-3 text-white" />
-                                )}
+                                {selectedFocusAreas.includes(area) && <CheckCircle className="w-3 h-3 text-white" />}
                               </div>
-                              <span className="text-sm text-gray-700">
-                                {area}
-                              </span>
+                              <span className="text-sm text-gray-700">{area}</span>
                             </label>
                           ))}
                         </div>
-                        {errors.focusAreas && (
-                          <p className="text-red-500 text-sm animate-shake mt-2">
-                            Please select at least one focus area
-                          </p>
-                        )}
+                        {errors.focusAreas && <p className="text-red-500 text-sm animate-shake mt-2">Please select at least one focus area</p>}
                         <input
                           type="hidden"
                           {...register("focusAreas", {
-                            validate: (val) =>
-                              (val && val.length > 0) ||
-                              "Please select at least one focus area",
+                            validate: (val) => (val && val.length > 0) || "Please select at least one focus area",
                           })}
                         />
                       </div>
@@ -1000,9 +945,7 @@ export default function SignupPage() {
 
                   {/* Address Fields */}
                   <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Address *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Address *</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-4 text-gray-400 h-5 w-5" />
                       <div className="pl-12 space-y-4">
@@ -1119,24 +1062,16 @@ export default function SignupPage() {
                   <CheckCircle className="w-12 h-12 text-green-500" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    Ready to Join!
-                  </h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Ready to Join!</h3>
                   <p className="text-gray-600 max-w-md mx-auto">
-                    You're all set to create your{" "}
-                    {selectedRole === "ngo" ? "organization" : "volunteer"}{" "}
-                    account. Review your information and click create account to
-                    get started.
+                    You're all set to create your {selectedRole === "ngo" ? "organization" : "volunteer"} account. Review your information and click create account to get started.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-6 text-left max-w-md mx-auto">
-                  <h4 className="font-semibold text-gray-800 mb-3">
-                    Account Summary
-                  </h4>
+                  <h4 className="font-semibold text-gray-800 mb-3">Account Summary</h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>
-                      <strong>Role:</strong>{" "}
-                      {selectedRole === "ngo" ? "NGO" : "Volunteer"}
+                      <strong>Role:</strong> {selectedRole === "ngo" ? "NGO" : "Volunteer"}
                     </p>
                     <p>
                       <strong>Name:</strong> {watchedFields.name}
@@ -1147,20 +1082,29 @@ export default function SignupPage() {
                     {selectedRole === "ngo" && (
                       <>
                         <p>
-                          <strong>Organization Type:</strong>{" "}
-                          {watchedFields.organizationType}
+                          <strong>Organization Type:</strong> {watchedFields.organizationType}
                         </p>
                         <p>
-                          <strong>Contact:</strong>{" "}
-                          {watchedFields.contactNumber}
+                          <strong>Contact:</strong> {watchedFields.contactNumber}
                         </p>
                         <p>
-                          <strong>Focus Areas:</strong>{" "}
-                          {selectedFocusAreas.join(", ")}
+                          <strong>Focus Areas:</strong> {selectedFocusAreas.join(", ")}
                         </p>
                         <p>
-                          <strong>Organization Size:</strong>{" "}
-                          {watchedFields.organizationSize}
+                          <strong>Organization Size:</strong> {watchedFields.organizationSize}
+                        </p>
+                      </>
+                    )}
+                    {selectedRole === "user" && (
+                      <>
+                        <p>
+                          <strong>Age:</strong> {watchedFields.age}
+                        </p>
+                        <p>
+                          <strong>City:</strong> {watchedFields.city}
+                        </p>
+                        <p>
+                          <strong>Profession:</strong> {watchedFields.profession}
                         </p>
                       </>
                     )}
@@ -1199,24 +1143,9 @@ export default function SignupPage() {
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       Creating Account...
                     </span>
@@ -1232,19 +1161,13 @@ export default function SignupPage() {
           <div className="text-center pt-8">
             <p className="text-gray-600">
               Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-[#3ABBA5] font-semibold hover:underline transition-colors"
-              >
+              <Link href="/login" className="text-[#3ABBA5] font-semibold hover:underline transition-colors">
                 Log in here
               </Link>
             </p>
-              <p className="text-gray-600">
+            <p className="text-gray-600">
               Are you a corporate partner?{" "}
-              <Link
-                href="/corporatesignup"
-                className="text-indigo-400 font-semibold hover:underline transition-colors"
-              >
+              <Link href="/corporatesignup" className="text-indigo-400 font-semibold hover:underline transition-colors">
                 Sign up here
               </Link>
             </p>
@@ -1254,4 +1177,3 @@ export default function SignupPage() {
     </div>
   );
 }
- 

@@ -104,6 +104,31 @@ const register = async (data) => {
 };
 
 
+// const login = async (data) => {
+//   const email = data.email.toLowerCase().trim();
+
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     throw new ApiError(404, "User does not exist");
+//   }
+
+//   const isValidPass = await comparePassword(data.password, user.password);
+
+//   if (!isValidPass) {
+//     throw new ApiError(401, "Invalid password");
+//   }
+
+//   return {
+//     userId: user._id,
+//     email: user.email,
+//     name: user.name,
+//     role: user.role,
+//     coins: user.coins,
+//     profilePicture: user.profilePicture,
+//     cloudinaryPublicId: user.cloudinaryPublicId,
+//   };
+// };
+
 const login = async (data) => {
   const email = data.email.toLowerCase().trim();
 
@@ -113,21 +138,14 @@ const login = async (data) => {
   }
 
   const isValidPass = await comparePassword(data.password, user.password);
-
   if (!isValidPass) {
     throw new ApiError(401, "Invalid password");
   }
 
-  return {
-    userId: user._id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    coins: user.coins,
-    profilePicture: user.profilePicture,
-    cloudinaryPublicId: user.cloudinaryPublicId,
-  };
+  // Return full user object for token/session creation
+  return user;
 };
+
 
 const logout = async (refreshToken) => {
   const hashedToken = hashToken(refreshToken);

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./auth-context";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE_URL = "http://localhost:5000/api/v1";
+const API_BASE_URL = "https://namastep-irod.onrender.com/api/v1";
 
 interface ParticipationRequest {
   _id: string;
@@ -14,7 +14,7 @@ interface ParticipationRequest {
     date: string;
     location: string;
     organization?: string;
-  };
+  } | null; // Allow eventId to be null
   userId: {
     _id: string;
     name: string;
@@ -276,7 +276,11 @@ export const ParticipationRequestProvider: React.FC<{ children: React.ReactNode 
       const data = await response.json();
 
       if (response.ok) {
-        setIncomingRequests(data.data || []);
+        // Filter out any requests with null eventId to prevent future errors
+        const validRequests = (data.data || []).filter((req: ParticipationRequest) => 
+          req.eventId && req.eventId._id
+        );
+        setIncomingRequests(validRequests);
       } else {
         console.error("Failed to fetch incoming requests:", data.message);
       }
@@ -304,7 +308,11 @@ export const ParticipationRequestProvider: React.FC<{ children: React.ReactNode 
       const data = await response.json();
 
       if (response.ok) {
-        setUserRequests(data.data || []);
+        // Filter out any requests with null eventId to prevent future errors
+        const validRequests = (data.data || []).filter((req: ParticipationRequest) => 
+          req.eventId && req.eventId._id
+        );
+        setUserRequests(validRequests);
       } else {
         console.error("Failed to fetch user requests:", data.message);
       }
@@ -339,28 +347,40 @@ export const ParticipationRequestProvider: React.FC<{ children: React.ReactNode 
   // Helper function to check if user has requested participation for an event
   const hasRequestedParticipation = (eventId: string): boolean => {
     return userRequests.some(req => 
-      req.eventId._id === eventId && req.status === "pending"
+      req.eventId && // Check if eventId exists
+      req.eventId._id && // Check if eventId._id exists
+      req.eventId._id === eventId && 
+      req.status === "pending"
     );
   };
 
   // Helper function to get pending request for an event
   const getPendingRequestForEvent = (eventId: string): ParticipationRequest | null => {
     return userRequests.find(req => 
-      req.eventId._id === eventId && req.status === "pending"
+      req.eventId && // Check if eventId exists
+      req.eventId._id && // Check if eventId._id exists
+      req.eventId._id === eventId && 
+      req.status === "pending"
     ) || null;
   };
 
   // Helper function to get rejected request for an event
   const getRejectedRequestForEvent = (eventId: string): ParticipationRequest | null => {
     return userRequests.find(req => 
-      req.eventId._id === eventId && req.status === "rejected"
+      req.eventId && // Check if eventId exists
+      req.eventId._id && // Check if eventId._id exists
+      req.eventId._id === eventId && 
+      req.status === "rejected"
     ) || null;
   };
 
   // Helper function to check if user has a rejected request for an event
   const hasRejectedRequest = (eventId: string): boolean => {
     return userRequests.some(req => 
-      req.eventId._id === eventId && req.status === "rejected"
+      req.eventId && // Check if eventId exists
+      req.eventId._id && // Check if eventId._id exists
+      req.eventId._id === eventId && 
+      req.status === "rejected"
     );
   };
 

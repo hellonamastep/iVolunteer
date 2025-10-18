@@ -84,13 +84,13 @@ function NGODashboard() {
       <div className="absolute w-32 h-32 bg-[#EC4899] opacity-[0.03] rounded-full top-[417px] left-[554px]"></div>
       <div className="absolute w-24 h-24 bg-[#4FC3DC] opacity-[0.04] rounded-full top-36 right-72"></div>
       
-      {/* Animated Mascots */}
+      {/* Animated Video Mascots - Positioned at edges to avoid content overlap */}
       <motion.img
-        src="/mascots/mascot_volunteer.png"
-        alt="volunteer mascot"
-        className="absolute top-32 left-12 w-20 h-20 md:w-24 md:h-24 opacity-30 pointer-events-none"
+        src="/mascots/video_mascots/mascot_joyDance_video.gif"
+        alt="joy dance mascot"
+        className="absolute top-20 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-8 pointer-events-none z-[5]"
         animate={{
-          y: [0, -20, 0],
+          y: [0, -15, 0],
           rotate: [0, 5, -5, 0],
         }}
         transition={{
@@ -101,11 +101,11 @@ function NGODashboard() {
       />
       
       <motion.img
-        src="/mascots/mascot_love.png"
-        alt="love mascot"
-        className="absolute top-48 right-20 w-16 h-16 md:w-20 md:h-20 opacity-30 pointer-events-none"
+        src="/mascots/video_mascots/mascot_holdingmoney_video.gif"
+        alt="holding money mascot"
+        className="absolute top-24 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-8 pointer-events-none z-[5]"
         animate={{
-          y: [0, 15, 0],
+          y: [0, 12, 0],
           rotate: [0, -5, 5, 0],
         }}
         transition={{
@@ -117,133 +117,36 @@ function NGODashboard() {
       />
       
       <motion.img
-        src="/mascots/mascot_help.png"
-        alt="help mascot"
-        className="absolute bottom-40 left-24 w-20 h-20 md:w-24 md:h-24 opacity-30 pointer-events-none"
+        src="/mascots/video_mascots/mascot_jumping_video.gif"
+        alt="jumping mascot"
+        className="absolute bottom-32 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-12 pointer-events-none z-[5] hidden md:block"
         animate={{
-          y: [0, -15, 0],
-          x: [0, 10, 0],
+          y: [0, 18, 0],
+          rotate: [0, -8, 8, 0],
         }}
         transition={{
-          duration: 6,
+          duration: 5.5,
           repeat: Infinity,
           ease: "easeInOut",
           delay: 1,
         }}
       />
       
-      <motion.img
-        src="/mascots/mascot_star.png"
-        alt="star mascot"
-        className="absolute top-96 left-1/4 w-16 h-16 md:w-20 md:h-20 opacity-25 pointer-events-none hidden md:block"
+      {/* <motion.img
+        src="/mascots/video_mascots/mascot_planting_video.gif"
+        alt="planting mascot"
+        className="absolute bottom-40 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-10 pointer-events-none z-[5] hidden lg:block"
         animate={{
-          scale: [1, 1.2, 1],
-          rotate: [0, 10, -10, 0],
+          scale: [1, 1.1, 1],
+          y: [0, -10, 0],
         }}
         transition={{
-          duration: 7,
+          duration: 6,
           repeat: Infinity,
           ease: "easeInOut",
           delay: 1.5,
         }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_group.png"
-        alt="group mascot"
-        className="absolute bottom-64 right-32 w-20 h-20 md:w-24 md:h-24 opacity-30 pointer-events-none"
-        animate={{
-          y: [0, 20, 0],
-          rotate: [0, -10, 10, 0],
-        }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_happiness.png"
-        alt="happiness mascot"
-        className="absolute top-1/3 right-16 w-16 h-16 md:w-20 md:h-20 opacity-25 pointer-events-none hidden md:block"
-        animate={{
-          y: [0, -10, 0],
-          x: [0, -10, 0],
-          rotate: [0, 15, -15, 0],
-        }}
-        transition={{
-          duration: 6.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2.5,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_party.png"
-        alt="party mascot"
-        className="absolute bottom-1/4 left-1/3 w-16 h-16 md:w-20 md:h-20 opacity-25 pointer-events-none hidden lg:block"
-        animate={{
-          scale: [1, 1.1, 1],
-          y: [0, -12, 0],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 3,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_donate.png"
-        alt="donate mascot"
-        className="absolute top-2/3 left-16 w-20 h-20 md:w-24 md:h-24 opacity-30 pointer-events-none"
-        animate={{
-          y: [0, 18, 0],
-          rotate: [0, 8, -8, 0],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 3.5,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_thumbsup.png"
-        alt="thumbs up mascot"
-        className="absolute top-1/2 right-24 w-16 h-16 md:w-20 md:h-20 opacity-25 pointer-events-none hidden lg:block"
-        animate={{
-          y: [0, -15, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 4,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/mascot_connect.png"
-        alt="connect mascot"
-        className="absolute bottom-1/3 right-12 w-16 h-16 md:w-20 md:h-20 opacity-25 pointer-events-none hidden md:block"
-        animate={{
-          y: [0, 12, 0],
-          rotate: [0, -8, 8, 0],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 4.5,
-        }}
-      />
+      /> */}
       
       <div className="relative z-10">
         <Header />

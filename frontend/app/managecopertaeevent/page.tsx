@@ -241,7 +241,7 @@ const AdminCorporateEventsPage = () => {
                 <div className="h-48 bg-gradient-to-br from-emerald-500 to-green-600 relative overflow-hidden">
                   {event.image ? (
                     <img
-                      src={`http://localhost:5000/${event.image}`}
+                      src={`https://namastep-irod.onrender.com/${event.image}`}
                       alt={event.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

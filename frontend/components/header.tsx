@@ -58,16 +58,29 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-3 group">
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-              <span className="font-bold text-white text-xl">N</span>
+            {/* Premium Badge */}
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-700 to-blue-700 flex items-center justify-center group-hover:shadow-lg transition-all duration-300 shadow-md border border-indigo-200/20">
+              <span className="font-bold text-white text-lg tracking-tighter">
+                N
+              </span>
             </div>
-            <div className="absolute -inset-1.5 bg-blue-100/50 rounded-xl -z-10 group-hover:bg-blue-100/70 transition-colors duration-300" />
+
+            {/* Corner Accents */}
+            <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-cyan-300 rounded-sm" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-purple-300 rounded-sm" />
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            AMASTEP
-          </span>
+
+          {/* Corporate Typography */}
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-slate-800 tracking-tight">
+              Namastep
+            </span>
+            <span className="text-[9px] font-semibold text-slate-500 tracking-[0.1em] uppercase">
+              Social Innovation
+            </span>
+          </div>
         </Link>
 
         {/* Desktop nav */}
@@ -101,9 +114,16 @@ export function Header() {
           <div className="ml-4 flex items-center gap-2">
             {user ? (
               <div className="flex items-center gap-3 bg-white rounded-xl p-2 pl-3 border border-gray-100">
-                <Link href="/profile" className="flex-shrink-0 cursor-pointer group" title="View Profile">
+                <Link
+                  href="/profile"
+                  className="flex-shrink-0 cursor-pointer group"
+                  title="View Profile"
+                >
                   <Avatar className="w-9 h-9 shadow-sm group-hover:shadow-md transition-shadow duration-200 ring-2 ring-gray-100">
-                    <AvatarImage src={(user as any).profilePicture} alt={user.name} />
+                    <AvatarImage
+                      src={(user as any).profilePicture}
+                      alt={user.name}
+                    />
                     <AvatarFallback className="text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                       <User className="w-5 h-5" />
                     </AvatarFallback>
@@ -112,7 +132,10 @@ export function Header() {
 
                 <div className="flex-1 min-w-0 hidden lg:block">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Link href="/profile" className="hover:text-blue-600 transition-colors">
+                    <Link
+                      href="/profile"
+                      className="hover:text-blue-600 transition-colors"
+                    >
                       <span className="font-semibold text-gray-800 truncate text-sm">
                         {user.name}
                       </span>
@@ -200,13 +223,16 @@ export function Header() {
 
               {user ? (
                 <div className="px-4 py-3 bg-gray-50 rounded-xl">
-                  <Link 
-                    href="/profile" 
+                  <Link
+                    href="/profile"
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-3 mb-3 hover:bg-white p-2 rounded-lg transition-colors"
                   >
                     <Avatar className="w-10 h-10 ring-2 ring-white shadow-sm">
-                      <AvatarImage src={(user as any).profilePicture} alt={user.name} />
+                      <AvatarImage
+                        src={(user as any).profilePicture}
+                        alt={user.name}
+                      />
                       <AvatarFallback className="text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                         <User className="w-5 h-5" />
                       </AvatarFallback>
@@ -237,14 +263,14 @@ export function Header() {
               ) : (
                 <div className="flex flex-col gap-2">
                   <Link
-                    href="/auth"
+                    href="/signup"
                     onClick={() => setOpen(false)}
                     className="w-full text-center px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-colors duration-200 font-medium"
                   >
                     Sign up
                   </Link>
                   <Link
-                    href="/auth"
+                    href="/login"
                     onClick={() => setOpen(false)}
                     className="w-full text-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 font-medium"
                   >

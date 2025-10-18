@@ -90,11 +90,11 @@ const PrivacyPolicy = () => {
                   </p>
                   <div className="flex items-center space-x-4 text-gray-700">
                     <Mail className="w-5 h-5 text-blue-600" />
-                    <span>namastep@gmail.com</span>
+                    <span>hello.namastep@gmail.com</span>
                   </div>
                   <div className="flex items-center space-x-4 text-gray-700">
                     <Phone className="w-5 h-5 text-blue-600" />
-                    <span>7400452698</span>
+                    <span>+91 93239 51188</span>
                   </div>
                 </div>
               </div>
@@ -134,11 +134,11 @@ const PrivacyPolicy = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <Mail className="w-4 h-4" />
-                  <span>namastep@gmail.com</span>
+                  <span>hello.namastep@gmail.com</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4" />
-                  <span>7400452698</span>
+                  <span>+91 93239 51188</span>
                 </div>
               </div>
             </div>
