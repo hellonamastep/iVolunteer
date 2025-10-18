@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import { usePoints } from "./points-context";
 import api from "@/lib/api";
+import { jwtDecode } from 'jwt-decode'
 
 export type UserRole = "user" | "ngo" | "admin" | "corporate";
 
@@ -28,9 +29,9 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
-  verifyOtp: (email: string, otp: string) => Promise<boolean>;
   signup: (data: SignupData) => Promise<boolean>;
   logout: () => void;
+    googleLogin: (credentialResponse: any) => Promise<boolean>; // <-- ADD THIS
 }
 
 interface SignupData {
@@ -157,39 +158,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Step 1: Request OTP
-  // const login = async (
-  //   email: string,
-  //   password: string,
-  //   role: UserRole = "user"
-  // ): Promise<boolean> => {
-  //   setIsLoading(true);
-  //   try {
-  //     await api.post(
-  //       "/v1/auth/login",
-  //       { email, password, role },
-  //       { withCredentials: true }
-  //     );
-
-  //     toast({
-  //       title: "OTP Sent",
-  //       description: "Check your email for the OTP to complete login.",
-  //       variant: "default",
-  //     });
-
-  //     setIsLoading(false);
-  //     return true;
-  //   } catch (err: any) {
-  //     console.error("Login failed:", err.response?.data?.message || err.message);
-  //     toast({
-  //       title: "Login Failed",
-  //       description: err.response?.data?.message || "Please try again.",
-  //       variant: "destructive",
-  //     });
-  //     setIsLoading(false);
-  //     return false;
-  //   }
-  // };
+  
 
   const login = async (
   email: string,
@@ -242,51 +211,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 };
 
-
-  // Step 2: Verify OTP
-  const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      const { data } = await api.post<AuthResponse>(
-        "/v1/auth/verify-otp",
-        { email, otp },
-        { withCredentials: true }
-      );
-
-      const mappedUser: User = {
-        _id: data.user.userId,
-        id: data.user.userId,
-        email: data.user.email,
-        name: data.user.name,
-        role: data.user.role,
-        points: 0,
-        coins: data.user.coins || 0,
-        volunteeredHours: 0,
-        totalRewards: 0,
-        completedEvents: [],
-        createdAt: new Date().toISOString(),
-        profilePicture: (data.user as any).profilePicture || undefined,
-        cloudinaryPublicId: (data.user as any).cloudinaryPublicId || undefined,
-      };
-
-      setUser(mappedUser);
-      localStorage.setItem("auth-user", JSON.stringify(mappedUser));
-      localStorage.setItem("auth-token", data.tokens.accessToken);
-      localStorage.setItem("refresh-token", data.tokens.refreshToken);
-
-      setIsLoading(false);
-      return true;
-    } catch (err: any) {
-      console.error("OTP verification failed:", err.response?.data?.message || err.message);
-      toast({
-        title: "OTP Verification Failed",
-        description: err.response?.data?.message || "Please try again.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
+const googleLogin = async (credentialResponse: any): Promise<boolean> => {
+  try {
+    if (!credentialResponse?.credential) {
+      console.error("Google credential missing");
       return false;
     }
-  };
+
+    const decoded: any = jwtDecode(credentialResponse.credential);
+
+    const res = await fetch(`https://namastep-irod.onrender.com/api/v1/auth/google-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: decoded.email,
+        name: decoded.name,
+        profilePicture: decoded.picture,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("Google login failed");
+      return false;
+    }
+
+    const data = await res.json();
+    localStorage.setItem("accessToken", data.tokens.accessToken);
+    localStorage.setItem("refreshToken", data.tokens.refreshToken);
+
+    return true;
+  } catch (err) {
+    console.error("Error in googleLogin:", err);
+    return false;
+  }
+};
+
+
 
   const logout = () => {
     setUser(null);
@@ -297,7 +257,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, verifyOtp, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login,  signup, logout,googleLogin}}>
       {children}
     </AuthContext.Provider>
   );

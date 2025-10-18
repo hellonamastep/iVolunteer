@@ -36,4 +36,6 @@ router.post("/refresh-access-token", refreshAccessTokenController);
 router.post("/send-otp", otpController.sendOtp);
 router.post("/verify-otp", otpController.verifyOtp);
 
+router.post("/google-login",authController.googleLogin)
+
 export default router;

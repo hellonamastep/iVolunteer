@@ -16,9 +16,12 @@ import { GroupsProvider } from "@/contexts/groups-context";
 import { BlogProvider } from "@/contexts/blog-context";
 import { CorporateEventProvider } from "@/contexts/corporateEvent-context";
 import { ParticipationRequestProvider } from "@/contexts/participation-request-context";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
+     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
     <PointsProvider>
       <AuthProvider>
         <UserProvider>
@@ -56,5 +59,6 @@ export function Providers({ children }: { children: ReactNode }) {
         </UserProvider>
       </AuthProvider>
     </PointsProvider>
+    </GoogleOAuthProvider>
   );
 }
