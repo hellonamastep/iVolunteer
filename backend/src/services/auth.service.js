@@ -21,6 +21,7 @@ import { Community } from "../models/Community.js";
 import Group from "../models/Group.js";
 import { Donation } from "../models/Donation.js";
 import { DonationEvent } from "../models/DonationEvent.js";
+import { jwt } from "jsonwebtoken";
 
 const register = async (data) => {
   const email = data.email.toLowerCase().trim();
