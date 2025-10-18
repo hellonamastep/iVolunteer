@@ -211,7 +211,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 };
 
-// const googleLogin = async (credentialResponse: any): Promise<boolean> => {
 //   try {
 //     if (!credentialResponse?.credential) {
 //       console.error("Google credential missing");
@@ -246,6 +245,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 //   }
 // };
 
+// const googleLogin = async (credentialResponse: any): Promise<boolean> => {
+//   try {
+//     if (!credentialResponse?.credential) {
+//       console.error("Google credential missing");
+//       return false;
+//     }
+
+//     const decoded: any = jwtDecode(credentialResponse.credential);
+
+//     const res = await fetch(
+//       "https://namastep-irod.onrender.com/api/v1/auth/google-login",
+//       {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           email: decoded.email,
+//           name: decoded.name,
+//           profilePicture: decoded.picture,
+//         }),
+//       }
+//     );
+
+//     const data = await res.json();
+
+//     if (!res.ok || !data.tokens) {
+//       console.error("Google login failed", data);
+//       return false;
+//     }
+
+//     localStorage.setItem("accessToken", data.tokens.accessToken);
+//     localStorage.setItem("refreshToken", data.tokens.refreshToken);
+
+//     return true;
+//   } catch (err) {
+//     console.error("Error in googleLogin:", err);
+//     return false;
+//   }
+// };
+
+
 const googleLogin = async (credentialResponse: any): Promise<boolean> => {
   try {
     if (!credentialResponse?.credential) {
@@ -268,15 +307,18 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
       }
     );
 
-    const data = await res.json();
+    const result = await res.json();
 
-    if (!res.ok || !data.tokens) {
-      console.error("Google login failed", data);
+    if (!res.ok || !result.success || !result.data?.tokens) {
+      console.error("Google login failed", result);
       return false;
     }
 
-    localStorage.setItem("accessToken", data.tokens.accessToken);
-    localStorage.setItem("refreshToken", data.tokens.refreshToken);
+    localStorage.setItem("accessToken", result.data.tokens.accessToken);
+    localStorage.setItem("refreshToken", result.data.tokens.refreshToken);
+
+    // Redirect to home page
+    window.location.href = "/";
 
     return true;
   } catch (err) {
@@ -284,7 +326,6 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
     return false;
   }
 };
-
 
 
   const logout = () => {
