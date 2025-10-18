@@ -979,7 +979,6 @@ const register = async (data) => {
 //     cloudinaryPublicId: user.cloudinaryPublicId,
 //   };
 // };
-
 const login = async (data) => {
   const email = data.email.toLowerCase().trim();
 
@@ -993,7 +992,8 @@ const login = async (data) => {
     throw new ApiError(401, "Invalid password");
   }
 
-  return user; // full user object for session/token
+  // Return full user object for token/session creation
+  return user;
 };
 
 

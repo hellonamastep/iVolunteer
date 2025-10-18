@@ -577,11 +577,29 @@ const register = asyncHandler(async (req, res) => {
 
 
 
-export const login = asyncHandler(async (req, res) => {
-  const user = await authService.login(req.body); // login checks email+password
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { user }, "Login successful"));
+const login = asyncHandler(async (req, res) => {
+  // Step 1: Validate credentials
+  const user = await authService.login(req.body);
+
+  // Step 2: Create session tokens
+  const { accessToken, refreshToken } = await createSession(user);
+
+  // Step 3: Set cookies for frontend
+  setCookies(res, accessToken, refreshToken);
+
+  // Step 4: Return user info + tokens
+  return res.status(200).json({
+    user: {
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      coins: user.coins,
+      profilePicture: user.profilePicture,
+    },
+    tokens: { accessToken, refreshToken },
+    message: "Login successful!",
+  });
 });
 
 // Step 2: verify OTP then mint session
