@@ -317,8 +317,6 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
     localStorage.setItem("accessToken", result.data.tokens.accessToken);
     localStorage.setItem("refreshToken", result.data.tokens.refreshToken);
 
-    // Redirect to home page
-    window.location.href = "/";
 
     return true;
   } catch (err) {

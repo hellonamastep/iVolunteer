@@ -36,7 +36,7 @@ app.set('trust proxy', 1);
 
 
 app.use(helmet());
-const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app"];
+const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app","https://namastep-dlv8fosc4-namasteps-projects.vercel.app"];
 
 
 // app.use(
