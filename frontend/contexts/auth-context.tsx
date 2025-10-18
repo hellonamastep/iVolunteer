@@ -390,6 +390,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { earnPoints } = usePoints();
+  
 
   useEffect(() => {
     const savedUser = localStorage.getItem("auth-user");
@@ -451,6 +452,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }, 100);
 
       return true;
+
+      
     } catch (err: any) {
       console.error("Signup failed:", err.response?.data?.message || err.message);
       toast({
