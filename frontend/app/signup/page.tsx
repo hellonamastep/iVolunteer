@@ -1913,7 +1913,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 font-['Manrope']">
+    <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-gradient-to-br from-[#E9FDF1] via-[#F0FDF4] to-[#E9FDF1] font-['Manrope']">
       {/* Header - Responsive */}
       <div className="flex flex-col items-center mb-4 sm:mb-6 lg:mb-8">
         <div className="relative">
@@ -1926,7 +1926,7 @@ export default function SignupPage() {
             priority
           />
         </div>
-        <h1 className="text-blue-600 font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-wide">
+        <h1 className="text-[#50C878] font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-wide">
           NAMASTEP
         </h1>
         <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1 text-center max-w-xs sm:max-w-sm">
@@ -1946,11 +1946,11 @@ export default function SignupPage() {
                     <div
                       className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm transition-all duration-300 ${
                         activeStep >= step.number
-                          ? "bg-blue-600 text-white shadow-md sm:shadow-lg"
+                          ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
                           : "bg-gray-200 text-gray-400"
                       } ${
                         activeStep === step.number
-                          ? "ring-2 sm:ring-4 ring-blue-600/20 scale-110"
+                          ? "ring-2 sm:ring-4 ring-[#3ABBA5]/20 scale-110"
                           : ""
                       }`}
                     >
@@ -1958,7 +1958,7 @@ export default function SignupPage() {
                     </div>
                     <span
                       className={`text-[10px] sm:text-xs lg:text-sm mt-1 font-medium text-center ${
-                        activeStep >= step.number ? "text-blue-600" : "text-gray-400"
+                        activeStep >= step.number ? "text-[#3ABBA5]" : "text-gray-400"
                       }`}
                     >
                       {step.title}
@@ -1967,7 +1967,7 @@ export default function SignupPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`w-4 h-1 sm:w-6 sm:h-1 lg:w-12 lg:h-1 rounded-full transition-all duration-300 ${
-                        activeStep > step.number ? "bg-blue-600" : "bg-gray-200"
+                        activeStep > step.number ? "bg-[#3ABBA5]" : "bg-gray-200"
                       }`}
                     ></div>
                   )}
@@ -1978,7 +1978,7 @@ export default function SignupPage() {
 
           {/* Form Header */}
           <div className="text-center mb-4 sm:mb-6 lg:mb-8">
-            <h2 className="text-lg sm:text-xl lg:text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-lg sm:text-xl lg:text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-[#3ABBA5] to-[#50C878] bg-clip-text text-transparent">
               Join Our Community
             </h2>
             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
@@ -2012,14 +2012,14 @@ export default function SignupPage() {
                         <div
                           className={`relative p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 transition-all duration-200 group-hover:scale-[1.02] sm:group-hover:scale-105 ${
                             isSelected
-                              ? "border-blue-600 bg-blue-600/5 shadow-md sm:shadow-lg"
-                              : "border-gray-200 bg-white hover:border-blue-600/50"
+                              ? "border-[#3ABBA5] bg-[#3ABBA5]/5 shadow-md sm:shadow-lg"
+                              : "border-gray-200 bg-white hover:border-[#3ABBA5]/50"
                           }`}
                         >
                           <div className="flex sm:flex-col items-center sm:items-center space-x-3 sm:space-x-0 sm:space-y-2 lg:space-y-3">
                             <div
                               className={`p-2 sm:p-3 lg:p-4 rounded-full transition-colors ${
-                                isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
+                                isSelected ? "bg-[#3ABBA5] text-white" : "bg-gray-100 text-gray-600"
                               }`}
                             >
                               <Icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
@@ -2033,7 +2033,7 @@ export default function SignupPage() {
                           </div>
                           {isSelected && (
                             <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#3ABBA5]" />
                             </div>
                           )}
                         </div>
@@ -2062,7 +2062,7 @@ export default function SignupPage() {
                         {...register("name", {
                           required: "This field is required",
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all ${
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
                           errors.name ? "border-red-400" : "border-gray-200"
                         }`}
                       />
@@ -2085,7 +2085,7 @@ export default function SignupPage() {
                             message: "Invalid email address",
                           },
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all ${
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
                           errors.email ? "border-red-400" : "border-gray-200"
                         }`}
                       />
@@ -2108,7 +2108,7 @@ export default function SignupPage() {
                             message: "Minimum 8 characters",
                           },
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all ${
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
                           errors.password ? "border-red-400" : "border-gray-200"
                         }`}
                       />
@@ -2135,7 +2135,7 @@ export default function SignupPage() {
                           required: "Please confirm your password",
                           validate: (val) => val === watchedFields.password || "Passwords do not match",
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all ${
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
                           errors.confirmPassword ? "border-red-400" : "border-gray-200"
                         }`}
                       />
@@ -2168,7 +2168,7 @@ export default function SignupPage() {
                               valueAsNumber: true,
                               min: { value: 1, message: "Invalid age" },
                             })}
-                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
                         {errors.age && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.age.message}</p>}
@@ -2188,7 +2188,7 @@ export default function SignupPage() {
                                 message: "Max 6 characters"
                               }
                             })}
-                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
                         {errors.city && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.city.message}</p>}
@@ -2204,7 +2204,7 @@ export default function SignupPage() {
                             {...register("profession", {
                               required: "Profession is required",
                             })}
-                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
                         {errors.profession && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.profession.message}</p>}
@@ -2218,8 +2218,8 @@ export default function SignupPage() {
             {/* Step 3: NGO Basic Details - Responsive */}
             {activeStep === 3 && selectedRole === "ngo" && (
               <div className="space-y-3 sm:space-y-6 animate-fadeIn">
-                <div className="bg-blue-50 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-blue-200">
-                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-blue-600 mb-3 sm:mb-4 lg:mb-6 text-center">Organization Information</h3>
+                <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#3ABBA5]/20">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-[#3ABBA5] mb-3 sm:mb-4 lg:mb-6 text-center">Organization Information</h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                     {/* Organization Type */}
@@ -2229,7 +2229,7 @@ export default function SignupPage() {
                         {...register("organizationType", {
                           required: "Please select organization type",
                         })}
-                        className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                        className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                       >
                         <option value="">Select type</option>
                         <option value="non-profit">Non-profit</option>
@@ -2265,7 +2265,7 @@ export default function SignupPage() {
                               message: "Only digits allowed"
                             }
                           })}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                         />
                       </div>
                       {errors.contactNumber && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.contactNumber.message}</p>}
@@ -2280,7 +2280,7 @@ export default function SignupPage() {
                           type="url"
                           placeholder="https://example.com"
                           {...register("websiteUrl")}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -2294,7 +2294,7 @@ export default function SignupPage() {
                           type="number"
                           placeholder="2010"
                           {...register("yearEstablished")}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -2310,7 +2310,7 @@ export default function SignupPage() {
                         required: "Description is required",
                         validate: validateDescription
                       })}
-                      className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none resize-none transition-all"
+                      className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none resize-none transition-all"
                     />
                     {errors.ngoDescription && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.ngoDescription.message}</p>}
                     <p className="text-[10px] sm:text-xs text-gray-500">
@@ -2324,8 +2324,8 @@ export default function SignupPage() {
             {/* Step 4: NGO Additional Details - Responsive */}
             {activeStep === 4 && selectedRole === "ngo" && (
               <div className="space-y-3 sm:space-y-6 animate-fadeIn">
-                <div className="bg-blue-50 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-blue-200">
-                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-blue-600 mb-3 sm:mb-4 lg:mb-6 text-center">Additional Details</h3>
+                <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#3ABBA5]/20">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-[#3ABBA5] mb-3 sm:mb-4 lg:mb-6 text-center">Additional Details</h3>
 
                   {/* Organization Size */}
                   <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
@@ -2336,7 +2336,7 @@ export default function SignupPage() {
                         {...register("organizationSize", {
                           required: "Organization size is required",
                         })}
-                        className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                        className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                       >
                         <option value="">Select organization size</option>
                         {organizationSizeOptions.map((size) => (
@@ -2367,7 +2367,7 @@ export default function SignupPage() {
                               />
                               <div
                                 className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded border flex items-center justify-center transition-all ${
-                                  selectedFocusAreas.includes(area) ? "bg-blue-600 border-blue-600" : "border-gray-300 bg-white"
+                                  selectedFocusAreas.includes(area) ? "bg-[#3ABBA5] border-[#3ABBA5]" : "border-gray-300 bg-white"
                                 }`}
                               >
                                 {selectedFocusAreas.includes(area) && <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 text-white" />}
@@ -2398,7 +2398,7 @@ export default function SignupPage() {
                           {...register("address.street", {
                             required: "Street address is required",
                           })}
-                          className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                          className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                         />
                         {errors.address?.street && <p className="text-red-500 text-xs sm:text-sm">{errors.address.street.message}</p>}
                       </div>
@@ -2414,7 +2414,7 @@ export default function SignupPage() {
                                 message: "City name must not exceed 6 characters"
                               }
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                           {errors.address?.city && <p className="text-red-500 text-xs">{errors.address.city.message}</p>}
                         </div>
@@ -2425,7 +2425,7 @@ export default function SignupPage() {
                             {...register("address.state", {
                               required: "State is required",
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                           {errors.address?.state && <p className="text-red-500 text-xs">{errors.address.state.message}</p>}
                         </div>
@@ -2440,7 +2440,7 @@ export default function SignupPage() {
                                 message: "ZIP code must contain only digits"
                               }
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                           {errors.address?.zip && <p className="text-red-500 text-xs">{errors.address.zip.message}</p>}
                         </div>
@@ -2451,7 +2451,7 @@ export default function SignupPage() {
                             {...register("address.country", {
                               required: "Country is required",
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                           {errors.address?.country && <p className="text-red-500 text-xs">{errors.address.country.message}</p>}
                         </div>
@@ -2465,8 +2465,8 @@ export default function SignupPage() {
             {/* Step 5/3: Complete - Responsive */}
             {activeStep === (selectedRole === "ngo" ? 5 : 3) && (
               <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 animate-fadeIn">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-blue-600" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-green-500" />
                 </div>
                 <div>
                   <h3 className="text-sm sm:text-lg lg:text-2xl font-bold text-gray-800 mb-1 sm:mb-2">Ready to Join!</h3>
@@ -2518,7 +2518,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm"
+                  className="px-4 py-2 sm:px-6 sm:py-3 bg-[#3ABBA5] text-white font-semibold rounded-lg hover:bg-[#36a894] transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm"
                 >
                   Continue
                 </button>
@@ -2526,7 +2526,7 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm"
+                  className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-[#3ABBA5] to-[#50C878] text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">
@@ -2548,13 +2548,13 @@ export default function SignupPage() {
           <div className="text-center pt-3 sm:pt-4 lg:pt-6">
             <p className="text-gray-600 text-xs sm:text-sm">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 font-semibold hover:underline transition-colors">
+              <Link href="/login" className="text-[#3ABBA5] font-semibold hover:underline transition-colors">
                 Log in here
               </Link>
             </p>
             <p className="text-gray-600 text-xs sm:text-sm">
               Are you a corporate partner?{" "}
-              <Link href="/corporatesignup" className="text-blue-400 font-semibold hover:underline transition-colors">
+              <Link href="/corporatesignup" className="text-indigo-400 font-semibold hover:underline transition-colors">
                 Sign up here
               </Link>
             </p>
