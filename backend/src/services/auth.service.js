@@ -993,8 +993,7 @@ const login = async (data) => {
     throw new ApiError(401, "Invalid password");
   }
 
-  // Return full user object for token/session creation
-  return user;
+  return user; // full user object for session/token
 };
 
 

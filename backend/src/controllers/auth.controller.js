@@ -578,11 +578,10 @@ const register = asyncHandler(async (req, res) => {
 
 
 export const login = asyncHandler(async (req, res) => {
-  const user = await authService.login(req.body); // your existing email+password check
-  await otpService.sendOtp(user.email);
+  const user = await authService.login(req.body); // login checks email+password
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "If the account exists, an OTP was sent"));
+    .json(new ApiResponse(200, { user }, "Login successful"));
 });
 
 // Step 2: verify OTP then mint session
