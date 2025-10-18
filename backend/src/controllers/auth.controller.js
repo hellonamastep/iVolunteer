@@ -651,7 +651,7 @@ const forgetPasswordRequest = asyncHandler(async (req, res) => {
   const result = await authService.forgetPasswordRequest({ email });
 
   if (result && result.token) {
-    const resetLink = `$https://namastep-irod.onrender.com/forgot-password/${result.token}`;
+    const resetLink = `https://namastep-irod.onrender.com/forgot-password/${result.token}`;
     try {
       await sendPasswordResetEmail(result.email, resetLink);
       console.log("Password reset email dispatched", { userId: result.userId });
