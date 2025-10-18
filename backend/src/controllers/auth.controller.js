@@ -535,7 +535,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { cloudinary } from "../config/cloudinary.js";
 import { otpService } from "../services/otp.service.js";
-import { sendEmail } from "../config/email.js";
+// new
 import { sendPasswordResetEmail, sendPasswResetSuccessEmail } from "../services/email.service.js";
 
 const register = asyncHandler(async (req, res) => {
@@ -642,72 +642,36 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { result }, "Password changed successfully"));
 });
 
-// const forgetPasswordRequest = asyncHandler(async (req, res) => {
-//   const email = (req.body?.email || "").toLowerCase().trim();
-//   if (!email) {
-//     return res.status(400).json(new ApiResponse(400, {}, "Email is required"));
-//   }
-
-//   const result = await authService.forgetPasswordRequest({ email });
-
-//   if (result && result.token) {
-//     const resetLink = `${process.env.CLIENT_URL}/forgot-password/${result.token}`;
-//     try {
-//       await sendPasswordResetEmail(result.email, resetLink);
-//       console.log("Password reset email dispatched", { userId: result.userId });
-//     } catch (err) {
-//       console.error("Failed to send password reset email", {
-//         userId: result.userId,
-//         err: err.message,
-//       });
-//     }
-//   }
-
-//   return res
-//     .status(200)
-//     .json(
-//       new ApiResponse(
-//         200,
-//         {},
-//         "If an account exists for that email, a password reset email was sent"
-//       )
-//     );
-// });
-
-
-const forgetPasswordRequestController = asyncHandler(async (req, res) => {
+const forgetPasswordRequest = asyncHandler(async (req, res) => {
   const email = (req.body?.email || "").toLowerCase().trim();
-  if (!email) return res.status(400).json(new ApiResponse(400, {}, "Email is required"));
+  if (!email) {
+    return res.status(400).json(new ApiResponse(400, {}, "Email is required"));
+  }
 
   const result = await authService.forgetPasswordRequest({ email });
 
   if (result && result.token) {
     const resetLink = `${process.env.CLIENT_URL}/forgot-password/${result.token}`;
     try {
-      await sendEmail({
-        to: result.email,
-        subject: "Password Reset Request",
-        html: `
-          <h2>Password Reset Request</h2>
-          <p>We received a request to reset your password.</p>
-          <p>Click below to set a new password:</p>
-          <a href="${resetLink}">${resetLink}</a>
-          <p>This link will expire in 10 minutes.</p>
-        `,
-      });
-      console.log("✅ Password reset email dispatched", { userId: result.userId });
+      await sendPasswordResetEmail(result.email, resetLink);
+      console.log("Password reset email dispatched", { userId: result.userId });
     } catch (err) {
-      console.error("❌ Failed to send password reset email", { userId: result.userId, err: err.message });
+      console.error("Failed to send password reset email", {
+        userId: result.userId,
+        err: err.message,
+      });
     }
   }
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      {},
-      "If an account exists for that email, a password reset email was sent"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "If an account exists for that email, a password reset email was sent"
+      )
+    );
 });
 
 const resetPassword = asyncHandler(async (req, res) => {

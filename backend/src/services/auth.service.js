@@ -1051,32 +1051,15 @@ function validatePasswordStrength(password) {
   return true;
 }
 
-// const forgetPasswordRequest = async (data) => {
-//   const email = (data.email || "").toLowerCase().trim();
-//   if (!email) throw new ApiError(400, "Email is required");
-
-//   const user = await User.findOne({ email });
-//   if (!user) {
-//     // Do not reveal existence. Return undefined so controller responds generically.
-//     return;
-//   }
-
-//   const rawToken = generateToken();
-//   const hashedToken = hashToken(rawToken);
-//   const resetTokenExpiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
-
-//   user.resetPasswordToken = hashedToken;
-//   user.resetPasswordExpiresAt = resetTokenExpiresAt;
-//   await user.save();
-
-//   return { email: user.email, token: rawToken, userId: user._id };
-// };
 const forgetPasswordRequest = async (data) => {
   const email = (data.email || "").toLowerCase().trim();
   if (!email) throw new ApiError(400, "Email is required");
 
   const user = await User.findOne({ email });
-  if (!user) return; // don’t reveal existence
+  if (!user) {
+    // Do not reveal existence. Return undefined so controller responds generically.
+    return;
+  }
 
   const rawToken = generateToken();
   const hashedToken = hashToken(rawToken);
