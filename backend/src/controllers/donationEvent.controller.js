@@ -5,7 +5,7 @@ export const createEvent = async (req, res) => {
     const ngoId = req.user._id;
     const eventData = req.body;
 
-    const event = await eventService.createEventService(ngoId, eventData);
+    const event = await eventService.createEventService(ngoId, eventData); 
     res.status(201).json({ success: true, event });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

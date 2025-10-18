@@ -62,7 +62,7 @@ const createEvent = async (data, organizationId, organizationName) => {
 // Optionally filtered by location (city-based filtering)
 const getAllPublishedEvents = async (locationFilter = null) => {
   // Build the base query
-  const baseQuery = { status: "active".,approvalStatus: "approved" };
+  const baseQuery = { status: "active",approvalStatus: "approved" };
   
   // Add location filter if provided
   const query = locationFilter 
