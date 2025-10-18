@@ -31,7 +31,7 @@ const Eventbutton = () => {
           {/* Button Section */}
           <div className="w-full">
             <Link 
-              href="/add-event" 
+              href="/add-event?source=dashboard" 
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >

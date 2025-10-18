@@ -4,6 +4,7 @@ import { Event } from "../models/Event.js";
 import { cloudinary } from "../config/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
 
 export const addEvent = asyncHandler(async (req, res) => {
@@ -381,8 +382,7 @@ const requestCompletion = asyncHandler(async (req, res) => {
 });
 
 
-// Admin reviews completion
-// ngoEvent.controller.js
+
 // Admin reviews completion
 export const reviewCompletion = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {

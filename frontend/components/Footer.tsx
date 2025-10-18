@@ -14,7 +14,9 @@ const Footer = () => {
           </div>
           <div className="flex flex-col">
             <p className="text-base font-normal text-[#2C3E50]">
+
               © {new Date().getFullYear()}Namastep. All rights reserved.
+
             </p>
             <p className="text-sm text-[#6B7280]">Building a better tomorrow, together 🌍</p>
           </div>

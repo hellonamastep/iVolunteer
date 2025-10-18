@@ -21,10 +21,10 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [emailForOtp, setEmailForOtp] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  // const [otpSent, setOtpSent] = useState(false);
+  // const [emailForOtp, setEmailForOtp] = useState("");
+  // const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  // const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const {
     register,
@@ -32,83 +32,67 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>();
 
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      value = value.charAt(0); // Only take first character
-    }
+  // const handleOtpChange = (index: number, value: string) => {
+  //   if (value.length > 1) {
+  //     value = value.charAt(0); // Only take first character
+  //   }
 
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) return;
+  //   // Only allow numbers
+  //   if (!/^\d*$/.test(value)) return;
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+  //   const newOtp = [...otp];
+  //   newOtp[index] = value;
+  //   setOtp(newOtp);
 
-    // Auto-focus next input
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
+  //   // Auto-focus next input
+  //   if (value && index < 5) {
+  //     otpRefs.current[index + 1]?.focus();
+  //   }
 
-    // Auto-submit when all fields are filled
-    if (newOtp.every((digit) => digit !== "") && index === 5) {
-      handleSubmit(onSubmit)();
-    }
-  };
+  //   // Auto-submit when all fields are filled
+  //   if (newOtp.every((digit) => digit !== "") && index === 5) {
+  //     handleSubmit(onSubmit)();
+  //   }
+  // };
 
-  const handleOtpKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      // Move to previous input on backspace
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
+  // const handleOtpKeyDown = (
+  //   index: number,
+  //   e: React.KeyboardEvent<HTMLInputElement>
+  // ) => {
+  //   if (e.key === "Backspace" && !otp[index] && index > 0) {
+  //     // Move to previous input on backspace
+  //     otpRefs.current[index - 1]?.focus();
+  //   }
+  // };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text/plain").slice(0, 6);
-    if (/^\d+$/.test(pastedData)) {
-      const newOtp = [...otp];
-      for (let i = 0; i < pastedData.length && i < 6; i++) {
-        newOtp[i] = pastedData[i];
-      }
-      setOtp(newOtp);
+  // const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  //   e.preventDefault();
+  //   const pastedData = e.clipboardData.getData("text/plain").slice(0, 6);
+  //   if (/^\d+$/.test(pastedData)) {
+  //     const newOtp = [...otp];
+  //     for (let i = 0; i < pastedData.length && i < 6; i++) {
+  //       newOtp[i] = pastedData[i];
+  //     }
+  //     setOtp(newOtp);
 
-      // Focus the next empty input or last input
-      const nextIndex = Math.min(pastedData.length, 5);
-      otpRefs.current[nextIndex]?.focus();
-    }
-  };
+  //     // Focus the next empty input or last input
+  //     const nextIndex = Math.min(pastedData.length, 5);
+  //     otpRefs.current[nextIndex]?.focus();
+  //   }
+  // };
 
   // Fixed ref callback function
-  const setOtpRef = (index: number) => (el: HTMLInputElement | null) => {
-    otpRefs.current[index] = el;
-  };
+  // const setOtpRef = (index: number) => (el: HTMLInputElement | null) => {
+  //   otpRefs.current[index] = el;
+  // };
 
   const onSubmit = async (data: FormValues) => {
-    if (!otpSent) {
-      const success = await login(data.email, data.password);
-      if (success) {
-        setOtpSent(true);
-        setEmailForOtp(data.email);
-        toast.info(
-          "OTP sent to your email. Please enter it to complete login."
-        );
-      }
+    const success = await login(data.email, data.password);
+    if (success) {
+      toast.success("Login successful!");
+      router.push("/");
     } else {
-      const otpValue = otp.join("");
-      if (!otpValue || otpValue.length !== 6) {
-        toast.error("Please enter the complete 6-digit OTP.");
-        return;
-      }
-      const success = await verifyOtp(emailForOtp, otpValue);
-      if (success) {
-        toast.success("Login successful!");
-        router.push("/");
-      } else {
-        toast.error("Invalid OTP. Please try again.");
-      }
+      toast.error("Invalid credentials. Please try again.");
     }
   };
 
@@ -229,7 +213,7 @@ export default function LoginPage() {
           </div>
 
           {/* OTP Field (Visible After Sending) */}
-          {otpSent && (
+          {/* {otpSent && (
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2 text-center">
                 Enter 6-digit OTP <span className="text-red-500">*</span>
@@ -253,8 +237,8 @@ export default function LoginPage() {
               <p className="text-xs text-gray-500 text-center">
                 Enter the 6-digit code sent to your email
               </p>
-            </div>
-          )}
+            </div> */}
+          {/* )} */}
 
           {/* Submit */}
           <button
@@ -284,12 +268,10 @@ export default function LoginPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {otpSent ? "Verifying..." : "Sending OTP..."}
+                Logging in...
               </span>
-            ) : otpSent ? (
-              "Verify OTP"
             ) : (
-              "Send OTP"
+              "Login"
             )}
           </button>
         </form>

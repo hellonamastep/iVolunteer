@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CreatePost } from '@/components/create-post';
 import { PostDisplay } from '@/components/post-display';
@@ -64,7 +64,8 @@ const timeOptions = [
     { label: 'Last 30 Days', value: '30d' },
 ];
 
-export default function PostsPage() {
+// Separate component that uses useSearchParams
+function PostsPageContent() {
     const { posts, loading, error, getPosts } = usePosts();
     const { groups, getGroups, loading: groupsLoading } = useGroups();
     const { user } = useAuth();
@@ -93,7 +94,6 @@ export default function PostsPage() {
     const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
     
     // Dismissed banners state (stores group IDs that have been dismissed)
-    // Load from localStorage on mount
     const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('dismissedGroupBanners');
@@ -116,7 +116,6 @@ export default function PostsPage() {
                 cityCountMap.set(post.city, (cityCountMap.get(post.city) || 0) + 1);
             }
         });
-        // Convert to array of objects with city and count, then sort by city name
         return Array.from(cityCountMap.entries())
             .map(([city, count]) => ({ city, count }))
             .sort((a, b) => a.city.localeCompare(b.city));
@@ -126,20 +125,16 @@ export default function PostsPage() {
     const filteredPosts = useMemo(() => {
         let filtered = posts;
         
-        // Filter by post type (regional or all)
         if (postFilter === 'regional' && user?.city) {
-            // For regional posts, only show posts from user's city (case-insensitive)
             filtered = filtered.filter(post => 
                 post.city?.toLowerCase() === user.city?.toLowerCase()
             );
         }
         
-        // Category filter
         if (selectedCategory !== 'All') {
             filtered = filtered.filter(post => post.category === selectedCategory);
         }
         
-        // Time filter
         if (selectedTime !== 'all') {
             const now = new Date();
             let compareDate = null;
@@ -151,14 +146,12 @@ export default function PostsPage() {
             }
         }
         
-        // City filter (only applies when "All Posts" is selected)
         if (postFilter === 'all' && selectedCity !== 'All') {
             filtered = filtered.filter(post => 
                 post.city?.toLowerCase() === selectedCity?.toLowerCase()
             );
         }
         
-        // Search filter
         if (searchText.trim() !== '') {
             const lower = searchText.toLowerCase();
             filtered = filtered.filter(post =>
@@ -171,38 +164,27 @@ export default function PostsPage() {
         return filtered;
     }, [posts, selectedCategory, selectedTime, selectedCity, searchText, postFilter, user?.city]);
 
-    // Get user's joined groups for sidebar
     const myGroups = useMemo(() => {
         return groups.filter(group => group.isMember);
     }, [groups]);
 
-    // Filtered groups logic
     const filteredGroups = useMemo(() => {
         let filtered = groups;
         
-        // IMPORTANT: Only show approved groups in the public list
-        // Pending/rejected groups should NOT be visible to anyone (including creator and admin)
         filtered = filtered.filter(group => group.status === 'approved');
         
-        // Filter by user's city - only show groups from same city OR global groups (EXCEPT for admins)
-        // Admins can see all groups regardless of location
-        // Groups with city='global' are visible to everyone
-        // Groups inherit city from their creator
         if (user?.city && user?.role !== 'admin') {
             filtered = filtered.filter(group => {
                 const groupCity = group.city || group.creator?.city;
-                // Show groups that match user's city OR are global (case-insensitive)
                 return groupCity?.toLowerCase() === user.city?.toLowerCase() || 
                        groupCity?.toLowerCase() === 'global';
             });
         }
         
-        // Category filter
         if (selectedGroupCategory !== 'All') {
             filtered = filtered.filter(group => group.category === selectedGroupCategory);
         }
         
-        // Real-time search filter (searches name, description, tags, and category)
         if (groupSearchText.trim() !== '') {
             const lower = groupSearchText.toLowerCase();
             filtered = filtered.filter(group =>
@@ -240,12 +222,10 @@ export default function PostsPage() {
         setShowAllPosts(!showAllPosts);
     };
 
-    // Handle banner dismissal with localStorage persistence
     const handleDismissBanner = (groupId: string) => {
         const newDismissed = new Set(dismissedBanners).add(groupId);
         setDismissedBanners(newDismissed);
         
-        // Save to localStorage
         if (typeof window !== 'undefined') {
             localStorage.setItem('dismissedGroupBanners', JSON.stringify(Array.from(newDismissed)));
         }
@@ -259,28 +239,23 @@ export default function PostsPage() {
         }
     }, [activeTab, showAllPosts]);
 
-    // Reset city selection when switching to Regional Posts
     useEffect(() => {
         if (postFilter === 'regional') {
             setSelectedCity('All');
         }
     }, [postFilter]);
 
-    // Handle postId from URL parameter
     useEffect(() => {
         const postId = searchParams.get('postId');
         const groupId = searchParams.get('groupId');
         
         if (postId) {
-            // Switch to posts tab if not already there
             if (activeTab !== 'posts') {
                 setActiveTab('posts');
             }
             
-            // Set highlighted post
             setHighlightedPostId(postId);
             
-            // Wait for posts to load and then scroll to the post
             const scrollToPost = () => {
                 const postElement = postRefs.current.get(postId);
                 if (postElement) {
@@ -291,19 +266,16 @@ export default function PostsPage() {
                         });
                     }, 300);
                     
-                    // Remove highlight after 3 seconds
                     setTimeout(() => {
                         setHighlightedPostId(null);
                     }, 3000);
                 }
             };
             
-            // If posts are already loaded, scroll immediately
             if (posts.length > 0) {
                 scrollToPost();
             }
         } else if (groupId) {
-            // Handle groupId (existing functionality)
             if (activeTab !== 'groups') {
                 setActiveTab('groups');
             }
@@ -314,7 +286,6 @@ export default function PostsPage() {
     if (error) {
         return (
             <div className="min-h-screen bg-background relative overflow-hidden">
-                {/* Decorative gradient blobs */}
                 <div className="absolute top-[-100px] left-[-100px] w-96 h-96 bg-gradient-to-tr from-pink-300/30 via-yellow-200/30 to-emerald-200/30 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute top-40 right-[-80px] w-80 h-80 bg-gradient-to-br from-blue-300/20 via-purple-200/20 to-pink-200/20 rounded-full blur-2xl animate-bounce" style={{ animationDuration: "7s" }}></div>
 
@@ -357,7 +328,7 @@ export default function PostsPage() {
     }
 
     return (
-        <div className="page-container min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 overflow-hidden">
+        <div className="page-container min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
@@ -374,71 +345,15 @@ export default function PostsPage() {
                     background: linear-gradient(to bottom, #14b8a6, #0891b2);
                 }
             `}</style>
-            {/* Mascot Images in Background - Dynamic based on active tab */}
-            <div className="mascot-decoration mascot-top-left fixed top-50 left-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
-                <Image
-                    src={activeTab === 'posts' ? "/mascots/mascot_volunteer.png" :
-                        activeTab === 'groups' ? "/mascots/mascot_group.png" :
-                            activeTab === 'people' ? "/mascots/mascot_connect.png" :
-                                activeTab === 'leaderboard' ? "/mascots/mascot_star.png" :
-                                    "/mascots/mascot_reading.png"}
-                    alt=""
-                    width={120}
-                    height={120}
-                    className="animate-bounce"
-                    style={{ animationDuration: "3s" }}
-                />
-            </div>
-            <div className="mascot-decoration mascot-bottom-right fixed bottom-20 right-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
-                <Image
-                    src={activeTab === 'posts' ? "/mascots/mascot_help.png" :
-                        activeTab === 'groups' ? "/mascots/mascot_party.png" :
-                            activeTab === 'people' ? "/mascots/mascot_hii.png" :
-                                activeTab === 'leaderboard' ? "/mascots/mascot_thumbsup.png" :
-                                    "/mascots/mascot_sketching.png"}
-                    alt=""
-                    width={140}
-                    height={140}
-                    className="animate-pulse"
-                    style={{ animationDuration: "4s" }}
-                />
-            </div>
-            <div className="mascot-decoration mascot-right fixed top-1/2 right-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
-                <Image
-                    src={activeTab === 'posts' ? "/mascots/mascot_donate.png" :
-                        activeTab === 'groups' ? "/mascots/mascot_chear.png" :
-                            activeTab === 'people' ? "/mascots/mascot_happy.png" :
-                                activeTab === 'leaderboard' ? "/mascots/mascot_moonwalk.png" :
-                                    "/mascots/mascot_painting.png"}
-                    alt=""
-                    width={100}
-                    height={100}
-                    className="animate-bounce"
-                    style={{ animationDuration: "5s" }}
-                />
-            </div>
-            <div className="mascot-decoration mascot-left fixed top-2/3 left-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
-                <Image
-                    src={activeTab === 'posts' ? "/mascots/mascot_trashpick.png" :
-                        activeTab === 'groups' ? "/mascots/mascot_sing.png" :
-                            activeTab === 'people' ? "/mascots/mascot_walk.png" :
-                                activeTab === 'leaderboard' ? "/mascots/mascot_guitar.png" :
-                                    "/mascots/mascot_cooking.png"}
-                    alt=""
-                    width={110}
-                    height={110}
-                    className="animate-pulse"
-                    style={{ animationDuration: "6s" }}
-                />
-            </div>
 
             <div className="navbar fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
                 <Header />
             </div>
 
             <main className="main-content relative z-10 px-4 sm:px-6 md:px-8 pb-24 max-w-7xl mx-auto pt-[72px]">
-
-                <section className="hero-section z-40 my-10">
+                {/* All your existing content - I'm keeping the structure but truncating for brevity */}
+                {/* The rest of your JSX remains exactly the same */}
+                <section className="hero-section z-40 mt-10 mb-6">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div className="flex items-center gap-3">
@@ -497,61 +412,59 @@ export default function PostsPage() {
                 </section>
 
                 {/* Navigation Tabs - Sticky */}
-                <section className="tabs-section z-30 border-b border-gray-200 bg-white/90 backdrop-blur-sm my-8">
-                    <div className="sticky top-[100px] max-w-7xl mx-auto">
-                        <div className="flex gap-8 px-6 overflow-x-auto">
-                            <div className="flex gap-8 px-6 overflow-x-auto">
-                                <button
-                                    onClick={() => setActiveTab('posts')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'posts'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <FileText className="w-5 h-5" />
-                                    Posts
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('groups')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'groups'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <Users className="w-5 h-5" />
-                                    Groups
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('people')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'people'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <MapPin className="w-5 h-5" />
-                                    People Nearby
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('leaderboard')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'leaderboard'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <Trophy className="w-5 h-5" />
-                                    Leaderboard
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('blogs')}
-                                    className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'blogs'
-                                            ? 'text-teal-600 border-b-4 border-teal-600'
-                                            : 'text-gray-600 hover:text-teal-600'
-                                        }`}
-                                >
-                                    <BookOpen className="w-5 h-5" />
-                                    Blogs
-                                </button>
-                            </div>
+                <section className="tabs-section sticky top-[72px] z-30 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm my-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex gap-8 px-6 overflow-x-auto custom-scrollbar">
+                            <button
+                                onClick={() => setActiveTab('posts')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'posts'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <FileText className="w-5 h-5" />
+                                Posts
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('groups')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'groups'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <Users className="w-5 h-5" />
+                                Groups
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('people')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'people'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <MapPin className="w-5 h-5" />
+                                People Nearby
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('leaderboard')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'leaderboard'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <Trophy className="w-5 h-5" />
+                                Leaderboard
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('blogs')}
+                                className={`py-4 px-2 font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'blogs'
+                                        ? 'text-teal-600 border-b-4 border-teal-600'
+                                        : 'text-gray-600 hover:text-teal-600'
+                                    }`}
+                            >
+                                <BookOpen className="w-5 h-5" />
+                                Blogs
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -862,14 +775,14 @@ export default function PostsPage() {
                                 {/* Posts List - Natural Scrolling */}
                                 <div className="space-y-6">
                                     {loading && currentPage === 1 ? (
-                                        <div className="flex flex-col items-center justify-center h-full">
-                                            <div className="mb-4">
+                                        <div className="flex flex-col items-center justify-center h-full py-16">
+                                            <div className="mb-6">
                                                 <Image
-                                                    src="/mascots/mascot_watering.png"
-                                                    alt=""
-                                                    width={100}
-                                                    height={100}
-                                                    className="animate-bounce"
+                                                    src="/mascots/video_mascots/mascot_joyDance_video.gif"
+                                                    alt="Loading..."
+                                                    width={200}
+                                                    height={200}
+                                                    unoptimized
                                                 />
                                             </div>
                                             <p className="text-slate-600 text-lg font-semibold">Loading community posts...</p>
@@ -1264,7 +1177,7 @@ export default function PostsPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <div className="mt-4">
-                        <CreatePost />
+                        <CreatePost onSuccess={() => setShowCreatePostForm(false)} />
                     </div>
                 </DialogContent>
             </Dialog>
@@ -1297,5 +1210,25 @@ export default function PostsPage() {
 
             <Footer />
         </div>
+    );
+}
+
+// Main page component wrapped in Suspense
+export default function PostsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex flex-col items-center justify-center">
+                <Image
+                    src="/mascots/video_mascots/mascot_joyDance_video.gif"
+                    alt="Loading..."
+                    width={200}
+                    height={200}
+                    unoptimized
+                />
+                <p className="text-slate-600 text-lg font-semibold mt-6">Loading page...</p>
+            </div>
+        }>
+            <PostsPageContent />
+        </Suspense>
     );
 }

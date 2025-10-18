@@ -32,14 +32,43 @@ import corporateBidRouter from "./routes/corporateBid.routes.js";
 import participationRequestRouter from "./routes/participationRequest.routes.js";
 
 const app = express();
+app.set('trust proxy', 1);
+
 
 app.use(helmet());
+const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app"];
+
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // allow requests with no origin (like Postman)
+//       if (!origin) return callback(null, true);
+//       if (allowedOrigins.indexOf(origin) === -1) {
+//         const msg = "The CORS policy for this site does not allow access from the specified origin.";
+//         return callback(new Error(msg), false);
+//       }
+//       return callback(null, true);
+//     },
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: "http://localhost:3000", // frontend URL
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow Postman or curl
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
+
 app.use(morgan("dev"));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));

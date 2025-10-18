@@ -60,6 +60,59 @@ const registerSchema = Joi.object({
         otherwise: Joi.string().optional()
     }),
 
+    contactNumber: Joi.alternatives().conditional('role', {
+        switch: [
+            {
+                is: 'user',
+                then: Joi.string().pattern(/^[\+]?[1-9][\d]{0,15}$/).required().messages({
+                    "any.required": "Contact number is required for volunteers",
+                    "string.empty": "Contact number cannot be empty",
+                    "string.pattern.base": "Please provide a valid contact number"
+                })
+            },
+            {
+                is: Joi.valid('ngo', 'corporate'),
+                then: Joi.string().custom((value, helpers) => {
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+                        return helpers.error('string.pattern.base', { 
+                            message: 'Contact number must be 7-15 digits long' 
+                        });
+                    }
+                    if (digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly)) {
+                        return value;
+                    }
+                    if (digitsOnly.length >= 10 && digitsOnly.length <= 11) {
+                        const areaCodes = ['011', '022', '033', '040', '044', '080', '020', '079', '0484', '0471'];
+                        const hasValidAreaCode = areaCodes.some(code => digitsOnly.startsWith(code));
+                        if (hasValidAreaCode) {
+                            return value;
+                        }
+                    }
+                    if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
+                        return value;
+                    }
+                    return helpers.error('string.pattern.base', { 
+                        message: 'Please enter a valid mobile number (10 digits) or landline number' 
+                    });
+                }).required().messages({
+                    "any.required": "Contact number is required"
+                })
+            }
+        ],
+        otherwise: Joi.string().optional()
+    }),
+
+    nearestRailwayStation: Joi.when('role', {
+        is: 'user',
+        then: Joi.string().trim().max(100).required().messages({
+            "any.required": "Nearest railway station is required for volunteers",
+            "string.empty": "Nearest railway station cannot be empty",
+            "string.max": "Railway station name cannot exceed 100 characters"
+        }),
+        otherwise: Joi.string().optional()
+    }),
+
     // NGO-specific fields (conditionally required when role is 'ngo')
     organizationType: Joi.when('role', {
         is: 'ngo',
@@ -79,46 +132,10 @@ const registerSchema = Joi.object({
         "number.max": "Year established cannot be in the future"
     }),
 
-    contactNumber: Joi.when('role', {
-        is: Joi.valid('ngo', 'corporate'),
-        then: Joi.string().custom((value, helpers) => {
-            // Remove all non-digit characters for validation
-            const digitsOnly = value.replace(/\D/g, '');
-            
-            // Check length (7-15 digits)
-            if (digitsOnly.length < 7 || digitsOnly.length > 15) {
-                return helpers.error('string.pattern.base', { 
-                    message: 'Contact number must be 7-15 digits long' 
-                });
-            }
-            
-            // Indian mobile number (10 digits starting with 6-9)
-            if (digitsOnly.length === 10 && /^[6-9]/.test(digitsOnly)) {
-                return value;
-            }
-            
-            // Indian landline with area code (10-11 digits)
-            if (digitsOnly.length >= 10 && digitsOnly.length <= 11) {
-                const areaCodes = ['011', '022', '033', '040', '044', '080', '020', '079', '0484', '0471'];
-                const hasValidAreaCode = areaCodes.some(code => digitsOnly.startsWith(code));
-                if (hasValidAreaCode) {
-                    return value;
-                }
-            }
-            
-            // International or other valid formats (7-15 digits)
-            if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
-                return value;
-            }
-            
-            return helpers.error('string.pattern.base', { 
-                message: 'Please enter a valid mobile number (10 digits) or landline number' 
-            });
-        }).required().messages({
-            "any.required": "Contact number is required"
-        }),
-        otherwise: Joi.string().optional()
-    }),
+    // This contactNumber is for NGO and Corporate (more detailed validation)
+    // Note: There's another contactNumber validation above for volunteers (simpler validation)
+    // Joi will use the first matching 'when' condition, so we need to handle this differently
+    // We'll rename this or handle it in the NGO/Corporate section
 
     address: Joi.when('role', {
         is: Joi.valid('ngo', 'corporate'),
@@ -161,23 +178,11 @@ const registerSchema = Joi.object({
 
     ngoDescription: Joi.when('role', {
         is: 'ngo',
-        then: Joi.string().trim().min(10).max(1000).required().custom((value, helpers) => {
-            // Count words by splitting on whitespace and filtering empty strings
-            const words = value.trim().split(/\s+/).filter(word => word.length > 0);
-            
-            if (words.length < 10) {
-                return helpers.error('string.custom', { 
-                    message: `Description must contain at least 10 words (currently ${words.length} words)` 
-                });
-            }
-            
-            return value;
-        }).messages({
+        then: Joi.string().trim().min(10).max(1000).required().messages({
             "any.required": "Organization description is required for NGOs",
             "string.min": "Description must be at least 10 characters long",
             "string.max": "Description cannot exceed 1000 characters",
-            "string.empty": "Description cannot be empty",
-            "string.custom": "{{#message}}"
+            "string.empty": "Description cannot be empty"
         }),
         otherwise: Joi.string().optional()
     }),
@@ -237,23 +242,11 @@ const registerSchema = Joi.object({
 
     companyDescription: Joi.when('role', {
         is: 'corporate',
-        then: Joi.string().trim().min(10).max(1000).required().custom((value, helpers) => {
-            // Count words by splitting on whitespace and filtering empty strings
-            const words = value.trim().split(/\s+/).filter(word => word.length > 0);
-            
-            if (words.length < 10) {
-                return helpers.error('string.custom', { 
-                    message: `Company description must contain at least 10 words (currently ${words.length} words)` 
-                });
-            }
-            
-            return value;
-        }).messages({
+        then: Joi.string().trim().min(10).max(1000).required().messages({
             "any.required": "Company description is required for corporate accounts",
             "string.min": "Description must be at least 10 characters long",
             "string.max": "Description cannot exceed 1000 characters",
-            "string.empty": "Description cannot be empty",
-            "string.custom": "{{#message}}"
+            "string.empty": "Description cannot be empty"
         }),
         otherwise: Joi.string().optional()
     }),

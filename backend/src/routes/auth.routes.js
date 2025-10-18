@@ -31,7 +31,7 @@ router.delete("/profile-picture", authentication, authController.removeProfilePi
 
 router.delete("/account", authentication, authController.deleteAccount);
 
-router.post("/refresh-access-token", authentication, refreshAccessTokenController);
+router.post("/refresh-access-token", refreshAccessTokenController);
 
 router.post("/send-otp", otpController.sendOtp);
 router.post("/verify-otp", otpController.verifyOtp);

@@ -64,6 +64,23 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Profession cannot exceed 100 characters"]
     },
+    contactNumber: {
+      type: String,
+      required: function() { return this.role === 'user' || this.role === 'ngo' || this.role === 'corporate'; },
+      validate: {
+        validator: function(v) {
+          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
+        },
+        message: 'Please provide a valid contact number'
+      }
+    },
+    nearestRailwayStation: {
+      type: String,
+      required: function() { return this.role === 'user'; },
+      trim: true,
+      lowercase: true,
+      maxlength: [100, "Railway station name cannot exceed 100 characters"]
+    },
     // NGO-specific fields
     organizationType: {
         type: String,
@@ -85,16 +102,7 @@ const userSchema = new mongoose.Schema(
         min: [1800, "Year must be after 1800"],
         max: [new Date().getFullYear(), "Year cannot be in the future"]
     },
-    contactNumber: {
-        type: String,
-        required: function() { return this.role === 'ngo' || this.role === 'corporate'; },
-        validate: {
-            validator: function(v) {
-                return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
-            },
-            message: 'Please provide a valid contact number'
-        }
-    },
+
     address: {
         street: {
             type: String,
@@ -121,6 +129,7 @@ const userSchema = new mongoose.Schema(
     ngoDescription: {
         type: String,
         required: function() { return this.role === 'ngo'; },
+        minlength: [10, "Description must be at least 10 characters"],
         maxlength: [1000, "Description cannot exceed 1000 characters"]
     },
     focusAreas: [{
@@ -151,6 +160,7 @@ const userSchema = new mongoose.Schema(
     companyDescription: {
         type: String,
         required: function() { return this.role === 'corporate'; },
+        minlength: [10, "Description must be at least 10 characters"],
         maxlength: [1000, "Description cannot exceed 1000 characters"]
     },
     csrFocusAreas: [{

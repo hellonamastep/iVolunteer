@@ -72,8 +72,10 @@ function NGODashboard() {
 function VolunteerDashboard() {
   return (
     <div className="w-full min-h-screen bg-gray-50 min-w-[350px]">
-      <Header />
-      <div className="pt-20 pb-8">
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Header />
+      </div>
+      <div className="pt-32 pb-8">
         <Useranalytics />
         <Dailyquote />
         <Useractivity />

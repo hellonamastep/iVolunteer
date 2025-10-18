@@ -85,7 +85,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch("http://localhost:5000/api/v1/event/all-event", {
+      const response = await fetch("https://namastep-irod.onrender.com/api/v1/event/all-event", {
         headers,
         credentials: 'include'
       });
@@ -112,7 +112,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
 
       // Add cache-busting parameter and headers
       const timestamp = new Date().getTime();
-      const response = await fetch(`http://localhost:5000/api/v1/event/organization?_t=${timestamp}`, {
+      const response = await fetch(`https://namastep-irod.onrender.com/api/v1/event/organization?_t=${timestamp}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -139,9 +139,9 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       try {
         let endpoint = "";
         if (userId) {
-          endpoint = `http://localhost:5000/api/applications/user/${userId}`;
+          endpoint = `https://namastep-irod.onrender.com/api/applications/user/${userId}`;
         } else if (eventId) {
-          endpoint = `http://localhost:5000/api/applications/event/${eventId}`;
+          endpoint = `https://namastep-irod.onrender.com/api/applications/event/${eventId}`;
         }
 
         if (endpoint) {
@@ -173,7 +173,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   ): Promise<boolean> => {
     try {
       const token = localStorage.getItem('auth-token');
-      const response = await fetch("http://localhost:5000/api/v1/event/add-event", {
+      const response = await fetch("https://namastep-irod.onrender.com/api/v1/event/add-event", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -205,7 +205,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `http://localhost:5000/api/v1/event/participate/${eventId}`,
+        `https://namastep-irod.onrender.com/api/v1/event/participate/${eventId}`,
         {
           method: "POST",
           headers: { 
@@ -235,7 +235,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `http://localhost:5000/api/v1/event/status/${eventId}`,
+        `https://namastep-irod.onrender.com/api/v1/event/status/${eventId}`,
         {
           method: "PUT",
           headers: {
@@ -264,7 +264,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `http://localhost:5000/api/v1/event/status/${eventId}`,
+        `https://namastep-irod.onrender.com/api/v1/event/status/${eventId}`,
         {
           method: "PUT",
           headers: {

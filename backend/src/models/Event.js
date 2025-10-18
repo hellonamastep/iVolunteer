@@ -83,16 +83,37 @@ const eventSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, "Event category is required"],
-      enum: {
-        values: [
-          "environmental",
-          "education",
-          "healthcare",
-          "community",
-          "animal-welfare",
-          "other",
-        ],
-        message: "{VALUE} is not a supported category",
+      trim: true,
+      // Removed strict enum to allow custom categories
+      validate: {
+        validator: function(value) {
+          // Accept predefined categories or custom ones
+          const predefinedCategories = [
+            "environmental",
+            "education",
+            "healthcare",
+            "community",
+            "animal-welfare",
+            "animals",
+            "eldercare",
+            "disability",
+            "arts",
+            "birthday",
+            "wedding",
+            "anniversary",
+            "retirement",
+            "graduation",
+            "baby-shower",
+            "engagement",
+            "corporate-celebration",
+            "milestone-celebration",
+            "memorial",
+            "other"
+          ];
+          // Allow predefined categories or any custom category string
+          return typeof value === 'string' && value.length >= 2 && value.length <= 50;
+        },
+        message: "Category must be between 2 and 50 characters",
       },
     },
     participants: {

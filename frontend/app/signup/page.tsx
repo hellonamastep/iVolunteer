@@ -1,3 +1,6 @@
+
+
+
 "use client";
 
 import React, { useState } from "react";
@@ -20,6 +23,7 @@ import {
   MapPin,
   Users,
   Target,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -30,10 +34,16 @@ type SignupFormValues = {
   password: string;
   confirmPassword: string;
   role: string;
+  // Volunteer-specific fields
+  age?: number;
+  city?: string;
+  profession?: string;
+  contactNumber?: string;
+  nearestRailwayStation?: string;
+  // NGO-specific fields
   organizationType?: string;
   websiteUrl?: string;
   yearEstablished?: number;
-  contactNumber?: string;
   address?: {
     street?: string;
     city?: string;
@@ -87,13 +97,7 @@ export default function SignupPage() {
   ];
 
   // Match exact backend enum values for organization size
-  const organizationSizeOptions = [
-    "1-10",
-    "11-50",
-    "51-100",
-    "101-500",
-    "500+",
-  ];
+  const organizationSizeOptions = ["1-10", "11-50", "51-100", "101-500", "500+"];
 
   const selectedRole = watch("role");
   const watchedFields = watch();
@@ -103,7 +107,9 @@ export default function SignupPage() {
     {
       number: 2,
       title: "Basic Info",
-      fields: ["name", "email", "password", "confirmPassword"],
+      fields: selectedRole === "user" 
+        ? ["name", "email", "age", "city", "profession", "contactNumber", "nearestRailwayStation", "password", "confirmPassword"]
+        : ["name", "email", "password", "confirmPassword"],
     },
     ...(selectedRole === "ngo"
       ? [
@@ -127,11 +133,59 @@ export default function SignupPage() {
     const isValid = await trigger(currentStepFields as any);
     if (isValid) {
       setActiveStep((prev) => prev + 1);
+    } else {
+      // Show error message when validation fails
+      toast.error("Please fill in all required fields correctly to proceed to the next step.");
+      
+      // Scroll to top to see error messages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Log validation errors for debugging
+      console.log("Validation errors:", errors);
     }
   };
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+  };
+
+  // Get current step validation errors
+  const getCurrentStepErrors = () => {
+    const currentStepFields = steps[activeStep - 1]?.fields || [];
+    const stepErrors: string[] = [];
+    
+    currentStepFields.forEach((field) => {
+      if (field === 'address') {
+        // Special handling for address field - check all nested address fields
+        const addressError = errors.address;
+        if (addressError && typeof addressError === 'object') {
+          const addressFields = ['street', 'city', 'state', 'zip', 'country'];
+          addressFields.forEach((addressField) => {
+            const fieldError = (addressError as any)[addressField];
+            if (fieldError?.message && typeof fieldError.message === 'string') {
+              stepErrors.push(fieldError.message);
+            }
+          });
+        }
+      } else if (field.includes('.')) {
+        // Handle other nested fields like address.street
+        const [parent, child] = field.split('.');
+        const parentError = errors[parent as keyof typeof errors];
+        if (parentError && typeof parentError === 'object') {
+          const childError = (parentError as any)[child];
+          if (childError?.message && typeof childError.message === 'string') {
+            stepErrors.push(childError.message);
+          }
+        }
+      } else if (errors[field as keyof typeof errors]) {
+        const error = errors[field as keyof typeof errors];
+        if (error && typeof error === 'object' && 'message' in error) {
+          stepErrors.push(error.message as string);
+        }
+      }
+    });
+    
+    return stepErrors;
   };
 
   const toggleFocusArea = (area: string) => {
@@ -145,43 +199,56 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormValues) => {
     try {
-      const signupData = {
+      console.log("Form data received:", data);
+      
+      const signupData: any = {
         name: data.name,
         email: data.email,
         password: data.password,
-        role: data.role as any,
-        ...(data.role === "ngo" && {
-          organizationType: data.organizationType,
-          websiteUrl: data.websiteUrl,
-          yearEstablished: data.yearEstablished
-            ? Number(data.yearEstablished)
-            : undefined,
-          contactNumber: data.contactNumber,
-          address: {
-            street: data.address?.street || "",
-            city: data.address?.city || "",
-            state: data.address?.state || "",
-            zip: data.address?.zip || "",
-            country: data.address?.country || "",
-          },
-          ngoDescription: data.ngoDescription,
-          focusAreas: data.focusAreas || [],
-          organizationSize: data.organizationSize,
-        }),
+        role: data.role,
       };
 
-      console.log("Submitting NGO data:", JSON.stringify(signupData, null, 2));
+      // Add volunteer-specific fields
+      if (data.role === "user") {
+        signupData.age = data.age;
+        signupData.city = data.city;
+        signupData.profession = data.profession;
+        signupData.contactNumber = data.contactNumber;
+        signupData.nearestRailwayStation = data.nearestRailwayStation;
+      }
+
+      // Add NGO-specific fields
+      if (data.role === "ngo") {
+        signupData.organizationType = data.organizationType;
+        signupData.websiteUrl = data.websiteUrl;
+        signupData.yearEstablished = data.yearEstablished ? Number(data.yearEstablished) : undefined;
+        signupData.contactNumber = data.contactNumber;
+        signupData.address = {
+          street: data.address?.street || "",
+          city: data.address?.city || "",
+          state: data.address?.state || "",
+          zip: data.address?.zip || "",
+          country: data.address?.country || "",
+        };
+        signupData.ngoDescription = data.ngoDescription;
+        signupData.focusAreas = data.focusAreas || [];
+        signupData.organizationSize = data.organizationSize;
+      }
+
+      console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
+      console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
 
       const success = await signup(signupData);
       if (success) {
-        toast.success("Account created successfully!");
+        toast.success("Account created successfully! Welcome to Namastep!");
         router.push("/");
       } else {
         toast.error("Signup failed. Please check your details and try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error("An unexpected error occurred. Please try again.");
+      const errorMessage = error?.response?.data?.message || error?.message || "An unexpected error occurred. Please try again.";
+      toast.error(errorMessage);
     }
   };
 
@@ -190,13 +257,13 @@ export default function SignupPage() {
       {/* Header */}
       <div className="flex flex-col items-center mb-8">
         <div className="relative">
-         <Image
-                  src="/images/auth.png"
-                  alt="Namastep Logo"
-                  width={150} // optional but recommended
-                  height={150} // optional but recommended
-                  priority // optional (for above-the-fold images)
-                />
+          <Image
+            src="/images/auth.png"
+            alt="Namastep Logo"
+            width={150}
+            height={150}
+            priority
+          />
           <div className="absolute -inset-2 bg-[#50C878]/20 rounded-full blur-sm animate-pulse"></div>
         </div>
         <h1 className="text-[#50C878] font-extrabold text-3xl tracking-wide drop-shadow-sm">
@@ -231,9 +298,7 @@ export default function SignupPage() {
                     </div>
                     <span
                       className={`text-xs mt-2 font-medium ${
-                        activeStep >= step.number
-                          ? "text-[#3ABBA5]"
-                          : "text-gray-400"
+                        activeStep >= step.number ? "text-[#3ABBA5]" : "text-gray-400"
                       }`}
                     >
                       {step.title}
@@ -242,9 +307,7 @@ export default function SignupPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`w-12 h-1 rounded-full transition-all duration-300 ${
-                        activeStep > step.number
-                          ? "bg-[#3ABBA5]"
-                          : "bg-gray-200"
+                        activeStep > step.number ? "bg-[#3ABBA5]" : "bg-gray-200"
                       }`}
                     ></div>
                   )}
@@ -261,18 +324,36 @@ export default function SignupPage() {
             <p className="text-gray-600 text-lg">
               {activeStep === 1 && "Choose your account type to get started"}
               {activeStep === 2 && "Tell us about yourself"}
-              {activeStep === 3 &&
-                selectedRole === "ngo" &&
-                "Organization information"}
-              {activeStep === 4 &&
-                selectedRole === "ngo" &&
-                "Additional details"}
-              {activeStep === (selectedRole === "ngo" ? 5 : 3) &&
-                "Complete your profile"}
+              {activeStep === 3 && selectedRole === "ngo" && "Organization information"}
+              {activeStep === 4 && selectedRole === "ngo" && "Additional details"}
+              {activeStep === (selectedRole === "ngo" ? 5 : 3) && "Complete your profile"}
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Validation Error Summary */}
+            {Object.keys(errors).length > 0 && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-shake">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-red-800">
+                      Please correct the following errors:
+                    </h3>
+                    <ul className="mt-2 text-sm text-red-700 list-disc list-inside space-y-1">
+                      {getCurrentStepErrors().map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Step 1: Role Selection */}
             {activeStep === 1 && (
               <div className="space-y-6 animate-fadeIn">
@@ -301,20 +382,14 @@ export default function SignupPage() {
                           <div className="flex flex-col items-center text-center space-y-3">
                             <div
                               className={`p-3 rounded-full transition-colors ${
-                                isSelected
-                                  ? "bg-[#3ABBA5] text-white"
-                                  : "bg-gray-100 text-gray-600"
+                                isSelected ? "bg-[#3ABBA5] text-white" : "bg-gray-100 text-gray-600"
                               }`}
                             >
                               <Icon className="w-8 h-8" />
                             </div>
-                            <h3 className="font-bold text-gray-800 text-lg">
-                              {opt.label}
-                            </h3>
+                            <h3 className="font-bold text-gray-800 text-lg">{opt.label}</h3>
                             <p className="text-sm text-gray-600">
-                              {opt.value === "user"
-                                ? "Join as an individual volunteer"
-                                : "Register your organization"}
+                              {opt.value === "user" ? "Join as an individual volunteer" : "Register your organization"}
                             </p>
                           </div>
                           {isSelected && (
@@ -327,11 +402,7 @@ export default function SignupPage() {
                     );
                   })}
                 </div>
-                {errors.role && (
-                  <p className="text-red-500 text-sm text-center animate-shake">
-                    {errors.role.message}
-                  </p>
-                )}
+                {errors.role && <p className="text-red-500 text-sm text-center animate-shake">{errors.role.message}</p>}
               </div>
             )}
 
@@ -342,42 +413,27 @@ export default function SignupPage() {
                   {/* Name Field */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
-                      {selectedRole === "ngo"
-                        ? "Organization Name"
-                        : "Full Name"}{" "}
-                      *
+                      {selectedRole === "ngo" ? "Organization Name" : "Full Name"} *
                     </label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
                         type="text"
-                        placeholder={
-                          selectedRole === "ngo"
-                            ? "Enter organization name"
-                            : "Enter your full name"
-                        }
+                        placeholder={selectedRole === "ngo" ? "Enter organization name" : "Enter your full name"}
                         {...register("name", {
                           required: "This field is required",
                         })}
                         className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.name
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.name ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                     </div>
-                    {errors.name && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    {errors.name && <p className="text-red-500 text-sm animate-shake">{errors.name.message}</p>}
                   </div>
 
                   {/* Email Field */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Email *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Email *</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
@@ -404,7 +460,178 @@ export default function SignupPage() {
                     )}
                   </div>
 
-                  {/* Password Field */}
+                  {/* Volunteer-specific fields - shown before password */}
+                  {selectedRole === "user" && (
+                    <>
+                      {/* Age */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Age *
+                        </label>
+                        <div className="relative">
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="number"
+                            placeholder="Enter your age"
+                            min="13"
+                            max="120"
+                            {...register("age", {
+                              required: "Age is required",
+                              valueAsNumber: true,
+                              min: {
+                                value: 13,
+                                message: "You must be at least 13 years old"
+                              },
+                              max: {
+                                value: 120,
+                                message: "Please enter a valid age"
+                              }
+                            })}
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.age
+                                ? "border-red-400 focus:ring-red-400"
+                                : "border-gray-200 focus:border-[#3ABBA5]"
+                            }`}
+                          />
+                        </div>
+                        {errors.age && (
+                          <p className="text-red-500 text-sm animate-shake">
+                            {errors.age.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* City */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          City *
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Enter your city"
+                            {...register("city", {
+                              required: "City is required",
+                              minLength: {
+                                value: 2,
+                                message: "City name must be at least 2 characters"
+                              },
+                              maxLength: {
+                                value: 100,
+                                message: "City name cannot exceed 100 characters"
+                              }
+                            })}
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.city
+                                ? "border-red-400 focus:ring-red-400"
+                                : "border-gray-200 focus:border-[#3ABBA5]"
+                            }`}
+                          />
+                        </div>
+                        {errors.city && (
+                          <p className="text-red-500 text-sm animate-shake">
+                            {errors.city.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Profession */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Profession *
+                        </label>
+                        <div className="relative">
+                          <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Enter your profession"
+                            {...register("profession", {
+                              required: "Profession is required",
+                              maxLength: {
+                                value: 100,
+                                message: "Profession cannot exceed 100 characters"
+                              }
+                            })}
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.profession
+                                ? "border-red-400 focus:ring-red-400"
+                                : "border-gray-200 focus:border-[#3ABBA5]"
+                            }`}
+                          />
+                        </div>
+                        {errors.profession && (
+                          <p className="text-red-500 text-sm animate-shake">
+                            {errors.profession.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Contact Number */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Contact Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="tel"
+                            placeholder="Enter your contact number"
+                            {...register("contactNumber", {
+                              required: "Contact number is required",
+                              pattern: {
+                                value: /^[\+]?[1-9][\d]{0,15}$/,
+                                message: "Please provide a valid contact number"
+                              }
+                            })}
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.contactNumber
+                                ? "border-red-400 focus:ring-red-400"
+                                : "border-gray-200 focus:border-[#3ABBA5]"
+                            }`}
+                          />
+                        </div>
+                        {errors.contactNumber && (
+                          <p className="text-red-500 text-sm animate-shake">
+                            {errors.contactNumber.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Nearest Railway Station */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Nearest Railway Station *
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Enter nearest railway station"
+                            {...register("nearestRailwayStation", {
+                              required: "Nearest railway station is required",
+                              maxLength: {
+                                value: 100,
+                                message: "Railway station name cannot exceed 100 characters"
+                              }
+                            })}
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.nearestRailwayStation
+                                ? "border-red-400 focus:ring-red-400"
+                                : "border-gray-200 focus:border-[#3ABBA5]"
+                            }`}
+                          />
+                        </div>
+                        {errors.nearestRailwayStation && (
+                          <p className="text-red-500 text-sm animate-shake">
+                            {errors.nearestRailwayStation.message}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Password Field - Now at the bottom */}
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
                       Password *
@@ -417,14 +644,12 @@ export default function SignupPage() {
                         {...register("password", {
                           required: "Password is required",
                           minLength: {
-                            value: 6,
-                            message: "Minimum 6 characters",
+                            value: 8,
+                            message: "Minimum 8 characters",
                           },
                         })}
                         className={`w-full pl-12 pr-12 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.password
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.password ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                       <button
@@ -432,25 +657,15 @@ export default function SignupPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
-                    {errors.password && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.password.message}
-                      </p>
-                    )}
+                    {errors.password && <p className="text-red-500 text-sm animate-shake">{errors.password.message}</p>}
                   </div>
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Confirm Password *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Confirm Password *</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <input
@@ -458,42 +673,80 @@ export default function SignupPage() {
                         placeholder="••••••••"
                         {...register("confirmPassword", {
                           required: "Please confirm your password",
-                          validate: (val) =>
-                            val === watchedFields.password ||
-                            "Passwords do not match",
+                          validate: (val) => val === watchedFields.password || "Passwords do not match",
                         })}
                         className={`w-full pl-12 pr-12 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.confirmPassword
-                            ? "border-red-400 focus:ring-red-400"
-                            : "border-gray-200 focus:border-[#3ABBA5]"
+                          errors.confirmPassword ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
                         }`}
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                        {!errors.confirmPassword &&
-                          watchedFields.confirmPassword && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          )}
+                        {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-5 w-5 text-green-500" />}
                         <button
                           type="button"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
+                          {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                         </button>
                       </div>
                     </div>
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.confirmPassword.message}
-                      </p>
-                    )}
+                    {errors.confirmPassword && <p className="text-red-500 text-sm animate-shake">{errors.confirmPassword.message}</p>}
                   </div>
+
+                  {/* Volunteer-specific fields: only show when role === 'user' */}
+                  {selectedRole === "user" && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">Age *</label>
+                        <div className="relative">
+                          <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="number"
+                            placeholder="e.g., 25"
+                            {...register("age", {
+                              required: "Age is required for volunteers",
+                              valueAsNumber: true,
+                              min: { value: 1, message: "Invalid age" },
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.age && <p className="text-red-500 text-sm animate-shake">{errors.age.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">City *</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Your city"
+                            {...register("city", {
+                              required: "City is required for volunteers",
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.city && <p className="text-red-500 text-sm animate-shake">{errors.city.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">Profession *</label>
+                        <div className="relative">
+                          <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                          <input
+                            type="text"
+                            placeholder="Your profession"
+                            {...register("profession", {
+                              required: "Profession is required for volunteers",
+                            })}
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                        </div>
+                        {errors.profession && <p className="text-red-500 text-sm animate-shake">{errors.profession.message}</p>}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -502,21 +755,21 @@ export default function SignupPage() {
             {activeStep === 3 && selectedRole === "ngo" && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-2xl p-6 border border-[#3ABBA5]/20">
-                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">
-                    Organization Information
-                  </h3>
+                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">Organization Information</h3>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Organization Type */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Organization Type *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Organization Type *</label>
                       <select
                         {...register("organizationType", {
                           required: "Please select organization type",
                         })}
-                        className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        className={`w-full px-4 py-4 rounded-xl border-2 text-gray-700 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.organizationType
+                            ? "border-red-400 focus:ring-red-400"
+                            : "border-gray-200 focus:border-[#3ABBA5]"
+                        }`}
                       >
                         <option value="">Select type</option>
                         <option value="non-profit">Non-profit</option>
@@ -526,18 +779,12 @@ export default function SignupPage() {
                         <option value="society">Society</option>
                         <option value="other">Other</option>
                       </select>
-                      {errors.organizationType && (
-                        <p className="text-red-500 text-sm animate-shake">
-                          {errors.organizationType.message}
-                        </p>
-                      )}
+                      {errors.organizationType && <p className="text-red-500 text-sm animate-shake">{errors.organizationType.message}</p>}
                     </div>
 
                     {/* Contact Number */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Contact Number *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Contact Number *</label>
                       <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -545,22 +792,28 @@ export default function SignupPage() {
                           placeholder="9876543210"
                           {...register("contactNumber", {
                             required: "Contact number is required",
+                            pattern: {
+                              value: /^[\+]?[1-9][\d]{0,15}$/,
+                              message: "Please provide a valid contact number"
+                            },
+                            minLength: {
+                              value: 10,
+                              message: "Contact number must be at least 10 digits"
+                            }
                           })}
-                          className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                            errors.contactNumber
+                              ? "border-red-400 focus:ring-red-400"
+                              : "border-gray-200 focus:border-[#3ABBA5]"
+                          }`}
                         />
                       </div>
-                      {errors.contactNumber && (
-                        <p className="text-red-500 text-sm animate-shake">
-                          {errors.contactNumber.message}
-                        </p>
-                      )}
+                      {errors.contactNumber && <p className="text-red-500 text-sm animate-shake">{errors.contactNumber.message}</p>}
                     </div>
 
                     {/* Website */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Website URL
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Website URL</label>
                       <div className="relative">
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -574,9 +827,7 @@ export default function SignupPage() {
 
                     {/* Year Established */}
                     <div className="space-y-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Year Established
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-700">Year Established</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <input
@@ -591,16 +842,26 @@ export default function SignupPage() {
 
                   {/* Organization Description */}
                   <div className="space-y-2 mt-4">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Organization Description *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Organization Description *</label>
                     <textarea
                       placeholder="Describe your organization's mission, vision, and activities..."
                       rows={4}
                       {...register("ngoDescription", {
                         required: "Description is required",
+                        minLength: {
+                          value: 10,
+                          message: "Description must be at least 10 characters"
+                        },
+                        maxLength: {
+                          value: 1000,
+                          message: "Description cannot exceed 1000 characters"
+                        }
                       })}
-                      className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none resize-none transition-all"
+                      className={`w-full px-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none resize-none transition-all ${
+                        errors.ngoDescription
+                          ? "border-red-400 focus:ring-red-400"
+                          : "border-gray-200 focus:border-[#3ABBA5]"
+                      }`}
                     />
                     {errors.ngoDescription && (
                       <p className="text-red-500 text-sm animate-shake">
@@ -616,22 +877,22 @@ export default function SignupPage() {
             {activeStep === 4 && selectedRole === "ngo" && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-2xl p-6 border border-[#3ABBA5]/20">
-                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">
-                    Additional Details
-                  </h3>
+                  <h3 className="text-xl font-bold text-[#3ABBA5] mb-6 text-center">Additional Details</h3>
 
                   {/* Organization Size */}
                   <div className="space-y-2 mb-6">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Organization Size *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Organization Size *</label>
                     <div className="relative">
                       <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                       <select
                         {...register("organizationSize", {
                           required: "Organization size is required",
                         })}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.organizationSize
+                            ? "border-red-400 focus:ring-red-400"
+                            : "border-gray-200 focus:border-[#3ABBA5]"
+                        }`}
                       >
                         <option value="">Select organization size</option>
                         {organizationSizeOptions.map((size) => (
@@ -641,27 +902,18 @@ export default function SignupPage() {
                         ))}
                       </select>
                     </div>
-                    {errors.organizationSize && (
-                      <p className="text-red-500 text-sm animate-shake">
-                        {errors.organizationSize.message}
-                      </p>
-                    )}
+                    {errors.organizationSize && <p className="text-red-500 text-sm animate-shake">{errors.organizationSize.message}</p>}
                   </div>
 
                   {/* Focus Areas */}
                   <div className="space-y-2 mb-6">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Focus Areas * (Select at least one)
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Focus Areas * (Select at least one)</label>
                     <div className="relative">
                       <Target className="absolute left-4 top-4 text-gray-400 h-5 w-5" />
                       <div className="pl-12">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {focusAreaOptions.map((area) => (
-                            <label
-                              key={area}
-                              className="flex items-center space-x-3 cursor-pointer"
-                            >
+                            <label key={area} className="flex items-center space-x-3 cursor-pointer">
                               <input
                                 type="checkbox"
                                 value={area}
@@ -671,32 +923,20 @@ export default function SignupPage() {
                               />
                               <div
                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                  selectedFocusAreas.includes(area)
-                                    ? "bg-[#3ABBA5] border-[#3ABBA5]"
-                                    : "border-gray-300 bg-white"
+                                  selectedFocusAreas.includes(area) ? "bg-[#3ABBA5] border-[#3ABBA5]" : "border-gray-300 bg-white"
                                 }`}
                               >
-                                {selectedFocusAreas.includes(area) && (
-                                  <CheckCircle className="w-3 h-3 text-white" />
-                                )}
+                                {selectedFocusAreas.includes(area) && <CheckCircle className="w-3 h-3 text-white" />}
                               </div>
-                              <span className="text-sm text-gray-700">
-                                {area}
-                              </span>
+                              <span className="text-sm text-gray-700">{area}</span>
                             </label>
                           ))}
                         </div>
-                        {errors.focusAreas && (
-                          <p className="text-red-500 text-sm animate-shake mt-2">
-                            Please select at least one focus area
-                          </p>
-                        )}
+                        {errors.focusAreas && <p className="text-red-500 text-sm animate-shake mt-2">Please select at least one focus area</p>}
                         <input
                           type="hidden"
                           {...register("focusAreas", {
-                            validate: (val) =>
-                              (val && val.length > 0) ||
-                              "Please select at least one focus area",
+                            validate: (val) => (val && val.length > 0) || "Please select at least one focus area",
                           })}
                         />
                       </div>
@@ -705,9 +945,7 @@ export default function SignupPage() {
 
                   {/* Address Fields */}
                   <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Address *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">Address *</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-4 text-gray-400 h-5 w-5" />
                       <div className="pl-12 space-y-4">
@@ -719,10 +957,14 @@ export default function SignupPage() {
                               {...register("address.street", {
                                 required: "Street address is required",
                               })}
-                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                                errors.address?.street
+                                  ? "border-red-400 focus:ring-red-400"
+                                  : "border-gray-200 focus:border-[#3ABBA5]"
+                              }`}
                             />
                             {errors.address?.street && (
-                              <p className="text-red-500 text-sm">
+                              <p className="text-red-500 text-sm animate-shake">
                                 {errors.address.street.message}
                               </p>
                             )}
@@ -734,10 +976,14 @@ export default function SignupPage() {
                               {...register("address.city", {
                                 required: "City is required",
                               })}
-                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                                errors.address?.city
+                                  ? "border-red-400 focus:ring-red-400"
+                                  : "border-gray-200 focus:border-[#3ABBA5]"
+                              }`}
                             />
                             {errors.address?.city && (
-                              <p className="text-red-500 text-sm">
+                              <p className="text-red-500 text-sm animate-shake">
                                 {errors.address.city.message}
                               </p>
                             )}
@@ -751,10 +997,14 @@ export default function SignupPage() {
                               {...register("address.state", {
                                 required: "State is required",
                               })}
-                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                                errors.address?.state
+                                  ? "border-red-400 focus:ring-red-400"
+                                  : "border-gray-200 focus:border-[#3ABBA5]"
+                              }`}
                             />
                             {errors.address?.state && (
-                              <p className="text-red-500 text-sm">
+                              <p className="text-red-500 text-sm animate-shake">
                                 {errors.address.state.message}
                               </p>
                             )}
@@ -766,10 +1016,14 @@ export default function SignupPage() {
                               {...register("address.zip", {
                                 required: "ZIP code is required",
                               })}
-                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                                errors.address?.zip
+                                  ? "border-red-400 focus:ring-red-400"
+                                  : "border-gray-200 focus:border-[#3ABBA5]"
+                              }`}
                             />
                             {errors.address?.zip && (
-                              <p className="text-red-500 text-sm">
+                              <p className="text-red-500 text-sm animate-shake">
                                 {errors.address.zip.message}
                               </p>
                             )}
@@ -781,10 +1035,14 @@ export default function SignupPage() {
                               {...register("address.country", {
                                 required: "Country is required",
                               })}
-                              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                              className={`w-full px-4 py-3 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                                errors.address?.country
+                                  ? "border-red-400 focus:ring-red-400"
+                                  : "border-gray-200 focus:border-[#3ABBA5]"
+                              }`}
                             />
                             {errors.address?.country && (
-                              <p className="text-red-500 text-sm">
+                              <p className="text-red-500 text-sm animate-shake">
                                 {errors.address.country.message}
                               </p>
                             )}
@@ -804,24 +1062,16 @@ export default function SignupPage() {
                   <CheckCircle className="w-12 h-12 text-green-500" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    Ready to Join!
-                  </h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Ready to Join!</h3>
                   <p className="text-gray-600 max-w-md mx-auto">
-                    You're all set to create your{" "}
-                    {selectedRole === "ngo" ? "organization" : "volunteer"}{" "}
-                    account. Review your information and click create account to
-                    get started.
+                    You're all set to create your {selectedRole === "ngo" ? "organization" : "volunteer"} account. Review your information and click create account to get started.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-6 text-left max-w-md mx-auto">
-                  <h4 className="font-semibold text-gray-800 mb-3">
-                    Account Summary
-                  </h4>
+                  <h4 className="font-semibold text-gray-800 mb-3">Account Summary</h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>
-                      <strong>Role:</strong>{" "}
-                      {selectedRole === "ngo" ? "NGO" : "Volunteer"}
+                      <strong>Role:</strong> {selectedRole === "ngo" ? "NGO" : "Volunteer"}
                     </p>
                     <p>
                       <strong>Name:</strong> {watchedFields.name}
@@ -832,20 +1082,29 @@ export default function SignupPage() {
                     {selectedRole === "ngo" && (
                       <>
                         <p>
-                          <strong>Organization Type:</strong>{" "}
-                          {watchedFields.organizationType}
+                          <strong>Organization Type:</strong> {watchedFields.organizationType}
                         </p>
                         <p>
-                          <strong>Contact:</strong>{" "}
-                          {watchedFields.contactNumber}
+                          <strong>Contact:</strong> {watchedFields.contactNumber}
                         </p>
                         <p>
-                          <strong>Focus Areas:</strong>{" "}
-                          {selectedFocusAreas.join(", ")}
+                          <strong>Focus Areas:</strong> {selectedFocusAreas.join(", ")}
                         </p>
                         <p>
-                          <strong>Organization Size:</strong>{" "}
-                          {watchedFields.organizationSize}
+                          <strong>Organization Size:</strong> {watchedFields.organizationSize}
+                        </p>
+                      </>
+                    )}
+                    {selectedRole === "user" && (
+                      <>
+                        <p>
+                          <strong>Age:</strong> {watchedFields.age}
+                        </p>
+                        <p>
+                          <strong>City:</strong> {watchedFields.city}
+                        </p>
+                        <p>
+                          <strong>Profession:</strong> {watchedFields.profession}
                         </p>
                       </>
                     )}
@@ -884,24 +1143,9 @@ export default function SignupPage() {
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       Creating Account...
                     </span>
@@ -917,19 +1161,13 @@ export default function SignupPage() {
           <div className="text-center pt-8">
             <p className="text-gray-600">
               Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-[#3ABBA5] font-semibold hover:underline transition-colors"
-              >
+              <Link href="/login" className="text-[#3ABBA5] font-semibold hover:underline transition-colors">
                 Log in here
               </Link>
             </p>
-              <p className="text-gray-600">
+            <p className="text-gray-600">
               Are you a corporate partner?{" "}
-              <Link
-                href="/corporatesignup"
-                className="text-indigo-400 font-semibold hover:underline transition-colors"
-              >
+              <Link href="/corporatesignup" className="text-indigo-400 font-semibold hover:underline transition-colors">
                 Sign up here
               </Link>
             </p>
@@ -939,4 +1177,3 @@ export default function SignupPage() {
     </div>
   );
 }
- 

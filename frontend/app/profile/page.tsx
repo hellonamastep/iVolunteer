@@ -26,6 +26,7 @@ import {
   ImagePlus,
   Lock,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,10 +104,11 @@ export default function ProfilePage() {
             age: userData.age || "",
             city: userData.city || "",
             profession: userData.profession || "",
+            contactNumber: userData.contactNumber || "",
+            nearestRailwayStation: userData.nearestRailwayStation || "",
             // NGO fields
             organizationType: userData.organizationType || "",
             websiteUrl: userData.websiteUrl || "",
-            contactNumber: userData.contactNumber || "",
             ngoDescription: userData.ngoDescription || "",
             // Corporate fields
             companyType: userData.companyType || "",
@@ -481,6 +483,16 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8 pb-24">
       <div className="max-w-5xl mx-auto">
+        {/* Back Button */}
+        <Button
+          onClick={() => router.back()}
+          variant="ghost"
+          className="mb-4 hover:bg-white/80 group"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back
+        </Button>
+
         {/* Header Section with Profile Picture */}
         <Card className="overflow-hidden mb-6 shadow-xl border-0">
           {/* Cover Image */}
@@ -752,7 +764,7 @@ export default function ProfilePage() {
                     <Briefcase className="w-5 h-5 text-blue-600" />
                     Additional Details
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <Label htmlFor="age" className="text-sm font-medium text-gray-700">Age</Label>
                       {isEditing ? (
@@ -807,6 +819,44 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-2 mt-2 text-gray-900 font-medium bg-gray-50 px-4 py-3 rounded-lg">
                           <Briefcase className="w-4 h-4 text-gray-400" />
                           {user.profession || "Not specified"}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="contactNumber" className="text-sm font-medium text-gray-700">Contact Number</Label>
+                      {isEditing ? (
+                        <Input
+                          id="contactNumber"
+                          name="contactNumber"
+                          value={formData.contactNumber}
+                          onChange={handleInputChange}
+                          className="mt-2"
+                          placeholder="Enter your contact number"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 mt-2 text-gray-900 font-medium bg-gray-50 px-4 py-3 rounded-lg">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          {user.contactNumber || "Not specified"}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label htmlFor="nearestRailwayStation" className="text-sm font-medium text-gray-700">Nearest Railway Station</Label>
+                      {isEditing ? (
+                        <Input
+                          id="nearestRailwayStation"
+                          name="nearestRailwayStation"
+                          value={formData.nearestRailwayStation}
+                          onChange={handleInputChange}
+                          className="mt-2"
+                          placeholder="Enter nearest railway station"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 mt-2 text-gray-900 font-medium bg-gray-50 px-4 py-3 rounded-lg">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          {user.nearestRailwayStation || "Not specified"}
                         </div>
                       )}
                     </div>

@@ -43,7 +43,7 @@ const getAllBlogs = async (): Promise<void> => {
 
         // ✅ If it's not a full URL, prefix with backend host
         if (!imageUrl.startsWith("http")) {
-          imageUrl = `http://localhost:5000/${imageUrl}`;
+          imageUrl = `https://namastep-irod.onrender.com/${imageUrl}`;
         }
       }
 

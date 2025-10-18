@@ -106,8 +106,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (signupData: SignupData): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { data } = await axios.post<AuthResponse>(
-        "http://localhost:5000/api/v1/auth/register",
+      const { data } = await api.post<AuthResponse>(
+        "/v1/auth/register",
         signupData,
         { withCredentials: true }
       );
@@ -158,38 +158,90 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Step 1: Request OTP
+  // const login = async (
+  //   email: string,
+  //   password: string,
+  //   role: UserRole = "user"
+  // ): Promise<boolean> => {
+  //   setIsLoading(true);
+  //   try {
+  //     await api.post(
+  //       "/v1/auth/login",
+  //       { email, password, role },
+  //       { withCredentials: true }
+  //     );
+
+  //     toast({
+  //       title: "OTP Sent",
+  //       description: "Check your email for the OTP to complete login.",
+  //       variant: "default",
+  //     });
+
+  //     setIsLoading(false);
+  //     return true;
+  //   } catch (err: any) {
+  //     console.error("Login failed:", err.response?.data?.message || err.message);
+  //     toast({
+  //       title: "Login Failed",
+  //       description: err.response?.data?.message || "Please try again.",
+  //       variant: "destructive",
+  //     });
+  //     setIsLoading(false);
+  //     return false;
+  //   }
+  // };
+
   const login = async (
-    email: string,
-    password: string,
-    role: UserRole = "user"
-  ): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      await axios.post(
-        "http://localhost:5000/api/v1/auth/login",
-        { email, password, role },
-        { withCredentials: true }
-      );
+  email: string,
+  password: string,
+  role: UserRole = "user"
+): Promise<boolean> => {
+  setIsLoading(true);
+  try {
+    const { data } = await api.post<AuthResponse>(
+      "/v1/auth/login",
+      { email, password, role },
+      { withCredentials: true }
+    );
 
-      toast({
-        title: "OTP Sent",
-        description: "Check your email for the OTP to complete login.",
-        variant: "default",
-      });
+    const mappedUser: User = {
+      _id: data.user.userId,
+      id: data.user.userId,
+      email: data.user.email,
+      name: data.user.name,
+      role: data.user.role,
+      points: 0,
+      coins: data.user.coins || 0,
+      volunteeredHours: 0,
+      totalRewards: 0,
+      completedEvents: [],
+      createdAt: new Date().toISOString(),
+    };
 
-      setIsLoading(false);
-      return true;
-    } catch (err: any) {
-      console.error("Login failed:", err.response?.data?.message || err.message);
-      toast({
-        title: "Login Failed",
-        description: err.response?.data?.message || "Please try again.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return false;
-    }
-  };
+    setUser(mappedUser);
+    localStorage.setItem("auth-user", JSON.stringify(mappedUser));
+    localStorage.setItem("auth-token", data.tokens.accessToken);
+    localStorage.setItem("refresh-token", data.tokens.refreshToken);
+
+    toast({
+      title: "Login Successful",
+      description: "Welcome back!",
+    });
+
+    return true;
+  } catch (err: any) {
+    console.error("Login failed:", err.response?.data?.message || err.message);
+    toast({
+      title: "Login Failed",
+      description: err.response?.data?.message || "Please try again.",
+      variant: "destructive",
+    });
+    return false;
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // Step 2: Verify OTP
   const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
