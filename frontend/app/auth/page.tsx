@@ -34,11 +34,12 @@ type FormValues = {
   city?: string;
   profession?: string;
   customProfession?: string;
+  contactNumber?: string;
+  nearestRailwayStation?: string;
   // NGO-specific fields
   organizationType?: string;
   websiteUrl?: string;
   yearEstablished?: number;
-  contactNumber?: string;
   address?: {
     street?: string;
     city?: string;
@@ -134,7 +135,9 @@ export default function AuthPage() {
         ...(data.role === "user" && {
           age: data.age,
           city: data.city,
-          profession: data.profession === "other" ? data.customProfession : data.profession
+          profession: data.profession === "other" ? data.customProfession : data.profession,
+          contactNumber: data.contactNumber,
+          nearestRailwayStation: data.nearestRailwayStation
         }),
         ...(data.role === "ngo" && {
           organizationType: data.organizationType,
@@ -843,6 +846,64 @@ export default function AuthPage() {
                     )}
                   </div>
                 )}
+
+                {/* Contact Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Contact Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Enter your contact number"
+                    {...register("contactNumber", {
+                      required: selectedRole === "user" ? "Contact number is required" : false,
+                      pattern: {
+                        value: /^[\+]?[1-9][\d]{0,15}$/,
+                        message: "Please provide a valid contact number"
+                      }
+                    })}
+                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-all
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                      ${errors.contactNumber
+                        ? "border border-red-500 focus:!border-red-500 focus:!ring-red-500"
+                        : "border border-gray-300 dark:border-gray-600 focus:!border-blue-500 focus:!ring-blue-500"
+                      } text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500`}
+                  />
+                  {errors.contactNumber && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.contactNumber.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Nearest Railway Station */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nearest Railway Station <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter your nearest railway station"
+                    {...register("nearestRailwayStation", {
+                      required: selectedRole === "user" ? "Nearest railway station is required" : false,
+                      maxLength: {
+                        value: 100,
+                        message: "Railway station name cannot exceed 100 characters"
+                      }
+                    })}
+                    className={`w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-all
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                      ${errors.nearestRailwayStation
+                        ? "border border-red-500 focus:!border-red-500 focus:!ring-red-500"
+                        : "border border-gray-300 dark:border-gray-600 focus:!border-blue-500 focus:!ring-blue-500"
+                      } text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500`}
+                  />
+                  {errors.nearestRailwayStation && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.nearestRailwayStation.message}
+                    </p>
+                  )}
+                </div>
 
                 {/* Password Field */}
                 <div>

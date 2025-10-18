@@ -47,6 +47,8 @@ const register = async (data) => {
     userData.age = data.age;
     userData.city = data.city;
     userData.profession = data.profession;
+    userData.contactNumber = data.contactNumber;
+    userData.nearestRailwayStation = data.nearestRailwayStation;
   }
 
   // Add NGO-specific fields if role is 'ngo'
@@ -295,7 +297,7 @@ const updateProfile = async (id, updateData) => {
   const allowedFields = ['name', 'profilePicture', 'cloudinaryPublicId'];
   
   if (user.role === 'user') {
-    allowedFields.push('age', 'city', 'profession');
+    allowedFields.push('age', 'city', 'profession', 'contactNumber', 'nearestRailwayStation');
   } else if (user.role === 'ngo') {
     allowedFields.push('organizationType', 'websiteUrl', 'yearEstablished', 'contactNumber', 'ngoDescription', 'focusAreas', 'organizationSize');
   } else if (user.role === 'corporate') {

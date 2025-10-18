@@ -19,9 +19,11 @@ import {
   XCircle,
   Share2,
 } from "lucide-react";
+import Image from "next/image";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
+import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { toast } from "@/hooks/use-toast";
 
 // Helper component to highlight matching text
@@ -73,6 +75,7 @@ const AvailableEventsContent: React.FC = () => {
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSpecialEvents, setShowSpecialEvents] = useState(false);
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -334,8 +337,15 @@ const AvailableEventsContent: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E8F5F5' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading events...</p>
+          <Image
+            src="/mascots/video_mascots/mascot_joyDance_video.gif"
+            alt="Loading..."
+            width={200}
+            height={200}
+            unoptimized
+          />
+          <p className="text-gray-600 text-lg font-semibold mt-6">Loading events...</p>
+          <p className="text-gray-400 text-sm mt-2">Finding amazing opportunities! 🌟</p>
         </div>
       </div>
     );
@@ -361,31 +371,6 @@ const AvailableEventsContent: React.FC = () => {
     );
   }
 
-  if (!events || events.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E8F5F5' }}>
-        <div className="text-center">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md shadow-lg">
-            <div className="text-gray-400 text-5xl mb-4">📅</div>
-            <h2 className="text-gray-600 text-xl font-semibold mb-2">
-              No Events Available
-            </h2>
-            <p className="text-gray-500">
-              There are currently no events available. Please check back later.
-            </p>
-            <Button
-              onClick={handleRefresh}
-              className="mt-4 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 shadow-md hover:shadow-lg"
-            >
-              <RefreshCcw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen py-6 relative overflow-hidden" style={{ backgroundColor: '#E8F5F5' }}>
       <style jsx global>{`
@@ -405,45 +390,33 @@ const AvailableEventsContent: React.FC = () => {
         }
       `}</style>
       
-      {/* Mascot Images in Background - Dynamic based on active tab */}
-      <div className="fixed top-32 left-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
+      {/* Video Mascots with Proper Spacing - Full opacity, no overlay */}
+      <div className="fixed top-24 left-8 z-0 pointer-events-none">
         <img 
-          src={activeTab === 'virtual' ? "/mascots/mascot_camera.png" : 
-               activeTab === 'in-person' ? "/mascots/mascot_volunteer.png" : 
-               "/mascots/mascot_group.png"} 
+          src="/mascots/video_mascots/mascot_joyDance_video.gif"
           alt="" 
-          className="w-28 h-28 animate-bounce" 
-          style={{ animationDuration: "3s" }} 
+          className="w-32 h-32"
         />
       </div>
-      <div className="fixed bottom-20 right-10 opacity-20 z-0 pointer-events-none transition-all duration-500">
+      <div className="fixed bottom-16 right-8 z-0 pointer-events-none">
         <img 
-          src={activeTab === 'virtual' ? "/mascots/mascot_reading.png" : 
-               activeTab === 'in-person' ? "/mascots/mascot_help.png" : 
-               "/mascots/mascot_party.png"} 
+          src="/mascots/video_mascots/mascot_watering_video.gif"
           alt="" 
-          className="w-36 h-36 animate-pulse" 
-          style={{ animationDuration: "4s" }} 
+          className="w-36 h-36"
         />
       </div>
-      <div className="fixed top-1/2 right-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
+      <div className="fixed top-1/3 right-8 z-0 pointer-events-none">
         <img 
-          src={activeTab === 'virtual' ? "/mascots/mascot_search.png" : 
-               activeTab === 'in-person' ? "/mascots/mascot_donate.png" : 
-               "/mascots/mascot_chear.png"} 
+          src="/mascots/video_mascots/mascot_planting_video.gif"
           alt="" 
-          className="w-24 h-24 animate-bounce" 
-          style={{ animationDuration: "5s" }} 
+          className="w-28 h-28"
         />
       </div>
-      <div className="fixed top-2/3 left-5 opacity-15 z-0 pointer-events-none transition-all duration-500">
+      <div className="fixed bottom-1/3 left-8 z-0 pointer-events-none">
         <img 
-          src={activeTab === 'virtual' ? "/mascots/mascot_sketching.png" : 
-               activeTab === 'in-person' ? "/mascots/mascot_trashpick.png" : 
-               "/mascots/mascot_sing.png"} 
+          src="/mascots/video_mascots/mascot_jumping_video.gif"
           alt="" 
-          className="w-28 h-28 animate-pulse" 
-          style={{ animationDuration: "6s" }} 
+          className="w-32 h-32"
         />
       </div>
       
@@ -467,26 +440,27 @@ const AvailableEventsContent: React.FC = () => {
         {/* Participation Request Banner */}
         <ParticipationRequestBanner />
 
-        {/* Stats Section - Top Cards */}
-        <section className="mb-6 grid grid-cols-5 gap-3">
-          <div 
-            onClick={() => {
-              setActiveTab('virtual');
-              setFilterType('all');
-            }}
-            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
-              activeTab === 'virtual' && filterType === 'all' ? 'ring-4 ring-cyan-600 scale-105' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <Video className="w-4 h-4 text-white" />
-                <span className="text-white text-xs font-medium">OR</span>
+          {/* Old Stats Section - Removed to avoid duplication */}
+          <div className="hidden">
+          <section className="mb-6 grid grid-cols-5 gap-3">
+            <div 
+              onClick={() => {
+                setActiveTab('virtual');
+                setFilterType('all');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                activeTab === 'virtual' && filterType === 'all' ? 'ring-4 ring-cyan-600 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Video className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">OR</span>
+                </div>
               </div>
+              <p className="text-xs text-white/90 font-medium mb-1">Virtual Events</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.virtual}</p>
             </div>
-            <p className="text-xs text-white/90 font-medium mb-1">Virtual Events</p>
-            <p className="text-3xl font-bold text-white">{eventCounts.virtual}</p>
-          </div>
 
           <div 
             onClick={() => {
@@ -544,38 +518,92 @@ const AvailableEventsContent: React.FC = () => {
             <p className="text-3xl font-bold text-white">{eventCounts.completed}</p>
           </div>
 
-          <div 
-            onClick={() => {
-              setActiveTab('community');
-              setFilterType('all');
-            }}
-            className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
-              activeTab === 'community' && filterType === 'all' ? 'ring-4 ring-yellow-600 scale-105' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-white" />
-                <span className="text-white text-xs font-medium">YE</span>
+            <div 
+              onClick={() => {
+                setActiveTab('community');
+                setFilterType('all');
+              }}
+              className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 p-4 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                activeTab === 'community' && filterType === 'all' ? 'ring-4 ring-yellow-600 scale-105' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-white" />
+                  <span className="text-white text-xs font-medium">YE</span>
+                </div>
               </div>
+              <p className="text-xs text-white/90 font-medium mb-1">Youth Events</p>
+              <p className="text-3xl font-bold text-white">{eventCounts.community}</p>
             </div>
-            <p className="text-xs text-white/90 font-medium mb-1">Youth Events</p>
-            <p className="text-3xl font-bold text-white">{eventCounts.community}</p>
+          </section>
           </div>
-        </section>
 
-        {/* Tab Navigation - Volunteer Events / Donation Form */}
-        <div className="mb-6 flex gap-2">
-          <button className="px-6 py-2 bg-white text-gray-700 font-medium rounded-lg border-b-2 border-teal-500 shadow-sm">
-            Volunteer Events
-          </button>
-          <button 
-            onClick={() => router.push("/donate")}
-            className="px-6 py-2 bg-white/70 text-gray-600 font-medium rounded-lg hover:bg-white transition-colors"
-          >
-            Donation Form
-          </button>
-        </div>
+          {/* Event Type Navigation - Compact Row Design */}
+          <div className="mb-6 flex gap-2 flex-wrap">
+            {/* Virtual Events */}
+            <button
+              onClick={() => {
+                setActiveTab('virtual');
+                setFilterType('all');
+              }}
+              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+                activeTab === 'virtual' && filterType === 'all'
+                  ? 'bg-white text-teal-600 border-teal-500' 
+                  : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
+              }`}
+            >
+              💻 Virtual ({eventCounts.virtual})
+            </button>
+
+            {/* In-Person Events */}
+            <button
+              onClick={() => {
+                setActiveTab('in-person');
+                setFilterType('all');
+              }}
+              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+                activeTab === 'in-person' && filterType === 'all'
+                  ? 'bg-white text-emerald-600 border-emerald-500' 
+                  : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
+              }`}
+            >
+              📍 In-Person ({eventCounts['in-person']})
+            </button>
+
+            {/* Community Events */}
+            <button
+              onClick={() => {
+                setActiveTab('community');
+                setFilterType('all');
+              }}
+              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+                activeTab === 'community' && filterType === 'all'
+                  ? 'bg-white text-purple-600 border-purple-500' 
+                  : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
+              }`}
+            >
+              🌍 Community ({eventCounts.community})
+            </button>
+
+            {/* Special Events */}
+            <button
+              onClick={() => setShowSpecialEvents(!showSpecialEvents)}
+              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+                showSpecialEvents
+                  ? 'bg-white text-amber-600 border-amber-500' 
+                  : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
+              }`}
+            >
+              ✨ Special Events
+            </button>
+          </div>
+
+          {/* Special Events Section */}
+          <SpecialEventsSection 
+            isVisible={showSpecialEvents} 
+            onClose={() => setShowSpecialEvents(false)} 
+          />
 
         {/* Search Bar */}
         <div className="mb-6">
@@ -615,75 +643,99 @@ const AvailableEventsContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Filters and Actions */}
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <button
-            onClick={() => setFilterType('all')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
-              filterType === 'all' 
-                ? 'bg-teal-500 text-white border-teal-500' 
-                : 'bg-white text-gray-700 border-gray-200'
-            }`}
-          >
-            <CheckCircle className="w-4 h-4" />
-            All Events ({events.length})
-          </button>
-          
-          <button
-            onClick={() => setFilterType('joined')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
-              filterType === 'joined' 
-                ? 'bg-teal-500 text-white border-teal-500' 
-                : 'bg-white text-gray-700 border-gray-200'
-            }`}
-          >
-            <UserPlus className="w-4 h-4" />
-            Joined ({eventCounts.joined})
-          </button>
-          
-          <button
-            onClick={() => setFilterType('shortlisted')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
-              filterType === 'shortlisted' 
-                ? 'bg-teal-500 text-white border-teal-500' 
-                : 'bg-white text-gray-700 border-gray-200'
-            }`}
-          >
-            ★ Shortlisted (0)
-          </button>
-          
-          <button
-            onClick={handleRefresh}
-            disabled={loading || isRefreshing}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+          {/* Filters and Actions */}
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
+            <button
+              onClick={() => setFilterType('all')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'all' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
+            >
+              <CheckCircle className="w-4 h-4" />
+              All Events ({events.length})
+            </button>
+            
+            <button
+              onClick={() => setFilterType('joined')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'joined' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
+            >
+              <UserPlus className="w-4 h-4" />
+              Joined ({eventCounts.joined})
+            </button>
+            
+            <button
+              onClick={() => setFilterType('shortlisted')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                filterType === 'shortlisted' 
+                  ? 'bg-teal-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
+            >
+              ★ Shortlisted (0)
+            </button>
+
+            <button
+              onClick={() => setShowSpecialEvents(!showSpecialEvents)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+                showSpecialEvents 
+                  ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-500' 
+                  : 'bg-white text-gray-700 border-gray-200'
+              }`}
+            >
+              ✨ Special Event
+            </button>
+            
+            <button
+              onClick={handleRefresh}
+              disabled={loading || isRefreshing}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
 
         {/* Empty State for Current Tab */}
         {filteredEvents.length === 0 && (
           <div className="text-center py-16">
             <div className="bg-white rounded-xl shadow-md border border-gray-200 p-10 max-w-md mx-auto">
               <div className="text-gray-400 text-6xl mb-4">
-                {filterType === 'joined' ? '👥' : 
+                {!events || events.length === 0 ? '📅' :
+                 filterType === 'joined' ? '👥' : 
                  filterType === 'shortlisted' ? '⭐' : 
                  activeTab === 'virtual' ? '💻' : 
                  activeTab === 'in-person' ? '🏢' : '🌍'}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {filterType === 'joined' ? 'No Joined Events' : 
+                {!events || events.length === 0 ? 'No Events Available' :
+                 filterType === 'joined' ? 'No Joined Events' : 
                  filterType === 'shortlisted' ? 'No Shortlisted Events' : 
                  `No ${activeTab === 'virtual' ? 'Virtual' : activeTab === 'in-person' ? 'In-Person' : 'Community'} Events`}
               </h3>
               <p className="text-gray-600 text-sm">
-                {filterType === 'joined' 
+                {!events || events.length === 0
+                  ? "There are currently no events available. Please check back later."
+                  : filterType === 'joined' 
                   ? "You haven't joined any events yet. Browse available events and join one to get started!" 
                   : filterType === 'shortlisted'
                   ? "You haven't shortlisted any events yet."
                   : `There are currently no ${activeTab} events available. Check back soon!`}
               </p>
+              {(!events || events.length === 0) && (
+                <Button
+                  onClick={handleRefresh}
+                  className="mt-4 bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 shadow-md hover:shadow-lg"
+                >
+                  <RefreshCcw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+              )}
             </div>
           </div>
         )}

@@ -24,6 +24,8 @@ import {
   TrendingUp,
   CheckCircle,
   Heart,
+  ShieldCheck,
+  Settings,
 } from "lucide-react";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -62,8 +64,6 @@ const DonationDetailsPage: React.FC = () => {
 
       const responseData = response.data as any;
       if (responseData.success && responseData.event) {
-        console.log('Donation event fetched successfully:', responseData.event);
-        console.log('NGO Details:', responseData.event.ngoId);
         setDonationEvent(responseData.event);
       } else {
         throw new Error("Donation event not found");
@@ -137,9 +137,9 @@ const DonationDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7DD9A6] mx-auto mb-4"></div>
             <p className="text-gray-600 text-lg">Loading donation details...</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ const DonationDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
             <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
               <div className="text-red-600 text-5xl mb-4">⚠️</div>
@@ -163,7 +163,7 @@ const DonationDetailsPage: React.FC = () => {
               </p>
               <button
                 onClick={() => router.back()}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-6 py-2 rounded-lg transition-all shadow-lg"
+                className="bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white px-6 py-2 rounded-lg transition-all shadow-lg"
               >
                 Go Back
               </button>
@@ -181,7 +181,7 @@ const DonationDetailsPage: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 py-6 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6]">
         <style jsx global>{`
           .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
@@ -191,338 +191,362 @@ const DonationDetailsPage: React.FC = () => {
             border-radius: 10px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #2dd4bf, #06b6d4);
+            background: linear-gradient(to bottom, #7DD9A6, #6BC794);
             border-radius: 10px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, #14b8a6, #0891b2);
+            background: linear-gradient(to bottom, #6BC794, #5AB583);
           }
         `}</style>
         
-        {/* Mascot Images in Background */}
-        <div className="fixed top-32 left-10 opacity-15 z-0 pointer-events-none">
-          <img src="/mascots/mascot_donate.png" alt="" className="w-24 h-24 animate-bounce" style={{ animationDuration: "3s" }} />
+        {/* Header with Back Button */}
+        <div className="bg-transparent py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <button
+                  onClick={() => router.back()}
+                  className="px-4 py-2 text-gray-600 font-medium rounded-lg hover:bg-white/50 transition-all text-sm flex items-center space-x-2 backdrop-blur-sm"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back to Donations</span>
+                </button>
+              </div>
+              <div className="text-center flex-1">
+                <h1 className="text-xl font-semibold text-gray-700">Donation Campaign</h1>
+                <p className="text-sm text-gray-600 mt-1">Support this cause and make an impact</p>
+              </div>
+              <div className="flex-1"></div>
+            </div>
+          </div>
         </div>
-        <div className="fixed bottom-20 right-10 opacity-15 z-0 pointer-events-none">
-          <img src="/mascots/mascot_gift.png" alt="" className="w-28 h-28 animate-pulse" style={{ animationDuration: "4s" }} />
-        </div>
-        <div className="fixed top-1/2 right-5 opacity-10 z-0 pointer-events-none">
-          <img src="/mascots/mascot_love.png" alt="" className="w-20 h-20 animate-bounce" style={{ animationDuration: "5s" }} />
-        </div>
-        
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-pink-600 mb-6 transition-colors font-medium"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Donations
-          </button>
 
-          {/* Donation Header */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
-            {/* Header Image/Gradient */}
-            <div className="bg-gradient-to-r from-pink-500 to-purple-600 h-64 md:h-80 flex items-center justify-center">
-              <div className="text-center text-white">
-                <Heart className="h-16 w-16 mx-auto mb-4 opacity-80" />
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">{donationEvent.title}</h1>
-                <p className="text-white/90">{donationEvent.ngoId?.name || "NGO"}</p>
+        {/* Cover Image - Full Width */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+          {donationEvent.coverImage ? (
+            <div className="h-64 md:h-96 relative rounded-xl overflow-hidden shadow-lg">
+              <img 
+                src={donationEvent.coverImage} 
+                alt={donationEvent.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+                <div className="p-6 md:p-8 text-white w-full">
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{donationEvent.title}</h1>
+                  <p className="text-white/90 flex items-center text-base md:text-lg">
+                    <Building className="h-5 w-5 mr-2" />
+                    {donationEvent.ngoId?.name || "NGO"}
+                  </p>
+                  {/* Completion Status */}
+                  {isCompleted && (
+                    <div className="mt-4 inline-flex items-center bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Goal Achieved! Thank you for your support.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="bg-gradient-to-r from-[#E8F5A5] to-[#7DD9A6] h-64 md:h-96 flex items-center justify-center rounded-xl shadow-lg">
+              <div className="text-center text-gray-800">
+                <Heart className="h-16 w-16 md:h-20 md:w-20 mx-auto mb-4 opacity-80" />
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{donationEvent.title}</h1>
+                <p className="text-gray-700 text-base md:text-lg">{donationEvent.ngoId?.name || "NGO"}</p>
+                {/* Completion Status */}
+                {isCompleted && (
+                  <div className="mt-4 inline-flex items-center bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Goal Achieved! Thank you for your support.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
-            {/* Completion Status */}
-            {isCompleted && (
-              <div className="bg-green-50 border-b border-green-200 px-6 py-3">
-                <div className="flex items-center justify-center text-green-700 text-sm font-medium">
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Goal Achieved! Thank you for your support.
+        {/* Main Content Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Campaign Details */}
+            <div className="bg-white rounded-lg shadow-sm p-8 space-y-6 custom-scrollbar overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-800">Campaign Details</h2>
+                <p className="text-sm text-gray-600 mt-1">Learn more about this fundraising campaign</p>
+              </div>
+              {/* Short Description */}
+              <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                    <span className="text-white text-lg">📝</span>
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-800">Campaign Tagline</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed text-sm">
+                  {donationEvent.shortDescription || donationEvent.description || "No description available for this donation campaign."}
+                </p>
+              </div>
+
+              {/* Why We're Raising Funds */}
+              {donationEvent.whyRaising && (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <span className="text-white text-lg">�</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800">Why We're Raising Funds</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+                    {donationEvent.whyRaising}
+                  </p>
+                </div>
+              )}
+
+              {/* Who Will Benefit */}
+              {donationEvent.whoBenefits && (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <span className="text-white text-lg">👥</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800">Who Will Benefit</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+                    {donationEvent.whoBenefits}
+                  </p>
+                </div>
+              )}
+
+              {/* How Funds Will Be Used */}
+              {donationEvent.howFundsUsed && (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <span className="text-white text-lg">💰</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800">How Funds Will Be Used</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+                    {donationEvent.howFundsUsed}
+                  </p>
+                </div>
+              )}
+
+              {/* Supporting Media */}
+                            {/* Supporting Media Gallery */}
+              {donationEvent.supportingMedia && donationEvent.supportingMedia.length > 0 && (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <span className="text-white text-lg">📸</span>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800">Supporting Media</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {donationEvent.supportingMedia.map((media: string, index: number) => (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer border border-[#D4E7B8] hover:border-[#7DD9A6] transition-all">
+                        <img
+                          src={media}
+                          alt={`Supporting media ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                          <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium">View</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trust Score & Verification */}
+              <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                    <ShieldCheck className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-800">Trust & Verification</h3>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-700">Trust Score</span>
+                  <span className="text-lg font-bold text-[#7DD9A6]">
+                    {donationEvent.trustScore !== undefined && donationEvent.trustScore !== null 
+                      ? `${donationEvent.trustScore}%` 
+                      : 'N/A'}
+                  </span>
+                </div>
+                {donationEvent.trustScore !== undefined && donationEvent.trustScore !== null && (
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
+                    <div
+                      className={`h-2 transition-all duration-500 ${
+                        donationEvent.trustScore >= 80 ? "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]" : 
+                        donationEvent.trustScore >= 50 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" : "bg-gradient-to-r from-red-400 to-red-500"
+                      }`}
+                      style={{ width: `${donationEvent.trustScore}%` }}
+                    ></div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {donationEvent.governmentId && (
+                    <div className="flex items-center text-green-700 text-xs p-2 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-3 w-3 mr-2" />
+                      Government ID Verified
+                    </div>
+                  )}
+                  {donationEvent.proofOfNeed && (
+                    <div className="flex items-center text-green-700 text-xs p-2 bg-green-50 rounded-lg">
+                      <CheckCircle className="h-3 w-3 mr-2" />
+                      Proof of Need Submitted
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Description */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-pink-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-md">
-                    <span className="text-white text-xl">💝</span>
+              {/* Campaign Information */}
+              {(donationEvent.location || donationEvent.category || donationEvent.minimumDonation) && (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <Settings className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-800">Campaign Information</h3>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900">About This Campaign</h2>
+                  <div className="space-y-2">
+                    {donationEvent.category && (
+                      <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                        <span className="text-xs text-gray-600 flex items-center">
+                          <Tag className="h-3 w-3 mr-1.5 text-[#7DD9A6]" />
+                          Category
+                        </span>
+                        <span className="text-xs font-medium text-gray-900 capitalize">
+                          {donationEvent.category}
+                        </span>
+                      </div>
+                    )}
+                    {donationEvent.location && (
+                      <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                        <span className="text-xs text-gray-600 flex items-center">
+                          <MapPin className="h-3 w-3 mr-1.5 text-[#7DD9A6]" />
+                          Location
+                        </span>
+                        <span className="text-xs font-medium text-gray-900">
+                          {donationEvent.location}
+                        </span>
+                      </div>
+                    )}
+                    {donationEvent.minimumDonation && (
+                      <div className="flex items-center justify-between py-1.5">
+                        <span className="text-xs text-gray-600 flex items-center">
+                          <IndianRupee className="h-3 w-3 mr-1.5 text-[#7DD9A6]" />
+                          Minimum Donation
+                        </span>
+                        <span className="text-xs font-medium text-gray-900">
+                          ₹{donationEvent.minimumDonation}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-base">
-                  {donationEvent.description || "No description available for this donation campaign."}
-                </p>
+              )}
+            </div>
+
+            {/* Right Column - Donation Actions & Info */}
+            <div className="bg-white rounded-lg shadow-sm p-8 space-y-6 custom-scrollbar overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-800">Support This Campaign</h2>
+                <p className="text-sm text-gray-600 mt-1">Make a difference today</p>
               </div>
 
               {/* NGO Information */}
               {donationEvent.ngoId && typeof donationEvent.ngoId === 'object' && (
-                <div className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
-                      <span className="text-white text-xl">🏢</span>
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                      <span className="text-white text-lg">🏢</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
+                    <h3 className="text-base font-semibold text-gray-800">About the Organization</h3>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Organization Basic Info */}
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <Building className="h-5 w-5 text-blue-600 mt-1" />
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-2">
+                      <Building className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-900">Organization Name</p>
+                        <p className="text-xs text-gray-600">
+                          {donationEvent.ngoId.name}
+                        </p>
+                      </div>
+                    </div>
+
+                    {donationEvent.ngoId.organizationType && (
+                      <div className="flex items-start space-x-2">
+                        <Tag className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">Organization Name</p>
-                          <p className="text-sm text-gray-600">
-                            {donationEvent.ngoId.name}
+                          <p className="text-xs font-medium text-gray-900">Organization Type</p>
+                          <p className="text-xs text-gray-600 capitalize">
+                            {donationEvent.ngoId.organizationType.replace('-', ' ')}
                           </p>
                         </div>
                       </div>
+                    )}
 
-                      {donationEvent.ngoId.organizationType && (
-                        <div className="flex items-start space-x-3">
-                          <Tag className="h-5 w-5 text-purple-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Organization Type</p>
-                            <p className="text-sm text-gray-600 capitalize">
-                              {donationEvent.ngoId.organizationType.replace('-', ' ')}
-                            </p>
-                          </div>
+                    {donationEvent.ngoId.yearEstablished && (
+                      <div className="flex items-start space-x-2">
+                        <Calendar className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-gray-900">Established</p>
+                          <p className="text-xs text-gray-600">
+                            {donationEvent.ngoId.yearEstablished}
+                          </p>
                         </div>
-                      )}
-
-                      {donationEvent.ngoId.yearEstablished && (
-                        <div className="flex items-start space-x-3">
-                          <Calendar className="h-5 w-5 text-green-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Established</p>
-                            <p className="text-sm text-gray-600">
-                              {donationEvent.ngoId.yearEstablished}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {donationEvent.ngoId.organizationSize && (
-                        <div className="flex items-start space-x-3">
-                          <Building className="h-5 w-5 text-orange-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Organization Size</p>
-                            <p className="text-sm text-gray-600">
-                              {donationEvent.ngoId.organizationSize} employees
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Contact Information */}
-                    <div className="space-y-4">
-                      {donationEvent.ngoId.email && (
-                        <div className="flex items-start space-x-3">
-                          <Mail className="h-5 w-5 text-red-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Email</p>
-                            <a 
-                              href={`mailto:${donationEvent.ngoId.email}`}
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {donationEvent.ngoId.email}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {donationEvent.ngoId.contactNumber && (
-                        <div className="flex items-start space-x-3">
-                          <Phone className="h-5 w-5 text-green-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Phone</p>
-                            <a 
-                              href={`tel:${donationEvent.ngoId.contactNumber}`}
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {donationEvent.ngoId.contactNumber}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {donationEvent.ngoId.websiteUrl && (
-                        <div className="flex items-start space-x-3">
-                          <Globe className="h-5 w-5 text-blue-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Website</p>
-                            <a 
-                              href={donationEvent.ngoId.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              Visit Website
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {donationEvent.ngoId.address && (
-                        <div className="flex items-start space-x-3">
-                          <MapPinIcon className="h-5 w-5 text-purple-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Address</p>
-                            <div className="text-sm text-gray-600">
-                              {donationEvent.ngoId.address.street && (
-                                <p>{donationEvent.ngoId.address.street}</p>
-                              )}
-                              <p>
-                                {[
-                                  donationEvent.ngoId.address.city,
-                                  donationEvent.ngoId.address.state,
-                                  donationEvent.ngoId.address.zip
-                                ].filter(Boolean).join(', ')}
-                              </p>
-                              {donationEvent.ngoId.address.country && (
-                                <p>{donationEvent.ngoId.address.country}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Organization Description */}
-                  {donationEvent.ngoId.ngoDescription && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">About Us</h3>
-                      <p className="text-gray-600 leading-relaxed">
-                        {donationEvent.ngoId.ngoDescription}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Focus Areas */}
-                  {donationEvent.ngoId.focusAreas && donationEvent.ngoId.focusAreas.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Focus Areas</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {donationEvent.ngoId.focusAreas.map((area: string, index: number) => (
-                          <span 
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize"
-                          >
-                            {area.replace('-', ' ')}
-                          </span>
-                        ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    {donationEvent.ngoId.focusAreas && donationEvent.ngoId.focusAreas.length > 0 && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <p className="text-xs font-medium text-gray-900 mb-2">Focus Areas</p>
+                        <div className="flex flex-wrap gap-1">
+                          {donationEvent.ngoId.focusAreas.slice(0, 3).map((area: string, index: number) => (
+                            <span 
+                              key={index}
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#E8F5A5]/50 text-gray-700 capitalize"
+                            >
+                              {area.replace('-', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Donation Details */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Campaign Details</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Campaign Duration */}
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
-                        <Calendar className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Start Date</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {new Date(donationEvent.startDate).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3 bg-red-50 p-4 rounded-xl border-2 border-red-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center shadow-md">
-                        <Clock className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">End Date</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {new Date(donationEvent.endDate).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
+              {/* Campaign Progress */}
+              <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                    <span className="text-white text-lg">📊</span>
                   </div>
-
-                  {/* Financial Goals */}
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3 bg-green-50 p-4 rounded-xl border-2 border-green-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-md">
-                        <Target className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Goal Amount</p>
-                        <p className="text-lg text-green-700 font-bold mt-1">
-                          ₹{donationEvent.goalAmount.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3 bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
-                        <TrendingUp className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Collected Amount</p>
-                        <p className="text-lg text-purple-700 font-bold mt-1">
-                          ₹{donationEvent.collectedAmount.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Donation Progress Card */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-pink-100 p-6 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shadow-md">
-                    <span className="text-white text-xl">📊</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Donation Progress</h3>
+                  <h3 className="text-base font-semibold text-gray-800">Donation Progress</h3>
                 </div>
                 
                 {/* Progress Stats */}
-                <div className="space-y-4 mb-6 bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-xl border-2 border-pink-200">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between text-gray-700">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mr-2">
-                        <IndianRupee className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="text-sm font-bold">
+                      <IndianRupee className="h-3 w-3 text-[#7DD9A6] mr-1" />
+                      <span className="text-xs font-semibold">
                         ₹{donationEvent.collectedAmount.toLocaleString()} of ₹{donationEvent.goalAmount.toLocaleString()}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-pink-600 bg-white px-3 py-1 rounded-full shadow-sm">{progress}%</span>
+                    <span className="text-xs font-bold text-[#6BC794]">{progress}%</span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-pink-200 rounded-full h-4 shadow-inner border border-pink-300">
+                  <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
                     <div
-                      className={`h-4 rounded-full transition-all duration-500 shadow-md ${
-                        isCompleted ? "bg-gradient-to-r from-green-400 to-emerald-500" : progress > 75 ? "bg-gradient-to-r from-blue-500 to-purple-600" : "bg-gradient-to-r from-pink-500 to-purple-600"
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        isCompleted ? "bg-gradient-to-r from-green-400 to-emerald-500" : "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]"
                       }`}
                       style={{ width: `${progress}%` }}
                     />
@@ -530,58 +554,59 @@ const DonationDetailsPage: React.FC = () => {
 
                   {/* Remaining Amount */}
                   {!isCompleted && (
-                    <div className="text-center bg-white px-4 py-2 rounded-lg border-2 border-pink-200">
-                      <p className="text-sm text-gray-700 font-bold">
-                        🎯 <span className="text-pink-600">₹{remainingAmount.toLocaleString()}</span> more needed
+                    <div className="text-center bg-[#E8F5A5]/30 px-3 py-2 rounded-lg border border-[#D4E7B8]">
+                      <p className="text-xs text-gray-700 font-semibold">
+                        🎯 <span className="text-[#6BC794]">₹{remainingAmount.toLocaleString()}</span> more needed
                       </p>
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Donation Actions */}
-                {!isCompleted ? (
-                  <div className="space-y-4">
-                    {/* Quick Amount Buttons */}
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg">⚡</span>
-                        Quick Donate
-                      </h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        {quickAmounts.slice(0, 4).map((amount) => (
-                          <Button
-                            key={amount}
-                            onClick={() => handleQuickDonate(amount)}
-                            disabled={donating}
-                            variant="outline"
-                            className="text-sm font-bold py-3 px-3 border-2 border-pink-200 hover:border-purple-300 hover:bg-gradient-to-r hover:from-pink-400 hover:to-purple-500 hover:text-white hover:shadow-lg hover:scale-105 transform transition-all duration-300 rounded-xl"
-                          >
-                            ₹{amount}
-                          </Button>
-                        ))}
-                      </div>
+              {/* Donation Actions */}
+              {!isCompleted ? (
+                <div className="border-2 border-[#D4E7B8] rounded-lg p-5 space-y-4">
+                  {/* Quick Amount Buttons */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center text-white text-sm">⚡</span>
+                      Quick Donate
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {quickAmounts.slice(0, 4).map((amount) => (
+                        <Button
+                          key={amount}
+                          onClick={() => handleQuickDonate(amount)}
+                          disabled={donating}
+                          variant="outline"
+                          className="text-xs font-semibold py-2 px-2 border-2 border-[#D4E7B8] hover:border-[#7DD9A6] hover:bg-gradient-to-r hover:from-[#7DD9A6] hover:to-[#6BC794] hover:text-white transition-all duration-300 rounded-lg"
+                        >
+                          ₹{amount}
+                        </Button>
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Custom Amount */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-lg">✨</span>
+                  {/* Custom Amount */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center text-white text-sm">✨</span>
                         Custom Amount
                       </h4>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-600 font-bold text-lg">₹</span>
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6BC794] font-semibold text-sm">₹</span>
                         <Input
                           type="number"
-                          placeholder="Enter custom amount"
+                          placeholder="Enter amount"
                           value={customAmount}
                           onChange={(e) => setCustomAmount(e.target.value)}
-                          className="pl-8 text-center font-semibold border-2 border-pink-300 focus:border-purple-400 rounded-xl shadow-inner h-12"
+                          className="pl-7 text-center font-semibold text-sm border-2 border-[#D4E7B8] focus:border-[#7DD9A6] rounded-lg h-10"
                         />
                       </div>
                       <Button
                         onClick={handleCustomDonate}
                         disabled={donating || !customAmount}
-                        className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform"
+                        className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white font-semibold py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 text-sm"
                       >
                         {donating ? (
                           <>
@@ -590,47 +615,82 @@ const DonationDetailsPage: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            <Heart className="h-5 w-5 mr-2" />
-                            💝 Donate Now
+                            <Heart className="h-4 w-4 mr-2" />
+                            Donate Now
                           </>
                         )}
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-4">
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-300 shadow-lg">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-3 shadow-md">
-                        <CheckCircle className="h-8 w-8 text-white" />
+                  <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
+                    <div className="text-center">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
+                        <CheckCircle className="h-6 w-6 text-white" />
                       </div>
-                      <h4 className="font-bold text-green-900 mb-2 text-lg">🎉 Goal Achieved!</h4>
-                      <p className="text-sm text-green-700 font-medium">
-                        Thank you for helping us reach our goal. Your support made this possible!
+                      <h4 className="font-semibold text-green-900 mb-1 text-sm">🎉 Goal Achieved!</h4>
+                      <p className="text-xs text-green-700">
+                        Thank you for your support!
                       </p>
                     </div>
                   </div>
                 )}
+
+              {/* Campaign Timeline */}
+              <div className="border-2 border-[#D4E7B8] rounded-lg p-5 space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                    <Calendar className="h-3 w-3 text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-800">Campaign Timeline</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                    <span className="text-xs text-gray-600">Start Date</span>
+                    <span className="text-xs font-medium text-gray-900">
+                      {new Date(donationEvent.startDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
+                    <span className="text-xs text-gray-600">End Date</span>
+                    <span className="text-xs font-medium text-gray-900">
+                      {new Date(donationEvent.endDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1.5">
+                    <span className="text-xs text-gray-600">Duration</span>
+                    <span className="text-xs font-medium text-gray-900">
+                      {Math.ceil((new Date(donationEvent.endDate).getTime() - new Date(donationEvent.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Campaign Status */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Campaign Status</h3>
-                <div className="space-y-3">
+              <div className="border-2 border-[#D4E7B8] rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center">
+                    <span className="text-white text-sm">ℹ️</span>
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-800">Campaign Status</h3>
+                </div>
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <span className="text-xs text-gray-600">Status</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
                       donationEvent.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      donationEvent.status === 'active' ? 'bg-blue-100 text-blue-700' :
+                      donationEvent.status === 'active' ? 'bg-[#E8F5A5] text-gray-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
                       {donationEvent.status === 'active' ? 'Active' : 'Completed'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Campaign Duration</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {Math.ceil((new Date(donationEvent.endDate).getTime() - new Date(donationEvent.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
                     </span>
                   </div>
                 </div>

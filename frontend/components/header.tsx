@@ -58,30 +58,31 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative">
-            {/* Premium Badge */}
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-700 to-blue-700 flex items-center justify-center group-hover:shadow-lg transition-all duration-300 shadow-md border border-indigo-200/20">
-              <span className="font-bold text-white text-lg tracking-tighter">
-                N
-              </span>
-            </div>
+      <Link href="/" className="flex items-center gap-3 group">
+  <div className="relative">
+    {/* Main Logo */}
+    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg">
+      <span className="font-bold text-white text-xl tracking-tight">N</span>
+    </div>
+    
+    {/* Accent Elements */}
+    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full shadow-sm" />
+    <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full" />
+    
+    {/* Glow Effect */}
+    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 blur-sm group-hover:blur-md transition-all duration-500 -z-10" />
+  </div>
 
-            {/* Corner Accents */}
-            <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-cyan-300 rounded-sm" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-purple-300 rounded-sm" />
-          </div>
-
-          {/* Corporate Typography */}
-          <div className="flex flex-col">
-            <span className="text-xl font-bold text-slate-800 tracking-tight">
-              Namastep
-            </span>
-            <span className="text-[9px] font-semibold text-slate-500 tracking-[0.1em] uppercase">
-              Social Innovation
-            </span>
-          </div>
-        </Link>
+  {/* Typography */}
+  <div className="flex flex-col">
+    <span className="text-2xl font-black bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent tracking-tight">
+      NAMASTEP
+    </span>
+    <span className="text-[10px] font-semibold text-slate-500 tracking-[0.2em] uppercase mt-[-2px]">
+      SOCIAL IMPACT
+    </span>
+  </div>
+</Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">

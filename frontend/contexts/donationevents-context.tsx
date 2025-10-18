@@ -107,16 +107,27 @@ export const DonationEventProvider = ({ children }: Props) => {
     eventData: Omit<
       DonationEvent,
       "_id" | "collectedAmount" | "status" | "createdAt" | "updatedAt" | "ngo"
-    >
+    > | FormData
   ) => {
     setLoading(true);
     try {
+      const headers: any = { Authorization: `Bearer ${token}` };
+      
+      // If FormData, let browser set Content-Type with boundary
+      if (!(eventData instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
+      
       const res = await api.post<{ event: DonationEvent }>(
         "/v1/donation-event/create-event",
         eventData,
-        { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+        { 
+          headers,
+          withCredentials: true 
+        }
       );
       setEvents((prev) => [res.data.event, ...prev]);
+      toast.success("Event created successfully! Pending admin approval.");
       return res.data.event;
     } catch (err: any) {
       console.error("Failed to add event:", err);

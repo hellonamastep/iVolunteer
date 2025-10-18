@@ -28,7 +28,11 @@ const POST_CATEGORIES = [
     'Other'
 ];
 
-export function CreatePost() {
+interface CreatePostProps {
+    onSuccess?: () => void;
+}
+
+export function CreatePost({ onSuccess }: CreatePostProps = {}) {
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
@@ -167,6 +171,11 @@ export function CreatePost() {
             setImagePreview(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
+            }
+
+            // Call onSuccess callback to close the dialog
+            if (onSuccess) {
+                onSuccess();
             }
         } catch (error: any) {
             console.error('Error creating post:', error);

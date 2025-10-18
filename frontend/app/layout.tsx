@@ -14,6 +14,14 @@ export const metadata: Metadata = {
   generator: "v0.app",
 };
 
+export function generateViewport() {
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  };
+}
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
