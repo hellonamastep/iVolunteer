@@ -11,7 +11,6 @@ import Image from "next/image";
 import moscatt from "@/public/images/moscatt.png";
 import { GoogleLogin } from "@react-oauth/google";
 
-
 type FormValues = {
   email: string;
   password: string;
@@ -19,7 +18,7 @@ type FormValues = {
 };
 
 export default function LoginPage() {
-  const { login,googleLogin  } = useAuth();
+  const { login, googleLogin } = useAuth();
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -126,8 +125,8 @@ export default function LoginPage() {
               <label className="block text-xs sm:text-sm font-medium">
                 Password <span className="text-red-500">*</span>
               </label>
-              <Link 
-                href="/forgot-password" 
+              <Link
+                href="/forgot-password"
                 className="text-xs sm:text-sm text-[#3ABBA5] hover:underline"
               >
                 Forgot password?
@@ -168,22 +167,21 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-center mt-4 rounded-md">
-  <GoogleLogin
-    onSuccess={async credentialResponse => {
-      const success = await googleLogin(credentialResponse);
-      if (success) {
-        toast.success("Login successful via Google!");
-        router.push("/");
-      } else {
-        toast.error("Google login failed. Try again.");
-      }
-    }}
-    onError={() => {
-      toast.error("Google login failed. Try again.");
-    }}
-  />
-</div>
-
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                const success = await googleLogin(credentialResponse);
+                if (success) {
+                  toast.success("Login successful via Google!");
+                  router.push("/");
+                } else {
+                  toast.error("Google login failed. Try again.");
+                }
+              }}
+              onError={() => {
+                toast.error("Google login failed. Try again.");
+              }}
+            />
+          </div>
 
           {/* Submit */}
           <button

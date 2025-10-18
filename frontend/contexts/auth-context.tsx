@@ -212,45 +212,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 
-// const googleLogin = async (credentialResponse: any): Promise<boolean> => {
-//   try {
-//     if (!credentialResponse?.credential) {
-//       console.error("Google credential missing");
-//       return false;
-//     }
-
-//     const decoded: any = jwtDecode(credentialResponse.credential);
-
-//     const res = await fetch(
-//       "https://namastep-irod.onrender.com/api/v1/auth/google-login",
-//       {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({
-//           email: decoded.email,
-//           name: decoded.name,
-//           profilePicture: decoded.picture,
-//         }),
-//       }
-//     );
-
-//     const result = await res.json();
-
-//     if (!res.ok || !result.success || !result.data?.tokens) {
-//       console.error("Google login failed", result);
-//       return false;
-//     }
-
-//     localStorage.setItem("accessToken", result.data.tokens.accessToken);
-//     localStorage.setItem("refreshToken", result.data.tokens.refreshToken);
-
-
-//     return true;
-//   } catch (err) {
-//     console.error("Error in googleLogin:", err);
-//     return false;
-//   }
-// };
 
 const googleLogin = async (credentialResponse: any): Promise<boolean> => {
   try {
@@ -300,7 +261,7 @@ const googleLogin = async (credentialResponse: any): Promise<boolean> => {
     localStorage.removeItem("auth-user");
     localStorage.removeItem("auth-token");
     localStorage.removeItem("refresh-token");
-    console.log("User logged out successfully");
+   
   };
 
   return (
