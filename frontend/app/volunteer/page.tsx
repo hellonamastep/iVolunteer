@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { toast } from "@/hooks/use-toast";
+import Pagination from "@/components/Pagination";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
@@ -77,6 +78,10 @@ const AvailableEventsContent: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSpecialEvents, setShowSpecialEvents] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Set to 2 for testing
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -162,6 +167,21 @@ const AvailableEventsContent: React.FC = () => {
       return matchesTab && matchesFilter && matchesSearch;
     });
   }, [events, activeTab, filterType, searchQuery, user, participated]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filterType, searchQuery]);
 
   // Auto-switch tab when searching for events in different sections
   useEffect(() => {
@@ -739,7 +759,7 @@ const AvailableEventsContent: React.FC = () => {
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filteredEvents.map((event) => {
+          {currentEvents.map((event) => {
             const progress = getProgressPercentage(event);
             const eventFull = isEventFull(event);
             const userParticipating = isUserParticipating(event);
@@ -995,15 +1015,26 @@ const AvailableEventsContent: React.FC = () => {
           })}
         </div>
 
+        {/* Pagination */}
+        {filteredEvents.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredEvents.length}
+          />
+        )}
+
         {/* Footer Note */}
         {filteredEvents.length > 0 && (
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
               {filterType === 'joined' 
-                ? `Showing ${filteredEvents.length} joined event${filteredEvents.length !== 1 ? 's' : ''}`
+                ? `Total ${filteredEvents.length} joined event${filteredEvents.length !== 1 ? 's' : ''}`
                 : filterType === 'shortlisted'
-                ? `Showing ${filteredEvents.length} shortlisted event${filteredEvents.length !== 1 ? 's' : ''}`
-                : `Showing ${filteredEvents.length} ${activeTab} event${filteredEvents.length !== 1 ? 's' : ''}`}
+                ? `Total ${filteredEvents.length} shortlisted event${filteredEvents.length !== 1 ? 's' : ''}`
+                : `Total ${filteredEvents.length} ${activeTab} event${filteredEvents.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         )}

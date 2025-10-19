@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Clock, Users } from "lucide-react";
 import api from "@/lib/api";
+import Pagination from "@/components/Pagination";
 
 interface EventItem {
   _id: string;
@@ -24,6 +25,10 @@ const Allngopublisheventcta = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false); // new state
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Set to 2 for testing
 
   // Fetch events
   const fetchEvents = async () => {
@@ -120,6 +125,16 @@ const Allngopublisheventcta = () => {
     fetchEvents();
   }, []);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(events.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = events.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (loading)
     return <div className="p-6 text-center text-gray-500">Loading published events...</div>;
 
@@ -146,7 +161,7 @@ const Allngopublisheventcta = () => {
           </thead>
           <tbody>
             <AnimatePresence>
-              {events.map((event) => (
+              {currentEvents.map((event) => (
                 <motion.tr
                   key={event._id}
                   initial={{ opacity: 0 }}
@@ -205,6 +220,15 @@ const Allngopublisheventcta = () => {
           <div className="p-8 text-center text-gray-500">No published events found</div>
         )}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        itemsPerPage={itemsPerPage}
+        totalItems={events.length}
+      />
 
       {/* Proof Modal */}
       {showModal && (

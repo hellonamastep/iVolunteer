@@ -98,7 +98,7 @@ export default function BlogDetailsPage() {
             src={
               blog.imageUrl.startsWith("http")
                 ? blog.imageUrl
-                : `https://namastep-irod.onrender.com/${blog.imageUrl}`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://namastep-irod.onrender.com'}/${blog.imageUrl}`
             }
             alt={blog.title}
             fill

@@ -19,6 +19,7 @@ import {
   DonationEvent,
 } from "@/contexts/donationevents-context";
 import { FundraiserSection } from "@/components/FundraiserSection";
+import Pagination from "@/components/Pagination";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({
@@ -66,6 +67,10 @@ function DonatePageContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFundraiser, setShowFundraiser] = useState(false);
   const [activeSection, setActiveSection] = useState<'campaigns' | 'fundraiser'>('campaigns');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Set to 2 for testing
 
   const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -166,6 +171,21 @@ function DonatePageContent() {
       return matchesFilter && matchesSearch;
     });
   }, [events, filter, searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery]);
 
   const eventCounts = useMemo(() => {
     const completed = events.filter(
@@ -576,7 +596,7 @@ function DonatePageContent() {
           ) : (
             <div>
               <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3 w-full">
-                {filteredEvents.map((event: DonationEvent, index) => {
+                {currentEvents.map((event: DonationEvent, index) => {
                   const progressPercentage = Math.min(
                     (event.collectedAmount / event.goalAmount) * 100,
                     100
@@ -734,18 +754,29 @@ function DonatePageContent() {
                 })}
               </div>
 
+              {/* Pagination */}
+              {filteredEvents.length > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredEvents.length}
+                />
+              )}
+
               {filteredEvents.length > 0 && (
                 <div className="mt-8 text-center">
                   <p className="text-sm text-gray-500">
                     {filter === "active"
-                      ? `Showing ${filteredEvents.length} active campaign${
+                      ? `Total ${filteredEvents.length} active campaign${
                           filteredEvents.length !== 1 ? "s" : ""
                         }`
                       : filter === "completed"
-                      ? `Showing ${filteredEvents.length} completed campaign${
+                      ? `Total ${filteredEvents.length} completed campaign${
                           filteredEvents.length !== 1 ? "s" : ""
                         }`
-                      : `Showing ${filteredEvents.length} campaign${
+                      : `Total ${filteredEvents.length} campaign${
                           filteredEvents.length !== 1 ? "s" : ""
                         }`}
                   </p>

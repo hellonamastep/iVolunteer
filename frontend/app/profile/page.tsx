@@ -84,7 +84,7 @@ export default function ProfilePage() {
         try {
           const token = localStorage.getItem("auth-token");
           const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/user?t=${Date.now()}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/user?t=${Date.now()}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -192,7 +192,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("auth-token");
       
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/profile-picture`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/profile-picture`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -239,7 +239,7 @@ export default function ProfilePage() {
       formData.append("profilePicture", profilePicture);
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/upload-profile-picture`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/upload-profile-picture`,
         formData,
         {
           headers: {
@@ -316,7 +316,7 @@ export default function ProfilePage() {
     try {
       const token = localStorage.getItem("auth-token");
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/change-password`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/change-password`,
         passwordData,
         {
           headers: {
@@ -364,7 +364,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("auth-token");
       await axios({
         method: 'delete',
-        url: `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/account`,
+        url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/account`,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -421,7 +421,7 @@ export default function ProfilePage() {
       }
       
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/profile`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/profile`,
         dataToSend,
         {
           headers: {
