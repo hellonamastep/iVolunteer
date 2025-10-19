@@ -87,3 +87,13 @@ export const getEventById = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getOrganizationEvents = async (req, res) => {
+  try {
+    const ngoId = req.user._id;
+    const events = await eventService.getOrganizationEventsService(ngoId);
+    res.json({ success: true, events });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

@@ -6,7 +6,7 @@ export const createEventService = async (ngoId, eventData) => {
 };
 
 export const getAllActiveEventsService = async () => {
-  return DonationEvent.find({ status: "active" })
+  return DonationEvent.find({ status: "active", approvalStatus: "approved" })
     .populate("ngoId", "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize")
     .sort({ createdAt: -1 });
 };
@@ -35,4 +35,9 @@ export const updateEventApprovalService = async (eventId, status) => {
     { approvalStatus: status },
     { new: true }
   );
+};
+
+export const getOrganizationEventsService = async (ngoId) => {
+  return DonationEvent.find({ ngoId })
+    .sort({ createdAt: -1 });
 };

@@ -81,7 +81,7 @@ const AvailableEventsContent: React.FC = () => {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Set to 2 for testing
+  const itemsPerPage = 8; // Set to 2 for testing
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());

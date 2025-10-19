@@ -101,7 +101,7 @@ import Pagination from "@/components/Pagination";
 ```typescript
 // 1. Add state
 const [currentPage, setCurrentPage] = useState(1);
-const itemsPerPage = 100;
+const itemsPerPage = 80;
 
 // 2. Calculate pagination
 const totalPages = Math.ceil(items.length / itemsPerPage);

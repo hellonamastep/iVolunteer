@@ -5,6 +5,7 @@ import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, Alert
 import api from "@/lib/api"; // your axios instance
 import { toast } from "react-toastify";
 import Link from "next/link";
+import Pagination from "@/components/Pagination";
 
 interface EventItem {
   _id: string;
@@ -44,6 +45,10 @@ const Ngoeventtable = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedEvent, setEditedEvent] = useState<EventItem | null>(null);
   const tableRef = useRef<HTMLElement>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch events from backend
   const fetchEvents = async () => {
@@ -160,6 +165,21 @@ const Ngoeventtable = () => {
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.location.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentEvents = filteredEvents.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery, sortConfig]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const requestSort = (key: keyof EventItem) => {
     let direction = "ascending";
@@ -415,7 +435,7 @@ const Ngoeventtable = () => {
           </thead>
           <tbody>
             <AnimatePresence>
-              {filteredEvents.map((event, index) => (
+              {currentEvents.map((event, index) => (
                 <motion.tr
                   key={event._id}
                   initial={{ opacity: 0, y: 10 }}
@@ -492,6 +512,17 @@ const Ngoeventtable = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredEvents.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredEvents.length}
+        />
+      )}
 
       {/* Event Details Modal */}
       {selectedEvent && (

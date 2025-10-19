@@ -71,7 +71,7 @@ function DonatePageContent() {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Set to 2 for testing
+  const itemsPerPage = 8; // Set to 2 for testing
 
   const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 

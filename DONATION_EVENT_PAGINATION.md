@@ -16,7 +16,7 @@ import Pagination from "@/components/Pagination";
 ```typescript
 // Pagination states
 const [currentPage, setCurrentPage] = useState(1);
-const itemsPerPage = 2; // Set to 2 for testing
+const itemsPerPage = 8; // Set to 2 for testing
 ```
 
 #### 3. Pagination Calculation Logic
@@ -175,12 +175,12 @@ Edit the `itemsPerPage` constant in `donate/page.tsx`:
 
 ```typescript
 // For testing
-const itemsPerPage = 2;
+const itemsPerPage = 8;
 
 // For production (recommended)
 const itemsPerPage = 9;  // 3 columns × 3 rows
 // or
-const itemsPerPage = 102; // 3 columns × 4 rows
+const itemsPerPage = 82; // 3 columns × 4 rows
 ```
 
 ### Recommended Production Settings:

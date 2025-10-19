@@ -28,7 +28,7 @@ const Allngopublisheventcta = () => {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Set to 2 for testing
+  const itemsPerPage = 8; // Set to 2 for testing
 
   // Fetch events
   const fetchEvents = async () => {

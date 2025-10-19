@@ -12,7 +12,7 @@ import Pagination from "@/components/Pagination";
 ### Step 2: Add State Variables
 ```typescript
 const [currentPage, setCurrentPage] = useState(1);
-const itemsPerPage = 100; // Adjust as needed (10, 20, 25, etc.)
+const itemsPerPage = 80; // Adjust as needed (10, 20, 25, etc.)
 ```
 
 ### Step 3: Calculate Pagination Values
@@ -82,7 +82,7 @@ const YourPage = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 100;
+  const itemsPerPage = 80;
 
   // Fetch your data
   useEffect(() => {
@@ -145,7 +145,7 @@ const YourPageWithFilters = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 100;
+  const itemsPerPage = 80;
 
   // Filter items
   const filteredItems = allItems.filter(item => {
@@ -212,7 +212,7 @@ export default YourPageWithFilters;
 
 ### Change Items Per Page
 ```typescript
-const itemsPerPage = 100; // Show 20 items per page
+const itemsPerPage = 80; // Show 20 items per page
 ```
 
 ### Hide Item Count
