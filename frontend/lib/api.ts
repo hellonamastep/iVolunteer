@@ -2,7 +2,7 @@ import axios from "axios";
 
 const apiHost = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const api = axios.create({
-  baseURL: `${apiHost}/api`,
+  baseURL: `${apiHost}`,
   withCredentials: true,
   headers: {
     "Cache-Control": "no-cache",
