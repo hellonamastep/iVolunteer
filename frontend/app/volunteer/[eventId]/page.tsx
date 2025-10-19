@@ -197,10 +197,17 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading event details...</p>
+            <img
+              src="/mascots/video_mascots/mascot_walking_video.gif"
+              alt="Loading..."
+              width={200}
+              height={200}
+              className="mx-auto mb-6"
+            />
+            <p className="text-gray-600 text-lg font-semibold">Loading event details...</p>
+            <p className="text-gray-400 text-sm mt-2">Please wait while we fetch the details! 🎉</p>
           </div>
         </div>
       </>
@@ -211,7 +218,7 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
             <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
               <div className="text-red-600 text-5xl mb-4">⚠️</div>
@@ -223,7 +230,7 @@ const EventDetailsPage: React.FC = () => {
               </p>
               <button
                 onClick={() => router.back()}
-                className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white px-6 py-2 rounded-lg transition-all shadow-lg"
+                className="bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white px-6 py-2 rounded-lg transition-all shadow-lg"
               >
                 Go Back
               </button>
@@ -247,7 +254,7 @@ const EventDetailsPage: React.FC = () => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 py-6 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] py-6 relative overflow-hidden">
         <style jsx global>{`
           .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
@@ -257,11 +264,11 @@ const EventDetailsPage: React.FC = () => {
             border-radius: 10px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #2dd4bf, #06b6d4);
+            background: linear-gradient(to bottom, #7DD9A6, #6BC794);
             border-radius: 10px;
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, #14b8a6, #0891b2);
+            background: linear-gradient(to bottom, #6BC794, #5AB583);
           }
         `}</style>
         
@@ -280,7 +287,7 @@ const EventDetailsPage: React.FC = () => {
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-teal-600 mb-6 transition-colors font-medium"
+            className="flex items-center text-gray-600 hover:text-[#7DD9A6] mb-6 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
@@ -327,9 +334,9 @@ const EventDetailsPage: React.FC = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Description */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-cyan-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
                     <span className="text-white text-xl">📋</span>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900">About This Event</h2>
@@ -340,7 +347,7 @@ const EventDetailsPage: React.FC = () => {
               </div>
 
               {/* Event Details Grid */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
                     <span className="text-white text-xl">ℹ️</span>
@@ -494,17 +501,17 @@ const EventDetailsPage: React.FC = () => {
 
               {/* Requirements */}
               {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg border-2 border-teal-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
                       <span className="text-white text-xl">✓</span>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Requirements</h2>
                   </div>
                   <ul className="space-y-3">
                     {event.requirements.map((req: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-3 bg-teal-50 p-3 rounded-xl border-2 border-teal-200">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <li key={index} className="flex items-start space-x-3 bg-green-50 p-3 rounded-xl border-2 border-green-200">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center flex-shrink-0 shadow-md">
                           <Target className="h-3 w-3 text-white" />
                         </div>
                         <span className="text-gray-700 text-sm font-medium">{req}</span>
@@ -516,10 +523,10 @@ const EventDetailsPage: React.FC = () => {
 
               {/* NGO Information */}
               {event.organizationId && typeof event.organizationId === 'object' && (
-                <div className="bg-white rounded-2xl shadow-lg border-2 border-purple-100 p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
-                      <span className="text-white text-xl">🏢</span>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8F5A5] to-[#D4E590] flex items-center justify-center shadow-md">
+                      <span className="text-gray-800 text-xl">🏢</span>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
                   </div>
@@ -528,7 +535,7 @@ const EventDetailsPage: React.FC = () => {
                     {/* Organization Basic Info */}
                     <div className="space-y-4">
                       <div className="flex items-start space-x-3">
-                        <Building className="h-5 w-5 text-blue-600 mt-1" />
+                        <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
                         <div>
                           <p className="text-sm font-medium text-gray-900">Organization Name</p>
                           <p className="text-sm text-gray-600">
@@ -539,7 +546,7 @@ const EventDetailsPage: React.FC = () => {
 
                       {event.organizationId.organizationType && (
                         <div className="flex items-start space-x-3">
-                          <Tag className="h-5 w-5 text-purple-600 mt-1" />
+                          <Tag className="h-5 w-5 text-[#E8F5A5] mt-1" />
                           <div>
                             <p className="text-sm font-medium text-gray-900">Organization Type</p>
                             <p className="text-sm text-gray-600 capitalize">
@@ -583,7 +590,7 @@ const EventDetailsPage: React.FC = () => {
                             <p className="text-sm font-medium text-gray-900">Email</p>
                             <a 
                               href={`mailto:${event.organizationId.email}`}
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              className="text-sm text-[#7DD9A6] hover:text-[#6BC794] hover:underline"
                             >
                               {event.organizationId.email}
                             </a>
@@ -667,7 +674,7 @@ const EventDetailsPage: React.FC = () => {
                         {event.organizationId.focusAreas.map((area: string, index: number) => (
                           <span 
                             key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize"
                           >
                             {area.replace('-', ' ')}
                           </span>
@@ -684,15 +691,15 @@ const EventDetailsPage: React.FC = () => {
                   <h2 className="text-2xl font-semibold text-gray-900 mb-6">About the Organization</h2>
                   
                   <div className="flex items-start space-x-3">
-                    <Building className="h-5 w-5 text-blue-600 mt-1" />
+                    <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Organization Name</p>
                       <p className="text-sm text-gray-600">{event.organization}</p>
                     </div>
                   </div>
                   
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700">
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-700">
                       <strong>Note:</strong> Detailed organization information is not available for this event. Only the organization name is provided.
                     </p>
                   </div>
@@ -862,7 +869,7 @@ const EventDetailsPage: React.FC = () => {
                     <button
                       onClick={handleParticipate}
                       disabled={participating}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white py-3 px-4 rounded-lg hover:from-[#6BC794] hover:to-[#5AB583] transition-all duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
                     >
                       {participating ? (
                         <>

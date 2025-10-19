@@ -139,8 +139,15 @@ const DonationDetailsPage: React.FC = () => {
         <Header />
         <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7DD9A6] mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading donation details...</p>
+            <img
+              src="/mascots/video_mascots/mascot_walking_video.gif"
+              alt="Loading..."
+              width={200}
+              height={200}
+              className="mx-auto mb-6"
+            />
+            <p className="text-gray-600 text-lg font-semibold">Loading donation details...</p>
+            <p className="text-gray-400 text-sm mt-2">Finding ways to make a difference! 💝</p>
           </div>
         </div>
       </>

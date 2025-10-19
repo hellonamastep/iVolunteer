@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
 import { usePoints } from "./points-context";
 import api from "@/lib/api";
 
@@ -74,11 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const handleTokenExpired = () => {
-      toast({
-        title: "Session Expired",
-        description: "Your session has expired. Please log in again.",
-        variant: "destructive",
-      });
+      toast.error("Your session has expired. Please log in again.");
       logout();
     };
 
@@ -136,22 +132,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (earnPoints) await earnPoints("register");
 
       setTimeout(() => {
-        toast({
-          title: "🎉 Welcome to iVolunteer!",
-          description: "You've been awarded 50 coins as a welcome bonus!",
-          variant: "default",
-        });
+        toast.success("🎉 Welcome to iVolunteer! You've been awarded 50 coins as a welcome bonus!");
       }, 100);
 
       setIsLoading(false);
       return true;
     } catch (err: any) {
       console.error("Signup failed:", err.response?.data?.message || err.message);
-      toast({
-        title: "Registration Failed",
-        description: err.response?.data?.message || err.message || "Please try again.",
-        variant: "destructive",
-      });
+      toast.error(err.response?.data?.message || err.message || "Registration failed. Please try again.");
       setIsLoading(false);
       return false;
     }
@@ -223,19 +211,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("auth-token", data.tokens.accessToken);
     localStorage.setItem("refresh-token", data.tokens.refreshToken);
 
-    toast({
-      title: "Login Successful",
-      description: "Welcome back!",
-    });
+    // Don't show toast here - let the login page handle it
+    // toast.success("Login successful! Welcome back!");
 
     return true;
   } catch (err: any) {
     console.error("Login failed:", err.response?.data?.message || err.message);
-    toast({
-      title: "Login Failed",
-      description: err.response?.data?.message || "Please try again.",
-      variant: "destructive",
-    });
+    // Show the specific error message from backend
+    toast.error(err.response?.data?.message || "Login failed. Please try again.");
     return false;
   } finally {
     setIsLoading(false);
@@ -278,11 +261,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return true;
     } catch (err: any) {
       console.error("OTP verification failed:", err.response?.data?.message || err.message);
-      toast({
-        title: "OTP Verification Failed",
-        description: err.response?.data?.message || "Please try again.",
-        variant: "destructive",
-      });
+      toast.error(err.response?.data?.message || "OTP verification failed. Please try again.");
       setIsLoading(false);
       return false;
     }

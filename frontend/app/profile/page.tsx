@@ -76,7 +76,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!authLoading && !authUser) {
-        router.push("/auth");
+        router.push("/login");
         return;
       }
 
@@ -381,7 +381,7 @@ export default function ProfilePage() {
       // Clear local storage and redirect to login
       localStorage.removeItem("auth-token");
       localStorage.removeItem("auth-user");
-      router.push("/auth");
+      router.push("/login");
     } catch (error: any) {
       console.error("Error deleting account:", error);
       toast({

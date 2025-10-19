@@ -97,7 +97,7 @@ api.interceptors.response.use(
                     window.dispatchEvent(new CustomEvent('token-expired'));
                     
                     // Redirect to login page
-                    window.location.href = '/auth';
+                    window.location.href = '/login';
                 }
             } finally {
                 isRefreshing = false;

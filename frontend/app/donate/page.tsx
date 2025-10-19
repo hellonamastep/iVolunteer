@@ -536,7 +536,7 @@ function DonatePageContent() {
           {loading ? (
             <div className="text-center py-16">
               <img
-                src="/mascots/video_mascots/mascot_joyDance_video.gif"
+                src="/mascots/video_mascots/mascot_walking_video.gif"
                 alt="Loading..."
                 width={200}
                 height={200}

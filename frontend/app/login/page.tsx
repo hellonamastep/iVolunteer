@@ -30,7 +30,11 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>();
+    setError,
+  } = useForm<FormValues>({
+    mode: "onSubmit",
+    shouldFocusError: false, // Prevent auto-focus that might cause issues
+  });
 
   // const handleOtpChange = (index: number, value: string) => {
   //   if (value.length > 1) {
@@ -87,12 +91,20 @@ export default function LoginPage() {
   // };
 
   const onSubmit = async (data: FormValues) => {
-    const success = await login(data.email, data.password);
-    if (success) {
-      toast.success("Login successful!");
-      router.push("/");
-    } else {
-      toast.error("Invalid credentials. Please try again.");
+    try {
+      const success = await login(data.email, data.password);
+      if (success) {
+        toast.success("Login successful!");
+        router.push("/");
+      }
+      // Error toast is already shown by auth context
+      // Don't throw or return anything that could cause issues
+      return false; // Explicitly return false to prevent any default behavior
+    } catch (error) {
+      // Catch any unexpected errors
+      console.error("Login error:", error);
+      toast.error("An error occurred. Please try again.");
+      return false; // Prevent default behavior
     }
   };
 
@@ -132,7 +144,11 @@ export default function LoginPage() {
 
         {/* Form Section */}
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onSubmit)(e);
+          }}
           className="px-8 pt-8 pb-10 text-gray-700"
         >
           <h2 className="text-xl font-semibold mb-1 text-gray-800">
