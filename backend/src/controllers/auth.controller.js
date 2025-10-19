@@ -81,31 +81,31 @@ const googleLogin = asyncHandler(async (req, res) => {
 });
 
 
-const login = asyncHandler(async (req, res) => {
-  // Step 1: Validate credentials
+ const login = asyncHandler(async (req, res) => {
+  // 1) validate creds
   const user = await authService.login(req.body);
 
-  // Step 2: Create session tokens
+  // 2) mint tokens  (payload must include { id: user._id } to match middleware)
   const { accessToken, refreshToken } = await createSession(user);
 
-  // Step 3: Set cookies for frontend
+  // 3) set cookies for browser
   setCookies(res, accessToken, refreshToken);
 
-  // Step 4: Return user info + tokens
+  // 4) respond
   return res.status(200).json({
     user: {
       userId: user._id,
       email: user.email,
       name: user.name,
       role: user.role,
-      coins: user.coins,
-      profilePicture: user.profilePicture,
+      coins: user.coins ?? 0,
+      profilePicture: user.profilePicture ?? null,
     },
+    // keep tokens if your FE stores them; safe to omit if you rely only on cookies
     tokens: { accessToken, refreshToken },
-    message: "Login successful!",
+    message: "Login successful",
   });
 });
-
 // Step 2: verify OTP then mint session
 export const verifyLoginOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body || {};
