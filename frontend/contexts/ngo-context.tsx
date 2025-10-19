@@ -103,13 +103,21 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       const showAllParam = showAll ? '?showAll=true' : '';
+      console.log('[NGO Context] Fetching events from:', api.defaults.baseURL);
+      console.log('[NGO Context] Full URL:', `${api.defaults.baseURL}/v1/event/all-event${showAllParam}`);
+      
       const res = await api.get<{ success: boolean; events: EventData[] }>(
         `/v1/event/all-event${showAllParam}`,
         { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
       );
 
+      console.log('[NGO Context] Events fetched:', res.data);
+      console.log('[NGO Context] Number of events:', (res.data as any).events?.length || 0);
+      
       setEvents((res.data as any).events || []);
     } catch (err: any) {
+      console.error('[NGO Context] Error fetching events:', err);
+      console.error('[NGO Context] Error response:', err.response);
       setError(err.response?.data?.message || "Failed to fetch events");
     } finally {
       setLoading(false);

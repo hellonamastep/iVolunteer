@@ -44,7 +44,7 @@ const Coinsystem = () => {
           whileTap={{ scale: 0.95 }}
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-md hover:bg-blue-700 transition-all"
         >
-          <Link href="/auth">
+          <Link href="/signup">
            Register & Get 5 Coins
            </Link>
         </motion.button>

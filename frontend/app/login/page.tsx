@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import moscatt from "@/public/images/moscatt.png";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 
 type FormValues = {
   email: string;
@@ -27,15 +27,81 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>();
+    setError,
+  } = useForm<FormValues>({
+    mode: "onSubmit",
+    shouldFocusError: false, // Prevent auto-focus that might cause issues
+  });
+
+  // const handleOtpChange = (index: number, value: string) => {
+  //   if (value.length > 1) {
+  //     value = value.charAt(0); // Only take first character
+  //   }
+
+  //   // Only allow numbers
+  //   if (!/^\d*$/.test(value)) return;
+
+  //   const newOtp = [...otp];
+  //   newOtp[index] = value;
+  //   setOtp(newOtp);
+
+  //   // Auto-focus next input
+  //   if (value && index < 5) {
+  //     otpRefs.current[index + 1]?.focus();
+  //   }
+
+  //   // Auto-submit when all fields are filled
+  //   if (newOtp.every((digit) => digit !== "") && index === 5) {
+  //     handleSubmit(onSubmit)();
+  //   }
+  // };
+
+  // const handleOtpKeyDown = (
+  //   index: number,
+  //   e: React.KeyboardEvent<HTMLInputElement>
+  // ) => {
+  //   if (e.key === "Backspace" && !otp[index] && index > 0) {
+  //     // Move to previous input on backspace
+  //     otpRefs.current[index - 1]?.focus();
+  //   }
+  // };
+
+  // const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  //   e.preventDefault();
+  //   const pastedData = e.clipboardData.getData("text/plain").slice(0, 6);
+  //   if (/^\d+$/.test(pastedData)) {
+  //     const newOtp = [...otp];
+  //     for (let i = 0; i < pastedData.length && i < 6; i++) {
+  //       newOtp[i] = pastedData[i];
+  //     }
+  //     setOtp(newOtp);
+
+  //     // Focus the next empty input or last input
+  //     const nextIndex = Math.min(pastedData.length, 5);
+  //     otpRefs.current[nextIndex]?.focus();
+  //   }
+  // };
+
+  // Fixed ref callback function
+  // const setOtpRef = (index: number) => (el: HTMLInputElement | null) => {
+  //   otpRefs.current[index] = el;
+  // };
 
   const onSubmit = async (data: FormValues) => {
-    const success = await login(data.email, data.password);
-    if (success) {
-      toast.success("Login successful!");
-      router.push("/");
-    } else {
-      toast.error("Invalid credentials. Please try again.");
+    try {
+      const success = await login(data.email, data.password);
+      if (success) {
+        toast.success("Login successful!");
+        router.push("/");
+      }
+      // Error toast is already shown by auth context
+      // Don't throw or return anything that could cause issues
+      return false; // Explicitly return false to prevent any default behavior
+    } catch (error) {
+      // Catch any unexpected errors
+      console.error("Login error:", error);
+      toast.error("An error occurred. Please try again.");
+      return false; // Prevent default behavior
     }
   };
 
@@ -78,8 +144,12 @@ export default function LoginPage() {
 
         {/* Form Section */}
         <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="px-4 sm:px-6 md:px-8 pt-6 sm:pt-8 pb-6 sm:pb-8 md:pb-10 text-gray-700"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onSubmit)(e);
+          }}
+          className="px-8 pt-8 pb-10 text-gray-700"
         >
           <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-1 text-gray-800 text-center sm:text-left">
             Welcome Back!
@@ -168,7 +238,7 @@ export default function LoginPage() {
 
           <div className="flex justify-center mt-4 rounded-md">
             <GoogleLogin
-              onSuccess={async (credentialResponse) => {
+              onSuccess={async (credentialResponse: CredentialResponse) => {
                 const success = await googleLogin(credentialResponse);
                 if (success) {
                   toast.success("Login successful via Google!");

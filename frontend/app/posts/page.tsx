@@ -64,6 +64,31 @@ const timeOptions = [
     { label: 'Last 30 Days', value: '30d' },
 ];
 
+// Reusable Sign-In Prompt Component
+function SignInPrompt({ title, description }: { title: string; description: string }) {
+    return (
+        <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-dashed border-gray-300">
+            <div className="mb-6">
+                <Image
+                    src="/mascots/mascot_connect.png"
+                    alt="Sign in required"
+                    width={120}
+                    height={120}
+                    className="mx-auto opacity-70"
+                />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-700 mb-3">{title}</h3>
+            <p className="text-slate-500 text-lg mb-6">{description}</p>
+            <button
+                onClick={() => window.location.href = '/login'}
+                className="bg-gradient-to-r from-teal-400 to-cyan-500 hover:from-teal-500 hover:to-cyan-600 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+                Sign In
+            </button>
+        </div>
+    );
+}
+
 // Separate component that uses useSearchParams
 function PostsPageContent() {
     const { posts, loading, error, getPosts } = usePosts();
@@ -232,12 +257,15 @@ function PostsPageContent() {
     };
 
     useEffect(() => {
-        if (activeTab === 'posts') {
-            loadPosts();
-        } else {
-            getGroups();
+        // Only fetch data if user is logged in
+        if (user) {
+            if (activeTab === 'posts') {
+                loadPosts();
+            } else {
+                getGroups();
+            }
         }
-    }, [activeTab, showAllPosts]);
+    }, [activeTab, showAllPosts, user]);
 
     useEffect(() => {
         if (postFilter === 'regional') {
@@ -772,13 +800,18 @@ function PostsPageContent() {
                         {/* Content based on active tab */}
                         {activeTab === 'posts' ? (
                             <>
-                                {/* Posts List - Natural Scrolling */}
-                                <div className="space-y-6">
+                                {!user ? (
+                                    <SignInPrompt 
+                                        title="Sign in to view community posts"
+                                        description="Join our community to share and discover inspiring volunteer stories!"
+                                    />
+                                ) : (
+                                    <div className="space-y-6">
                                     {loading && currentPage === 1 ? (
                                         <div className="flex flex-col items-center justify-center h-full py-16">
                                             <div className="mb-6">
                                                 <Image
-                                                    src="/mascots/video_mascots/mascot_joyDance_video.gif"
+                                                    src="/mascots/video_mascots/mascot_walking_video.gif"
                                                     alt="Loading..."
                                                     width={200}
                                                     height={200}
@@ -848,9 +881,17 @@ function PostsPageContent() {
                                             )}
                                         </div>
                                     )}
-                                </div>
+                                    </div>
+                                )}
                             </>
                         ) : activeTab === 'groups' ? (
+                            <>
+                                {!user ? (
+                                    <SignInPrompt 
+                                        title="Sign in to view groups"
+                                        description="Connect with like-minded volunteers and join groups in your community!"
+                                    />
+                                ) : (
                             <div className="space-y-8">
                                 {selectedGroupId ? (
                                     <GroupDetails
@@ -983,24 +1024,51 @@ function PostsPageContent() {
                                     </>
                                 )}
                             </div>
-                        ) : (
-                            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl">
-                                <div className="w-24 h-24 mx-auto mb-4">
-                                    <Image
-                                        src={activeTab === 'people' ? "/mascots/mascot_wink.png" :
-                                            activeTab === 'leaderboard' ? "/mascots/mascot_believe.png" :
-                                                "/mascots/mascot_dreaming.png"}
-                                        alt=""
-                                        width={96}
-                                        height={96}
-                                        className="animate-bounce"
-                                        style={{ animationDuration: "2.5s" }}
+                                )}
+                            </>
+                        ) : activeTab === 'people' ? (
+                            <>
+                                {!user ? (
+                                    <SignInPrompt 
+                                        title="Sign in to discover people"
+                                        description="Find and connect with amazing volunteers near you!"
                                     />
-                                </div>
-                                <h3 className="text-2xl font-bold text-slate-700 mb-3">Coming Soon!</h3>
-                                <p className="text-slate-500 text-lg">This feature is under development.</p>
-                            </div>
-                        )}
+                                ) : (
+                                    <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl">
+                                        <h3 className="text-2xl font-bold text-slate-700 mb-3">Coming Soon!</h3>
+                                        <p className="text-slate-500 text-lg">This feature is under development.</p>
+                                    </div>
+                                )}
+                            </>
+                        ) : activeTab === 'leaderboard' ? (
+                            <>
+                                {!user ? (
+                                    <SignInPrompt 
+                                        title="Sign in to view leaderboard"
+                                        description="See top volunteers and track your community impact!"
+                                    />
+                                ) : (
+                                    <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl">
+                                        <h3 className="text-2xl font-bold text-slate-700 mb-3">Coming Soon!</h3>
+                                        <p className="text-slate-500 text-lg">This feature is under development.</p>
+                                    </div>
+                                )}
+                            </>
+                        ) : activeTab === 'blogs' ? (
+                            <>
+                                {!user ? (
+                                    <SignInPrompt 
+                                        title="Sign in to read blogs"
+                                        description="Discover inspiring stories and insights from our community!"
+                                    />
+                                ) : (
+                                    <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl">
+                                        <h3 className="text-2xl font-bold text-slate-700 mb-3">Coming Soon!</h3>
+                                        <p className="text-slate-500 text-lg">This feature is under development.</p>
+                                    </div>
+                                )}
+                            </>
+                        ) : null}
                     </div>
 
                     {/* Right Sidebar - Sticky */}

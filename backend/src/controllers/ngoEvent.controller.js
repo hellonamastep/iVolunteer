@@ -56,6 +56,10 @@ export const addEvent = asyncHandler(async (req, res) => {
 
 // ngoEvent.controller.js (filtered by city for non-admin users)
 const getAllPublishedEvents = asyncHandler(async (req, res) => {
+  console.log('\n=== GET ALL PUBLISHED EVENTS ===');
+  console.log('Request query:', req.query);
+  console.log('User:', req.user ? { role: req.user.role, city: req.user.city, addressCity: req.user.address?.city } : 'Not authenticated');
+  
   // Check if user wants to see all events (showAll=true parameter)
   const shouldShowAll = req.query.showAll === 'true';
   
@@ -89,6 +93,10 @@ const getAllPublishedEvents = asyncHandler(async (req, res) => {
   }
   
   const events = await ngoEventService.getAllPublishedEvents(locationFilter);
+  console.log('Events returned from service:', events.length);
+  console.log('Event statuses:', events.map(e => ({ title: e.title, status: e.status })));
+  console.log('=================================\n');
+  
   res.status(200).json({
     success: true,
     events,

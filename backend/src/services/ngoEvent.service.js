@@ -61,15 +61,18 @@ const createEvent = async (data, organizationId, organizationName) => {
 // Get all published events with participants populated and NGO details
 // Optionally filtered by location (city-based filtering)
 const getAllPublishedEvents = async (locationFilter = null) => {
-  // Build the base query
-  const baseQuery = { status: "active",approvalStatus: "approved" };
+  console.log('\n[SERVICE] getAllPublishedEvents called');
+  console.log('[SERVICE] locationFilter:', JSON.stringify(locationFilter, null, 2));
+  
+  // Build the base query - only show approved events
+  const baseQuery = { status: "approved" };
   
   // Add location filter if provided
   const query = locationFilter 
     ? { ...baseQuery, ...locationFilter }
     : baseQuery;
 
-  console.log('Event query:', JSON.stringify(query, null, 2));
+  console.log('[SERVICE] Final query:', JSON.stringify(query, null, 2));
 
   // First, check for any events that still have the legacy participants field as number
   const eventsToMigrate = await Event.find({
@@ -83,7 +86,14 @@ const getAllPublishedEvents = async (locationFilter = null) => {
     .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize')
     .sort({ date: 1 });
   
-  console.log('Events found:', events.length);
+  console.log('[SERVICE] Events found:', events.length);
+  console.log('[SERVICE] Event details:', events.map(e => ({ 
+    title: e.title, 
+    status: e.status, 
+    location: e.location,
+    date: e.date 
+  })));
+  console.log('[SERVICE] ====================================\n');
   
   if (eventsToMigrate.length > 0) {
     console.log(
@@ -127,17 +137,17 @@ const getSponsorshipEvents = async () => {
 
 const getEventsByOrganization = async (organizationId) => {
   console.log(
-    `[SERVICE] Searching approved events for organizationId: ${organizationId}`
+    `[SERVICE] Fetching ALL events for organizationId: ${organizationId}`
   );
 
+  // Fetch ALL events for this organization (pending, approved, rejected)
+  // NGO needs to see all their events with status banners
   const events = await Event.find({
     organizationId,
-    status: "approved",
-    eventStatus: { $in: ["upcoming", "ongoing"] },
   })
     .populate("organizationId", "name email organizationType")
     .populate("participants", "_id name email")
-    .sort({ date: 1 }); // soonest first
+    .sort({ createdAt: -1 }); // newest first
 
   console.log(`[SERVICE] Query result: ${events.length} events found`);
   return events;

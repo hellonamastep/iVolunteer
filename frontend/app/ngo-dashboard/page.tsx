@@ -48,7 +48,7 @@ export default function NGODashboard() {
 
   useEffect(() => {
     if (!user || user.role !== "ngo") {
-      router.push("/auth")
+      router.push("/login")
     } else {
       fetchOrganizationEvents()
     }

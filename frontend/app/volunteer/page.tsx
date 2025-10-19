@@ -71,7 +71,8 @@ const AvailableEventsContent: React.FC = () => {
   );
   const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community'>('virtual');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showAllEvents, setShowAllEvents] = useState(false);
+  // TEMPORARY FIX: Always show all events regardless of user's city
+  const [showAllEvents, setShowAllEvents] = useState(true); // Changed from: !user
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +81,17 @@ const AvailableEventsContent: React.FC = () => {
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+  // Update showAllEvents when user authentication status changes
   useEffect(() => {
+    // For non-logged-in users, always show all events
+    if (!user) {
+      setShowAllEvents(true);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log('[Volunteer Page] showAllEvents:', showAllEvents);
+    console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
     fetchAvailableEvents(showAllEvents);
   }, [showAllEvents]);
 
@@ -338,7 +349,7 @@ const AvailableEventsContent: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#E8F5F5' }}>
         <div className="text-center">
           <Image
-            src="/mascots/video_mascots/mascot_joyDance_video.gif"
+            src="/mascots/video_mascots/mascot_walking_video.gif"
             alt="Loading..."
             width={200}
             height={200}
@@ -403,20 +414,6 @@ const AvailableEventsContent: React.FC = () => {
           src="/mascots/video_mascots/mascot_watering_video.gif"
           alt="" 
           className="w-36 h-36"
-        />
-      </div>
-      <div className="fixed top-1/3 right-8 z-0 pointer-events-none">
-        <img 
-          src="/mascots/video_mascots/mascot_planting_video.gif"
-          alt="" 
-          className="w-28 h-28"
-        />
-      </div>
-      <div className="fixed bottom-1/3 left-8 z-0 pointer-events-none">
-        <img 
-          src="/mascots/video_mascots/mascot_jumping_video.gif"
-          alt="" 
-          className="w-32 h-32"
         />
       </div>
       

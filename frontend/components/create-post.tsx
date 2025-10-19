@@ -45,7 +45,7 @@ export function CreatePost({ onSuccess }: CreatePostProps = {}) {
     const router = useRouter();
 
     if (!user) {
-        router.push('/auth');
+        router.push('/login');
         return null;
     }
 

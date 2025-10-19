@@ -38,7 +38,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
-      router.push("/auth")
+      router.push("/login")
     } else {
       // Load pending groups when admin panel loads
       getPendingGroups().catch(console.error)
