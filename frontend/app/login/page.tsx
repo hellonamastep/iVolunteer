@@ -1,23 +1,20 @@
-
-
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter, useSearchParams } from "next/navigation"; // <-- add
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-// import { GoogleLogin, CredentialResponse } from "@react-oauth/google"; // <-- remove
-// import { FcGoogle } from "react-icons/fc"; // optional: install react-icons for the logo
 
 type FormValues = { email: string; password: string; otp?: string };
 
-export default function LoginPage() {
-  const { login } = useAuth();                    // <-- no googleLogin here
+// Separate component that uses useSearchParams
+function LoginForm() {
+  const { login } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
   const linkedBanner = params.get("linked") === "true";
@@ -44,7 +41,7 @@ export default function LoginPage() {
     }
   };
 
-  const oauthBase = process.env.NEXT_PUBLIC_OAUTH_BASE_URL; // e.g., http://localhost:5000/api
+  const oauthBase = process.env.NEXT_PUBLIC_OAUTH_BASE_URL;
   const googleHref = `${oauthBase}/v1/auth/google`;
 
   return (
@@ -124,26 +121,26 @@ export default function LoginPage() {
             {errors.password && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.password.message}</p>}
           </div>
 
-          {/* Old-flow Google button (redirect) */}
-         <div className="flex justify-center mt-4">
-  <a
-    href={googleHref}
-    className="group inline-flex items-center gap-3 rounded-full px-6 py-3
-               bg-white border border-gray-200 shadow-md hover:shadow-lg
-               ring-1 ring-black/5 hover:ring-2 hover:ring-[#3ABBA5]/40
-               transition-transform duration-200 hover:-translate-y-0.5"
-    title="Continue with Google"
-  >
-    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
-      <FcGoogle className="h-5 w-5" />
-    </span>
-    <span className="text-sm sm:text-base font-semibold text-gray-800">
-      Continue with Google
-    </span>
-  </a>
-</div>
+          {/* Google Sign-in Button */}
+          <div className="flex justify-center mt-4">
+            <a
+              href={googleHref}
+              className="group inline-flex items-center gap-3 rounded-full px-6 py-3
+                       bg-white border border-gray-200 shadow-md hover:shadow-lg
+                       ring-1 ring-black/5 hover:ring-2 hover:ring-[#3ABBA5]/40
+                       transition-transform duration-200 hover:-translate-y-0.5"
+              title="Continue with Google"
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                <FcGoogle className="h-5 w-5" />
+              </span>
+              <span className="text-sm sm:text-base font-semibold text-gray-800">
+                Continue with Google
+              </span>
+            </a>
+          </div>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -170,5 +167,21 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main export component with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#E9FDF1] to-[#E9FDF1]/80">
+        <div className="text-center">
+          <RefreshCw className="h-12 w-12 text-[#3ABBA5] animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 text-sm sm:text-base">Loading login page...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
