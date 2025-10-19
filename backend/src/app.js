@@ -20,6 +20,7 @@ import rewardsRouter from "./routes/rewards.routes.js"
 
 // import communityRouter from "./routes/community.routes.js"
 import communityRouter from "./routes/community.routes.js";
+import passport from "./config/passport.js"; 
 import eventRouter from "./routes/event.routes.js";
 import donationRouter from "./routes/donation.routes.js";
 import donationEventRouter from "./routes/donationEvent.routes.js";

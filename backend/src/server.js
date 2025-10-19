@@ -54,6 +54,8 @@ const server = async() => {
 
         await initializeApp();
     } catch (error) {
+    
+        
         logger.error(
             `Failed to start server! error message: ${error.message}, error stack: ${error.stack}`
         );

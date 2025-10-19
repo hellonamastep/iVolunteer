@@ -1,10 +1,8 @@
-
-
 import axios from "axios";
 
 const apiHost = (process.env.NEXT_PUBLIC_API_URL || "https://namastep-irod.onrender.com").replace(/\/$/, "");
 const api = axios.create({
-  baseURL: `${apiHost}/api`, // frontend "/v1/*" -> backend "/api/v1/*"
+  baseURL: `${apiHost}/api`,
   withCredentials: true,
   headers: {
     "Cache-Control": "no-cache",
@@ -13,32 +11,31 @@ const api = axios.create({
   },
 });
 
-// Helpers
+// --- helpers ---
 const isAuthRoute = (url?: string) => {
   if (!url) return false;
-  // normalize to path only
   const u = /^https?:\/\//i.test(url) ? new URL(url).pathname : url;
   return [
     "/v1/auth/login",
-    "/v1/auth/verify-otp",
     "/v1/auth/register",
+    "/v1/auth/verify-otp",
+    "/v1/auth/verify-login-otp",
     "/v1/auth/refresh-access-token",
-    "/v1/auth/verify-login-otp", // if you use this path
+    "/v1/auth/google-login", // old one-tap path if used
+    "/v1/auth/user",         // do NOT try refresh on this probe
   ].some((p) => u.includes(p));
 };
 
-const unwrap = (r: any) => r?.data?.data ?? r?.data ?? r;
-
-// Refresh state
-let isRefreshing = false;
-type QueueItem = { resolve: (token: string | null) => void; reject: (err: any) => void };
-let failedQueue: QueueItem[] = [];
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
-  failedQueue = [];
+const isAuthPage = () => {
+  if (typeof window === "undefined") return false;
+  const p = window.location.pathname;
+  return p === "/login" || p === "/signup" || p === "/callback";
 };
 
-// REQUEST: attach token and add cache-buster for GET
+const hasRefreshToken = () =>
+  typeof window !== "undefined" && !!localStorage.getItem("refresh-token");
+
+// --- request: attach bearer from localStorage + cache-bust GETs ---
 api.interceptors.request.use(
   (config: any) => {
     try {
@@ -51,8 +48,7 @@ api.interceptors.request.use(
           Pragma: "no-cache",
         };
       }
-
-      const method = (config.method || "").toString().toLowerCase();
+      const method = String(config.method || "").toLowerCase();
       if (method === "get" && config.url) {
         try {
           const full = new URL(config.url, config.baseURL);
@@ -69,17 +65,36 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// RESPONSE: refresh on 401, but NEVER for auth endpoints
+// --- response: refresh-once policy, only if we actually have a refresh token ---
+let isRefreshing = false;
+type QueueItem = { resolve: (t: string | null) => void; reject: (e: any) => void };
+let failedQueue: QueueItem[] = [];
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (err: any) => {
     const error = err;
-    const originalRequest: any = error.config;
+    const originalRequest: any = error?.config;
 
-    // If 401 on auth endpoints, do not refresh. Just fail.
-    if (error.response?.status === 401 && originalRequest) {
+    if (error?.response?.status === 401 && originalRequest) {
       const url = originalRequest.url || "";
-      if (isAuthRoute(url)) {
+
+      // Never refresh for auth endpoints or the refresh endpoint itself
+      if (isAuthRoute(url)) return Promise.reject(error);
+      if (url.includes("/v1/auth/refresh-access-token")) return Promise.reject(error);
+
+      // Only attempt refresh if app uses refresh tokens
+      if (!hasRefreshToken()) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-user");
+          localStorage.removeItem("auth-token");
+          localStorage.removeItem("refresh-token");
+          if (!isAuthPage()) window.location.replace("/login");
+        }
         return Promise.reject(error);
       }
 
@@ -100,20 +115,18 @@ api.interceptors.response.use(
           const refreshResponse = await axios.post(refreshUrl, {}, { withCredentials: true });
 
           if (refreshResponse.status === 200) {
-            // optionally update stored tokens here if backend returns them
             processQueue(null, "refreshed");
-            // retry original request with the same axios instance (which will pick updated token if set)
             return api(originalRequest);
           }
+          // fallthrough to catch on non-200
+          throw new Error("Refresh failed");
         } catch (refreshError) {
           processQueue(refreshError, null);
-          // Clear auth storage and redirect to login
           if (typeof window !== "undefined") {
             localStorage.removeItem("auth-user");
             localStorage.removeItem("auth-token");
             localStorage.removeItem("refresh-token");
-            window.dispatchEvent(new CustomEvent("token-expired"));
-            window.location.href = "/auth";
+            if (!isAuthPage()) window.location.replace("/login");
           }
           return Promise.reject(refreshError);
         } finally {
