@@ -147,8 +147,6 @@
 //     }
 //   };
 
-  
-
 //   const login = async (
 //   email: string,
 //   password: string,
@@ -195,8 +193,6 @@
 //   }
 // };
 
-
-
 // const googleLogin = async (credentialResponse: any): Promise<boolean> => {
 //   setIsLoading(true);
 //   try {
@@ -240,7 +236,7 @@
 //     // Persist using the SAME keys used elsewhere
 //     setUser(mappedUser);
 //     console.log(user);
-    
+
 //     localStorage.setItem("auth-user", JSON.stringify(mappedUser));
 //     localStorage.setItem("auth-token", d.tokens.accessToken);
 //     localStorage.setItem("refresh-token", d.tokens.refreshToken);
@@ -261,7 +257,7 @@
 //     localStorage.removeItem("auth-user");
 //     localStorage.removeItem("auth-token");
 //     localStorage.removeItem("refresh-token");
-   
+
 //   };
 
 //   return (
@@ -276,8 +272,6 @@
 //   if (!context) throw new Error("useAuth must be used within AuthProvider");
 //   return context;
 // };
-
-
 
 "use client";
 
@@ -326,7 +320,13 @@ interface SignupData {
   websiteUrl?: string;
   yearEstablished?: number;
   contactNumber?: string;
-  address?: { street?: string; city?: string; state?: string; zip?: string; country?: string };
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
   ngoDescription?: string;
   focusAreas?: string[];
   organizationSize?: string;
@@ -369,7 +369,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const base = process.env.NEXT_PUBLIC_OAUTH_BASE_URL; // e.g. http://localhost:5000/api
         if (!base) return;
 
-        const r = await fetch(`${base}/v1/auth/user`, { credentials: "include" });
+        const r = await fetch(`${base}/v1/auth/user`, {
+          credentials: "include",
+        });
         if (!r.ok) return;
         const json = await r.json();
         const u = json?.user ?? json?.data?.user;
@@ -413,26 +415,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (signupData: SignupData): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const { data } = await api.post<AuthResponse>("/v1/auth/register", signupData, {
-        withCredentials: true,
-      });
+      const { data } = await api.post<AuthResponse>(
+        "/v1/auth/register",
+        signupData,
+        {
+          withCredentials: true,
+        }
+      );
       const mapped = mapUser(data.user);
       setUser(mapped);
       localStorage.setItem("auth-user", JSON.stringify(mapped));
       localStorage.setItem("auth-token", data.tokens.accessToken);
       localStorage.setItem("refresh-token", data.tokens.refreshToken);
       if (earnPoints) await earnPoints("register");
-      setTimeout(() => toast.success("🎉 Welcome to iVolunteer! You've been awarded 50 coins as a welcome bonus!"), 100);
+      setTimeout(
+        () =>
+          toast.success(
+            "🎉 Welcome to iVolunteer! You've been awarded 50 coins as a welcome bonus!"
+          ),
+        100
+      );
       return true;
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err?.message || "Registration failed. Please try again.");
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Registration failed. Please try again."
+      );
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string, role: UserRole = "user"): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string,
+    role: UserRole = "user"
+  ): Promise<boolean> => {
     setIsLoading(true);
     try {
       const { data } = await api.post<AuthResponse>(
@@ -447,7 +467,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("refresh-token", data.tokens.refreshToken);
       return true;
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Login failed. Please try again.");
+      toast.error(
+        err?.response?.data?.message || "Login failed. Please try again."
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -455,25 +477,79 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // keep if you still use one-tap elsewhere
+  // const googleLogin = async (credentialResponse: any): Promise<boolean> => {
+  //   setIsLoading(true);
+  //   try {
+  //     if (!credentialResponse?.credential) return false;
+  //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/google-login`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       credentials: "include",
+  //       body: JSON.stringify({ idToken: credentialResponse.credential }),
+  //     });
+  //     const result = await res.json();
+  //     if (!res.ok || !result?.success || !result?.data?.tokens) return false;
+  //     const mapped = mapUser(result.data.user);
+  //     setUser(mapped);
+  //     localStorage.setItem("auth-user", JSON.stringify(mapped));
+  //     localStorage.setItem("auth-token", result.data.tokens.accessToken);
+  //     localStorage.setItem("refresh-token", result.data.tokens.refreshToken);
+  //     return true;
+  //   } catch {
+  //     toast.error("Google login failed. Try again.");
+  //     return false;
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  interface GoogleLoginResponse {
+    success: boolean;
+    data: {
+      user: {
+        userId: string;
+        email: string;
+        name: string;
+        role: UserRole;
+        coins?: number;
+        points?: number;
+        profilePicture?: string;
+        cloudinaryPublicId?: string;
+        city?: string;
+      };
+      tokens: {
+        accessToken: string;
+        refreshToken: string;
+      };
+    };
+    message?: string;
+  }
+
   const googleLogin = async (credentialResponse: any): Promise<boolean> => {
     setIsLoading(true);
     try {
       if (!credentialResponse?.credential) return false;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/google-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken: credentialResponse.credential }),
+
+      // ✅ use api instance with type for TS
+      const res = await api.post<GoogleLoginResponse>("/v1/auth/google-login", {
+        idToken: credentialResponse.credential,
       });
-      const result = await res.json();
-      if (!res.ok || !result?.success || !result?.data?.tokens) return false;
+
+      const result = res.data;
+
+      if (!result?.success || !result?.data?.tokens) return false;
+
       const mapped = mapUser(result.data.user);
       setUser(mapped);
+
+      // 💾 Store user and tokens
       localStorage.setItem("auth-user", JSON.stringify(mapped));
       localStorage.setItem("auth-token", result.data.tokens.accessToken);
       localStorage.setItem("refresh-token", result.data.tokens.refreshToken);
+
       return true;
-    } catch {
+    } catch (error: any) {
+      console.error("Google login error:", error);
       toast.error("Google login failed. Try again.");
       return false;
     } finally {
@@ -491,7 +567,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, googleLogin }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, signup, logout, googleLogin }}
+    >
       {children}
     </AuthContext.Provider>
   );
