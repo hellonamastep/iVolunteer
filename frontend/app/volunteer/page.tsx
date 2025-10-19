@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { toast } from "@/hooks/use-toast";
+import Footer from "@/components/Footer";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
@@ -1008,6 +1009,8 @@ const AvailableEventsContent: React.FC = () => {
           </div>
         )}
       </div>
+
+      <Footer/>
     </div>
   );
 };

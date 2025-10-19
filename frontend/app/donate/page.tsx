@@ -19,6 +19,7 @@ import {
   DonationEvent,
 } from "@/contexts/donationevents-context";
 import { FundraiserSection } from "@/components/FundraiserSection";
+import Footer from "@/components/Footer";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({
@@ -756,7 +757,9 @@ function DonatePageContent() {
         </>
         )}
         </div>
+         <Footer/>
       </div>
+     
     </>
   );
 }
