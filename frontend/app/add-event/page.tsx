@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useNGO } from "@/contexts/ngo-context";
@@ -53,7 +53,8 @@ interface EventFormValues {
 const STORAGE_KEY = "volunteer_event_draft";
 const IMAGES_STORAGE_KEY = "volunteer_event_images";
 
-const CreateEventPage: React.FC = () => {
+// Separate component that uses useSearchParams
+const CreateEventForm: React.FC = () => {
   const { createEvent } = useNGO();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1278,6 +1279,22 @@ const CreateEventPage: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Main component with Suspense wrapper
+const CreateEventPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-[#7DD9A6] mx-auto mb-4" />
+          <p className="text-gray-600">Loading event form...</p>
+        </div>
+      </div>
+    }>
+      <CreateEventForm />
+    </Suspense>
   );
 };
 
