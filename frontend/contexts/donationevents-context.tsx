@@ -23,6 +23,10 @@ export interface DonationEvent {
   endDate: string;
   status: string;
   paymentMethod?: "UPI" | "Bank" | "PayPal" | "Razorpay";
+  coverImage?: string | {
+    url: string;
+    publicId: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

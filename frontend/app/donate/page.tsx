@@ -20,6 +20,7 @@ import {
 } from "@/contexts/donationevents-context";
 import { FundraiserSection } from "@/components/FundraiserSection";
 import Pagination from "@/components/Pagination";
+import { DonationEventCard } from "@/components/DonationEventCard";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({
@@ -596,162 +597,28 @@ function DonatePageContent() {
           ) : (
             <div>
               <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3 w-full">
-                {currentEvents.map((event: DonationEvent, index) => {
-                  const progressPercentage = Math.min(
-                    (event.collectedAmount / event.goalAmount) * 100,
-                    100
-                  );
-                  const isCompleted = event.collectedAmount >= event.goalAmount;
-
-                  return (
-                    <div
-                      key={event._id}
-                      ref={(el) => {
-                        if (el && event._id) {
-                          donationRefs.current.set(event._id, el);
-                        } else if (event._id) {
-                          donationRefs.current.delete(event._id);
-                        }
-                      }}
-                      className={`group relative bg-white rounded-3xl border-2 border-teal-100 hover:border-cyan-300 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm overflow-hidden p-5 cursor-pointer ${
-                        highlightedDonationId === event._id
-                          ? "ring-4 ring-teal-500 ring-offset-2 shadow-2xl"
-                          : ""
-                      }`}
-                      onClick={() => router.push(`/donate/${event._id}`)}
-                      style={{
-                        animationDelay: `${index * 0.1}s`,
-                      }}
-                    >
-                      {/* Background Glow Effect */}
-                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-teal-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                      {/* Status Ribbon */}
-                      {isCompleted && (
-                        <div className="absolute top-4 right-4 bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 fill-current" />
-                          Goal Achieved
-                        </div>
-                      )}
-
-                      {/* Content Layout */}
-                      <div className="relative z-10">
-                        {/* Category/NGO Badge */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-3 h-3 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full shadow-md"></div>
-                          <span className="text-xs font-semibold text-teal-600 bg-teal-50/80 px-3 py-1.5 rounded-2xl border border-teal-200/60 backdrop-blur-sm">
-                            <HighlightText
-                              text={event.ngo?.name || "Community NGO"}
-                              highlight={searchQuery}
-                            />
-                          </span>
-                        </div>
-
-                        {/* Title and Description */}
-                        <div className="mb-4">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-500 leading-tight mb-2">
-                            <HighlightText
-                              text={event.title}
-                              highlight={searchQuery}
-                            />
-                          </h3>
-                          <p className="text-gray-600 leading-relaxed text-sm line-clamp-2">
-                            <HighlightText
-                              text={event.description || ""}
-                              highlight={searchQuery}
-                            />
-                          </p>
-                        </div>
-
-                        {/* Stats Grid */}
-                        <div className="grid gap-2.5 mb-4 grid-cols-2">
-                          <div className="flex items-center gap-2.5 p-3 bg-teal-50/80 rounded-xl border border-teal-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-100 shadow-sm">
-                              <Target className="w-5 h-5 text-teal-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Goal
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatCurrency(event.goalAmount)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-cyan-50/80 rounded-xl border border-cyan-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-100 shadow-sm">
-                              <DollarSign className="w-5 h-5 text-cyan-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Collected
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatCurrency(event.collectedAmount)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-emerald-50/80 rounded-xl border border-emerald-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 shadow-sm">
-                              <TrendingUp className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Progress
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {progressPercentage.toFixed(1)}%
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-orange-50/80 rounded-xl border border-orange-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-100 shadow-sm">
-                              <Users className="w-5 h-5 text-orange-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Status
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {isCompleted ? "Completed" : event.status || "Active"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="pt-4 border-t border-teal-100/80 flex gap-2.5">
-                          {/* View Details Button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/donate/${event._id}`);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 transition-all duration-500 shadow-lg hover:shadow-xl hover:scale-105"
-                          >
-                            <Heart className="w-4 h-4" />
-                            View & Donate
-                          </button>
-                          
-                          {/* Share Button */}
-                          <button
-                            onClick={(e) => handleShare(event, e)}
-                            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
-                            title="Share donation event"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Hover Effect Border */}
-                      <div className="absolute inset-0 rounded-3xl border-3 border-transparent bg-gradient-to-br from-teal-200/50 to-cyan-200/30 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
-                    </div>
-                  );
-                })}
+                {currentEvents.map((event: DonationEvent, index) => (
+                  <div
+                    key={event._id}
+                    ref={(el) => {
+                      if (el && event._id) {
+                        donationRefs.current.set(event._id, el);
+                      } else if (event._id) {
+                        donationRefs.current.delete(event._id);
+                      }
+                    }}
+                  >
+                    <DonationEventCard
+                      event={event}
+                      onCardClick={(id) => router.push(`/donate/${id}`)}
+                      onShare={handleShare}
+                      isHighlighted={highlightedDonationId === event._id}
+                      animationIndex={index}
+                      searchQuery={searchQuery}
+                      HighlightText={HighlightText}
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}

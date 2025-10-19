@@ -33,7 +33,7 @@ export const createEvent = async (req, res) => {
       }
     }
 
-    const event = await eventService.createEventService(ngoId, eventData); 
+    const event = await eventService.createEventService(ngoId, eventData);
     res.status(201).json({ success: true, event });
   } catch (err) {
     console.error('Create event error:', err);

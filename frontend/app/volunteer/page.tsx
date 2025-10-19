@@ -788,48 +788,61 @@ const AvailableEventsContent: React.FC = () => {
                 }`}
               >
                 {/* Event Image */}
-                {event.image?.url && (
-                  <div className="relative h-40 w-full overflow-hidden">
-                    <img
-                      src={event.image.url}
-                      alt={event.image.caption || event.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    
-                    {/* Points Badge */}
-                    <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-                      ⚡ 100
-                    </div>
-                    
-                    {/* Bookmark Icon */}
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                    >
-                      <span className="text-gray-600">☆</span>
-                    </button>
-                    
-                    {/* Event Type Badge on Image */}
-                    {event.eventType && (
-                      <div className="absolute bottom-3 left-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-lg ${
-                          event.eventType === 'virtual' 
-                            ? 'bg-cyan-500 text-white' 
-                            : event.eventType === 'in-person'
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-purple-500 text-white'
-                        }`}>
-                          {event.eventType === 'virtual' && '💻 Virtual'}
-                          {event.eventType === 'in-person' && '📍 In-Person'}
-                          {event.eventType === 'community' && '🌍 Community'}
-                        </span>
+                <div className="relative h-40 w-full overflow-hidden">
+                  {event.image?.url ? (
+                    <>
+                      <img
+                        src={event.image.url}
+                        alt={event.image.caption || event.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </>
+                  ) : (
+                    <>
+                      {/* Placeholder with gradient background */}
+                      <div className="w-full h-full bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <Users className="w-12 h-12 text-purple-300 mx-auto mb-1" />
+                          <p className="text-purple-600 text-xs font-semibold">Volunteer Event</p>
+                        </div>
                       </div>
-                    )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    </>
+                  )}
+                  
+                  {/* Points Badge */}
+                  <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                    ⚡ 100
                   </div>
-                )}
+                  
+                  {/* Bookmark Icon */}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                  >
+                    <span className="text-gray-600">☆</span>
+                  </button>
+                  
+                  {/* Event Type Badge on Image */}
+                  {event.eventType && (
+                    <div className="absolute bottom-3 left-3">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-lg ${
+                        event.eventType === 'virtual' 
+                          ? 'bg-cyan-500 text-white' 
+                          : event.eventType === 'in-person'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-purple-500 text-white'
+                      }`}>
+                        {event.eventType === 'virtual' && '💻 Virtual'}
+                        {event.eventType === 'in-person' && '📍 In-Person'}
+                        {event.eventType === 'community' && '🌍 Community'}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Event Content */}
                 <div className="p-4">

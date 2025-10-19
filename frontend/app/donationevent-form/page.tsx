@@ -152,14 +152,10 @@ const AddEventForm: React.FC = () => {
               }
             });
             
-            if (savedImages) {
-              const imageData = JSON.parse(savedImages);
-              if (imageData.coverImage) setCoverImagePreview(imageData.coverImage);
-              if (imageData.governmentId) setGovernmentIdPreview(imageData.governmentId);
-              if (imageData.proofOfNeed) setProofOfNeedPreview(imageData.proofOfNeed);
-            }
+            // Don't restore images from draft - they cause FileList issues
+            // User will need to re-select images if they restore a draft
             
-            toast.info("Draft restored successfully!", { autoClose: 2000 });
+            toast.info("Draft restored successfully! Please re-select your images if you had any.", { autoClose: 3000 });
             setLastSaved(new Date(draftData._savedAt));
           }
         }
@@ -189,31 +185,13 @@ const AddEventForm: React.FC = () => {
         const formDataStr = JSON.stringify(dataToSave);
         localStorage.setItem(STORAGE_KEY, formDataStr);
         
-        const imageData = {
-          coverImage: coverImagePreview,
-          governmentId: governmentIdPreview,
-          proofOfNeed: proofOfNeedPreview === 'PDF_UPLOADED' ? 'PDF_UPLOADED' : proofOfNeedPreview,
-        };
+        // Don't save images to localStorage - they cause issues with FileList
+        // User will need to re-select images if they restore a draft
         
-        try {
-          const imageDataStr = JSON.stringify(imageData);
-          localStorage.setItem(IMAGES_STORAGE_KEY, imageDataStr);
-          setLastSaved(new Date());
+        setLastSaved(new Date());
           
-          const usage = getStorageUsage();
-          setStorageUsage({ usedMB: usage.usedMB, totalMB: usage.totalMB });
-        } catch (imageError) {
-          if (imageError instanceof DOMException && imageError.name === 'QuotaExceededError') {
-            console.warn('Image storage quota exceeded, skipping image save but keeping form data');
-            localStorage.removeItem(IMAGES_STORAGE_KEY);
-            toast.warning('Draft saved, but image previews too large. Images will need to be re-uploaded.', {
-              autoClose: 3000
-            });
-            setLastSaved(new Date());
-          } else {
-            throw imageError;
-          }
-        }
+        const usage = getStorageUsage();
+        setStorageUsage({ usedMB: usage.usedMB, totalMB: usage.totalMB });
       } catch (error) {
         console.error("Error saving draft:", error);
         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
@@ -492,6 +470,22 @@ const AddEventForm: React.FC = () => {
         formData.append('bankAccount[accountHolder]', data.accountHolder);
       }
       
+      // Add cover image
+      if (data.coverImage && data.coverImage.length > 0) {
+        formData.append('coverImage', data.coverImage[0]);
+      }
+      
+      // Add government ID
+      if (data.governmentId && data.governmentId.length > 0) {
+        formData.append('governmentId', data.governmentId[0]);
+      }
+      
+      // Add proof of need
+      if (data.proofOfNeed && data.proofOfNeed.length > 0) {
+        formData.append('proofOfNeed', data.proofOfNeed[0]);
+      }
+      
+      // Add supporting media files
       if (supportingMediaFiles.length > 0) {
         supportingMediaFiles.forEach(file => {
           formData.append('supportingMedia', file);
