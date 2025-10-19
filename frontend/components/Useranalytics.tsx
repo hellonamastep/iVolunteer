@@ -3,76 +3,60 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Coins, Award, Flame, PiggyBank, Wallet, Loader2 } from "lucide-react";
 import { useUser } from "@/contexts/user-context";
-import { useAuth } from "@/contexts/auth-context";
+import Link from "next/link";
+import { useRouter } from "next/navigation"; // Add this import
 
 const Useranalytics = () => {
-  const { activeCoins, totalCoinsEarned, totalSpend, badges, streak, isLoading } = useUser();
-  const { user } = useAuth();
+  const {
+    activeCoins,
+    totalCoinsEarned,
+    totalSpend,
+    badges,
+    streak,
+    isLoading,
+  } = useUser();
+
+  const router = useRouter(); 
 
   const stats = [
     {
       title: "Active Coins",
       value: activeCoins,
-      icon: <Coins className="w-6 h-6 text-blue-600" />,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-l-4 border-blue-500",
+      icon: <Coins className="w-6 h-6 text-[#4FC3DC]" />,
+      color: "text-[#4FC3DC]",
     },
     {
       title: "Total Coins Earned",
       value: totalCoinsEarned,
-      icon: <PiggyBank className="w-6 h-6 text-purple-600" />,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-      border: "border-l-4 border-purple-500",
+      icon: <PiggyBank className="w-6 h-6 text-[#7FD47F]" />,
+      color: "text-[#7FD47F]",
     },
     {
-      title: "Total Spend",
-      value: totalSpend,
-      icon: <Wallet className="w-6 h-6 text-rose-600" />,
-      color: "text-rose-600",
-      bg: "bg-rose-50",
-      border: "border-l-4 border-rose-500",
+      title: "Goal Speed",
+      value: 0, // You can replace this with actual goal speed data
+      icon: <Flame className="w-6 h-6 text-[#F9D71C]" />,
+      color: "text-[#F9D71C]",
     },
     {
       title: "Badges",
-      value: badges,
-      icon: <Award className="w-6 h-6 text-emerald-600" />,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-l-4 border-emerald-500",
-    },
-    {
-      title: "Streak",
-      value: streak,
-      icon: <Flame className="w-6 h-6 text-amber-600" />,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-l-4 border-amber-500",
+      value: badges || 0,
+      icon: <Award className="w-6 h-6 text-[#EC4899]" />,
+      color: "text-[#EC4899]",
+      link: "/badges",
     },
   ];
 
-  // Show loading state
   if (isLoading) {
     return (
-      <section className="px-4 py-8 md:px-8 md:py-12 lg:px-16 lg:py-16 bg-gray-50">
+      <section className="px-4 py-6 md:px-8">
         <div className="max-w-8xl mx-auto">
-          <motion.h2 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 md:mb-10"
-          >
-            Welcome back, {user?.name || 'User'}
-          </motion.h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-            {Array.from({ length: 5 }).map((_, index) => (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {stats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white border-l-4 border-gray-300 rounded-lg p-5 shadow-sm flex flex-col justify-between h-full"
+                className="bg-white rounded-2xl p-5 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] flex flex-col h-[174.4px]"
               >
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex justify-between items-start mb-9">
                   <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
                   <div className="p-2 rounded-lg bg-gray-100">
                     <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
@@ -88,36 +72,47 @@ const Useranalytics = () => {
   }
 
   return (
-    <section className="px-4 py-8 md:px-8 md:py-12 lg:px-16 lg:py-16 bg-gray-50">
+    <section className="px-4 py-6 md:px-8">
       <div className="max-w-8xl mx-auto">
-        <motion.h2 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 md:mb-10"
-        >
-          Welcome back, {user?.name || 'User'}
-        </motion.h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className={`${stat.bg} ${stat.border} rounded-lg p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full`}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{stat.title}</p>
-                <div className="p-2 rounded-lg bg-white shadow-xs">
-                  {stat.icon}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {stats.map((stat, index) => {
+            const CardContent = (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{
+                  y: -5,
+                  scale: stat.link ? 1.03 : 1.02,
+                  transition: { duration: 0.2 },
+                }}
+                className={`bg-white rounded-2xl px-5 pt-5 pb-0 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] hover:shadow-lg flex flex-col h-[174.4px] transition-all ${
+                  stat.link ? "cursor-pointer" : ""
+                }`}
+              >
+                <div className="flex justify-between items-start mb-9">
+                  <p className="text-xs font-normal text-[#6B7280] uppercase tracking-wide">
+                    {stat.title}
+                  </p>
+                  <div className="flex items-center justify-center">
+                    {stat.icon}
+                  </div>
                 </div>
-              </div>
-              <p className={`text-2xl md:text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-            </motion.div>
-          ))}
+                <p className={`text-3xl font-medium ${stat.color}`}>
+                  {stat.value}
+                </p>
+              </motion.div>
+            );
+
+            return stat.link ? (
+              <Link key={stat.title} href={stat.link} className="block">
+                {CardContent}
+              </Link>
+            ) : (
+              CardContent
+            );
+          })}
         </div>
       </div>
     </section>

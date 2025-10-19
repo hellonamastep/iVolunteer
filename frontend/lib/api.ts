@@ -1,106 +1,127 @@
-// src/lib/api.ts
+
+
 import axios from "axios";
 
+const apiHost = (process.env.NEXT_PUBLIC_API_URL || "https://namastep-irod.onrender.com").replace(/\/$/, "");
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-  withCredentials: true, // if you're using cookies / auth
+  baseURL: `${apiHost}/api`, // frontend "/v1/*" -> backend "/api/v1/*"
+  withCredentials: true,
+  headers: {
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    Expires: "0",
+  },
 });
 
-// Flag to prevent multiple refresh attempts
-let isRefreshing = false;
-let failedQueue: any[] = [];
+// Helpers
+const isAuthRoute = (url?: string) => {
+  if (!url) return false;
+  // normalize to path only
+  const u = /^https?:\/\//i.test(url) ? new URL(url).pathname : url;
+  return [
+    "/v1/auth/login",
+    "/v1/auth/verify-otp",
+    "/v1/auth/register",
+    "/v1/auth/refresh-access-token",
+    "/v1/auth/verify-login-otp", // if you use this path
+  ].some((p) => u.includes(p));
+};
 
+const unwrap = (r: any) => r?.data?.data ?? r?.data ?? r;
+
+// Refresh state
+let isRefreshing = false;
+type QueueItem = { resolve: (token: string | null) => void; reject: (err: any) => void };
+let failedQueue: QueueItem[] = [];
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(token);
-    }
-  });
-  
+  failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
   failedQueue = [];
 };
 
-// Add a request interceptor to add the auth token
+// REQUEST: attach token and add cache-buster for GET
 api.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('auth-token');
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`
-      };
-    }
+  (config: any) => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+      if (token) {
+        config.headers = {
+          ...(config.headers || {}),
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        };
+      }
+
+      const method = (config.method || "").toString().toLowerCase();
+      if (method === "get" && config.url) {
+        try {
+          const full = new URL(config.url, config.baseURL);
+          full.searchParams.set("_t", Date.now().toString());
+          config.url = /^https?:\/\//i.test(config.url) ? full.toString() : full.pathname + full.search;
+        } catch {
+          const sep = config.url.includes("?") ? "&" : "?";
+          config.url = `${config.url}${sep}_t=${Date.now()}`;
+        }
+      }
+    } catch {}
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle token expiration
+// RESPONSE: refresh on 401, but NEVER for auth endpoints
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config;
+  (response) => response,
+  async (err: any) => {
+    const error = err;
+    const originalRequest: any = error.config;
 
-    // Check if the error is due to token expiration
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        // If already refreshing, queue this request
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => {
-          return api(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
+    // If 401 on auth endpoints, do not refresh. Just fail.
+    if (error.response?.status === 401 && originalRequest) {
+      const url = originalRequest.url || "";
+      if (isAuthRoute(url)) {
+        return Promise.reject(error);
       }
 
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        // Try to refresh the token
-        const refreshResponse = await axios.post(
-          `${(process.env.API_BASE_URL || "http://localhost:5000/api").replace('/api', '')}/api/v1/auth/refresh-access-token`,
-          {},
-          { withCredentials: true }
-        );
-
-        if (refreshResponse.status === 200) {
-          console.log('Token refreshed successfully');
-          processQueue(null, 'success');
-          
-          // Retry the original request
-          return api(originalRequest);
+      if (!originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then(() => api(originalRequest))
+            .catch((e) => Promise.reject(e));
         }
-      } catch (refreshError) {
-        console.log('Token refresh failed, logging out user');
-        processQueue(refreshError, null);
-        
-        // Clear all auth data
-        localStorage.removeItem('auth-user');
-        localStorage.removeItem('auth-token');
-        localStorage.removeItem('refresh-token');
-        
-        // Redirect to auth page
-        if (typeof window !== 'undefined') {
-          // Trigger a custom event that the auth context can listen to
-          window.dispatchEvent(new CustomEvent('token-expired'));
-          
-          // Redirect to login page
-          window.location.href = '/auth';
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const refreshUrl = `${apiHost}/api/v1/auth/refresh-access-token`;
+          const refreshResponse = await axios.post(refreshUrl, {}, { withCredentials: true });
+
+          if (refreshResponse.status === 200) {
+            // optionally update stored tokens here if backend returns them
+            processQueue(null, "refreshed");
+            // retry original request with the same axios instance (which will pick updated token if set)
+            return api(originalRequest);
+          }
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          // Clear auth storage and redirect to login
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("auth-user");
+            localStorage.removeItem("auth-token");
+            localStorage.removeItem("refresh-token");
+            window.dispatchEvent(new CustomEvent("token-expired"));
+            window.location.href = "/auth";
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
-      } finally {
-        isRefreshing = false;
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

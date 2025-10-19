@@ -5,7 +5,8 @@ const donationSchema = new mongoose.Schema({
   eventId: { type: mongoose.Schema.Types.ObjectId, ref: "DonationEvent", required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   amount: { type: Number, required: true, min: 1 },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  
 });
 
 donationSchema.index({ eventId: 1 });

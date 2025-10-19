@@ -49,53 +49,60 @@ const Dailyquote = () => {
   };
 
   return (
-    <section className="flex items-center justify-center px-4 py-6 md:px-8 md:py-8">
+    <section className="flex items-center justify-center px-4 py-6 md:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 w-full max-w-8xl flex flex-col-reverse md:flex-row items-center justify-between gap-8 border border-gray-100 md:mr-8 md:ml-8"
+        className="bg-gradient-to-r from-[#4FC3DC]/20 to-[#7FD47F]/20 border-2 border-[#4FC3DC] rounded-2xl p-6 w-full flex flex-col-reverse md:flex-row items-center justify-between gap-6 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] hover:shadow-lg transition-all duration-300 relative overflow-hidden"
       >
+        {/* Decorative element */}
+        <div className="absolute top-0 right-0 w-28 h-28 opacity-10">
+          <svg className="w-full h-full text-[#4FC3DC]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        </div>
+
         {/* Left Side - Text Content */}
-        <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <p className="text-sm font-semibold text-blue-700 tracking-wide uppercase">
+        <div className="flex-1 text-left relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-[#F9D71C]" />
+            <p className="text-sm font-normal text-[#2C3E50]">
               Daily Inspiration
             </p>
           </div>
 
-          <div className="relative mb-6">
-            <QuoteIcon className="absolute -left-6 -top-2 w-12 h-12 text-blue-200 opacity-80" />
-            <p className="text-2xl md:text-3xl font-light text-gray-800 leading-relaxed ml-6">
+          <div className="relative mb-4">
+            <p className="text-lg md:text-xl font-normal text-[#2C3E50] leading-relaxed">
               "{todayQuote}"
             </p>
           </div>
 
-          <p className="text-gray-600 mb-6 text-sm">
-            Collect your daily bonus of 10 coins for motivation!
+          <p className="text-[#6B7280] mb-5 text-sm">
+            Collect your daily bonus of 10 coins for motivation! 🌟
           </p>
 
-          {!dailyRewardClaimed && user ? (
+          {/* {!dailyRewardClaimed && user ? (
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleCollect}
               disabled={isClaimingReward}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#4FC3DC] text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <Sparkles className="w-4 h-4" />
-              {isClaimingReward ? "Claiming..." : "Collect 10 Coins"}
+              {isClaimingReward ? "Claiming..." : "Explore 50 Cities"}
+              
             </motion.button>
           ) : dailyRewardClaimed ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg"
+              className="inline-flex items-center gap-2 bg-[#7FD47F]/20 text-[#7FD47F] px-4 py-2 rounded-full text-sm"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
+                className="h-4 w-4"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -111,11 +118,22 @@ const Dailyquote = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="inline-flex items-center gap-2 bg-gray-100 text-gray-500 px-4 py-2 rounded-lg"
+              className="inline-flex items-center gap-2 bg-gray-100 text-[#6B7280] px-4 py-2 rounded-full text-sm"
             >
               <span className="font-medium">Please login to claim rewards</span>
             </motion.div>
-          )}
+          )} */}
+          <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleCollect}
+              disabled={isClaimingReward}
+              className="bg-[#4FC3DC] text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              Explore 50 Cities
+              
+            </motion.button>
         </div>
 
         {/* Right Side - Image */}
@@ -123,23 +141,16 @@ const Dailyquote = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="flex-shrink-0 relative"
+          className="flex-shrink-0 relative z-10"
         >
-          <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0"></div>
+          <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden flex items-center justify-center">
             <Image
             src="/images/dailyreward.jpg"
             alt="Daily Bonus"
-            width={200}
-            height={200}
+            width={160}
+            height={160}
             className="rounded-lg object-contain"
           />
-            <div className="absolute bottom-4 left-0 right-0 text-center">
-              <div className="inline-flex items-center bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
-                <Sparkles className="w-4 h-4 mr-1" />
-                +10 Coins
-              </div>
-            </div>
           </div>
         </motion.div>
       </motion.div>

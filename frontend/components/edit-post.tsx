@@ -5,10 +5,27 @@ import Image from 'next/image';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { usePosts } from '@/contexts/post-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Post } from '@/contexts/post-context';
+
+const POST_CATEGORIES = [
+    'Volunteer Experience',
+    'Community Service',
+    'Environmental Action',
+    'Healthcare Initiative',
+    'Education Support',
+    'Animal Welfare',
+    'Disaster Relief',
+    'Fundraising',
+    'Social Impact',
+    'Personal Story',
+    'Achievement',
+    'Other'
+];
 
 interface EditPostProps {
     post: Post;
@@ -17,6 +34,8 @@ interface EditPostProps {
 }
 
 export function EditPost({ post, isOpen, onClose }: EditPostProps) {
+    const [title, setTitle] = useState(post.title || '');
+    const [category, setCategory] = useState(post.category || '');
     const [description, setDescription] = useState(post.description);
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>(post.imageUrl);
@@ -39,6 +58,24 @@ export function EditPost({ post, isOpen, onClose }: EditPostProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!title.trim()) {
+            toast({
+                title: 'Error',
+                description: 'Please enter a title',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        if (!category) {
+            toast({
+                title: 'Error',
+                description: 'Please select a category',
+                variant: 'destructive'
+            });
+            return;
+        }
+
         if (!description.trim()) {
             toast({
                 title: 'Error',
@@ -57,7 +94,9 @@ export function EditPost({ post, isOpen, onClose }: EditPostProps) {
         try {
             setIsUpdating(true);
             const formData = new FormData();
-            formData.append('description', description);
+            formData.append('title', title.trim());
+            formData.append('category', category);
+            formData.append('description', description.trim());
             
             if (image) {
                 formData.append('image', image);
@@ -85,6 +124,8 @@ export function EditPost({ post, isOpen, onClose }: EditPostProps) {
 
     const handleCancel = () => {
         // Reset to original values
+        setTitle(post.title || '');
+        setCategory(post.category || '');
         setDescription(post.description);
         setImage(null);
         setImagePreview(post.imageUrl);
@@ -110,13 +151,43 @@ export function EditPost({ post, isOpen, onClose }: EditPostProps) {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Description
-                            </label>
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                                id="title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Give your post a catchy title..."
+                                required
+                                maxLength={200}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="category">Category</Label>
+                            <Select
+                                value={category}
+                                onValueChange={setCategory}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {POST_CATEGORIES.map((cat) => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {cat}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="description">Description</Label>
                             <Textarea
+                                id="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="What's on your mind?"
+                                placeholder="Share your story, experience, or thoughts..."
                                 required
                                 rows={4}
                             />

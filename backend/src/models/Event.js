@@ -52,6 +52,10 @@ const eventSchema = new mongoose.Schema(
       required: [true, "Event location is required"],
       trim: true,
     },
+    detailedAddress: {
+      type: String,
+      trim: true,
+    },
     date: {
       type: Date,
       required: [true, "Event date is required"],
@@ -79,21 +83,42 @@ const eventSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, "Event category is required"],
-      enum: {
-        values: [
-          "environmental",
-          "education",
-          "healthcare",
-          "community",
-          "animal-welfare",
-          "other",
-        ],
-        message: "{VALUE} is not a supported category",
+      trim: true,
+      // Removed strict enum to allow custom categories
+      validate: {
+        validator: function(value) {
+          // Accept predefined categories or custom ones
+          const predefinedCategories = [
+            "environmental",
+            "education",
+            "healthcare",
+            "community",
+            "animal-welfare",
+            "animals",
+            "eldercare",
+            "disability",
+            "arts",
+            "birthday",
+            "wedding",
+            "anniversary",
+            "retirement",
+            "graduation",
+            "baby-shower",
+            "engagement",
+            "corporate-celebration",
+            "milestone-celebration",
+            "memorial",
+            "other"
+          ];
+          // Allow predefined categories or any custom category string
+          return typeof value === 'string' && value.length >= 2 && value.length <= 50;
+        },
+        message: "Category must be between 2 and 50 characters",
       },
     },
-    participants: { 
-      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], 
-      default: [] 
+    participants: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
     },
 
     maxParticipants: {
@@ -108,7 +133,12 @@ const eventSchema = new mongoose.Schema(
         values: ["pending", "approved", "rejected", "completed", "cancelled"],
         message: "{VALUE} is not a valid status",
       },
-      default: "approved",
+      default: "pending",
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Rejection reason cannot exceed 500 characters"],
     },
     eventStatus: {
       type: String,
@@ -118,42 +148,109 @@ const eventSchema = new mongoose.Schema(
       },
       default: "upcoming",
     },
+    eventType: {
+      type: String,
+      enum: {
+        values: ["community", "virtual", "in-person"],
+        message: "{VALUE} is not a valid event type",
+      },
+      required: [true, "Event type is required"],
+      default: "community",
+    },
     pointsOffered: {
       type: Number,
       required: [true, "Points reward must be specified"],
       min: [0, "Points cannot be negative"],
       default: 50,
     },
+    scoringRule: {
+      basePoints: { type: Number, default: 0 },
+      difficultyMultiplier: { type: Number, default: 1 },
+      durationFactor: { type: Number, default: 1 },
+      totalPoints: { type: Number, default: 0 }, // pre-calculated final value
+    },
+
     applications: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Application",
       },
     ],
+    image: {
+      url: String,
+      caption: String,
+      publicId: String,
+    },
     images: [
       {
         url: String,
         caption: String,
       },
     ],
-    sponsorshipRequired: {
-        type: Boolean,
-        default: true,
-      },
-      sponsorshipAmount: {
-        type: Number,
-        min: [0, "Sponsorship amount cannot be negative"],
-        default: 1000, 
-        validate: {
-          validator: function (value) {
-            if (this.sponsorshipRequired) {
-              return value > 0;
-            }
-            return true;
+    completionProof: {
+      type: {
+        url: {
+          type: String,
+          required: function () {
+            // Only required if completion is pending
+            return this.completionStatus === "pending";
           },
-          message: "Sponsorship amount must be > 0 if sponsorship is required",
         },
+        caption: String,
       },
+      required: false,
+    },
+    completionStatus: {
+      type: String,
+      enum: ["none", "pending", "accepted", "rejected"],
+      default: "none",
+    },
+
+    sponsorshipRequired: {
+      type: Boolean,
+      default: true,
+    },
+  sponsorshipContactEmail: {
+  type: String,
+  validate: {
+    validator: function (value) {
+      if (this.sponsorshipRequired) {
+        return !!value; // must be provided if sponsorshipRequired = true
+      }
+      return true;
+    },
+    message: "Contact email is required when sponsorship is enabled",
+  },
+},
+
+sponsorshipContactNumber: {
+  type: String,
+  validate: {
+    validator: function (value) {
+      if (this.sponsorshipRequired) {
+        return !!value;
+      }
+      return true;
+    },
+    message: "Contact number is required when sponsorship is enabled",
+  },
+},
+
+    sponsorshipAmount: {
+      type: Number,
+      min: [0, "Sponsorship amount cannot be negative"],
+      default: 1000,
+      validate: {
+        validator: function (value) {
+          if (this.sponsorshipRequired) {
+            return value > 0;
+          }
+          return true;
+        },
+        message: "Sponsorship amount must be > 0 if sponsorship is required",
+      },
+    },
+    
     requirements: [
       {
         type: String,

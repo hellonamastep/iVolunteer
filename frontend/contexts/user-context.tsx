@@ -44,7 +44,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const token = localStorage.getItem("auth-token");
       
-      const response = await api.get("http://localhost:5000/api/v1/rewards/stats", {
+      const response = await api.get("/v1/rewards/stats", {
         headers: {
           Authorization: `Bearer ${token}`
         },
@@ -77,7 +77,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem("auth-token");
       
       const response = await api.post(
-        "http://localhost:5000/api/v1/rewards/daily-claim",
+        "/v1/rewards/daily-claim",
         { type },
         {
           headers: {

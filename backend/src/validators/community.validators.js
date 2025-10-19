@@ -71,6 +71,11 @@ export const createEventValidator = [
         .notEmpty().withMessage('Category is required')
         .isIn(['environmental', 'education', 'healthcare', 'community', 'animal-welfare', 'other'])
         .withMessage('Invalid category'),
+    body('eventType')
+        .optional()
+        .trim()
+        .isIn(['community', 'virtual', 'in-person'])
+        .withMessage('Invalid event type. Must be one of: community, virtual, in-person'),
     validateRequest
 ];
 

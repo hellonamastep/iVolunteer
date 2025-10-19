@@ -64,6 +64,8 @@ export const getCommunityEvents = asyncHandler(async (req, res) => {
     }
 
     const events = await Event.find(query)
+        .populate('participants', '_id name email')
+        .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize')
         .sort(sort)
         .limit(limit * 1)
         .skip((page - 1) * limit);
@@ -92,7 +94,9 @@ export const getEvent = asyncHandler(async (req, res) => {
     const event = await Event.findOne({
         _id: eventId,
         _id: { $in: community.events }
-    });
+    })
+    .populate('participants', '_id name email')
+    .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize');
 
     if (!event) {
         throw new ApiError(404, 'Event not found in this community');

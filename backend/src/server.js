@@ -88,7 +88,7 @@ const server = async() => {
 const handleFatalError = async(type, error) => {
     if(isShuttingDown) return;
 
-    logger.error(`🚨 ${type.toUpperCase()} in ${currentServiceName}: ${error.message}`);
+    logger.error(`🚨 ${type.toUpperCase()}: ${error.message}`);
 
     logger.error(error.stack);
     await gracefulShutdown(type);
@@ -135,4 +135,7 @@ const gracefulShutdown = async(signal) => {
 
 }
 
-server()
+server().catch((error) => {
+    console.error("Fatal error in server startup:", error);
+    process.exit(1);
+});

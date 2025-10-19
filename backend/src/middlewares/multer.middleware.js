@@ -1,6 +1,6 @@
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../config/cloudinary.js";
+import { cloudinary } from "../config/cloudinary.js";
 
 // Fix: Use proper Cloudinary storage configuration
 const storage = new CloudinaryStorage({
@@ -9,7 +9,6 @@ const storage = new CloudinaryStorage({
     folder: "ngo_events",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     public_id: (req, file) => {
-     
       return `event_${Date.now()}_${Math.round(Math.random() * 1e9)}`;
     },
   },

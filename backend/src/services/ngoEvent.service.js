@@ -2,25 +2,27 @@ import { Event } from "../models/Event.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
 
-
 const createEvent = async (data, organizationId, organizationName) => {
-  let {
+  const {
     title,
     description,
     location,
+    detailedAddress,
     date,
     time,
     duration,
     category,
     maxParticipants,
-    pointsOffered = 50,
     requirements = [],
     sponsorshipRequired,
     sponsorshipAmount,
+    sponsorshipContactEmail,
+    sponsorshipContactNumber,
     eventStatus,
+    eventType = "community",
+    image,
     images = [],
   } = data;
-
 
   const event = new Event({
     title,
@@ -28,39 +30,75 @@ const createEvent = async (data, organizationId, organizationName) => {
     organization: organizationName,
     organizationId,
     location,
+    detailedAddress,
     date,
     time,
     eventStatus,
+    eventType,
     duration,
     category,
     maxParticipants,
-    pointsOffered,
     requirements,
     sponsorshipRequired,
     sponsorshipAmount,
+    sponsorshipContactEmail,
+    sponsorshipContactNumber,
+    image,
     images,
+    status: "pending",
   });
 
   try {
     return await event.save();
   } catch (error) {
-    throw new ApiError(error.status || 500, error.message || "Failed to create event");
+    throw new ApiError(
+      error.status || 500,
+      error.message || "Failed to create event"
+    );
   }
 };
 
+// Get all published events with participants populated and NGO details
+// Optionally filtered by location (city-based filtering)
+const getAllPublishedEvents = async (locationFilter = null) => {
+  console.log('\n[SERVICE] getAllPublishedEvents called');
+  console.log('[SERVICE] locationFilter:', JSON.stringify(locationFilter, null, 2));
+  
+  // Build the base query - only show approved events
+  const baseQuery = { status: "approved" };
+  
+  // Add location filter if provided
+  const query = locationFilter 
+    ? { ...baseQuery, ...locationFilter }
+    : baseQuery;
 
-// Get all approved events (status = approved)
-const getAllPublishedEvents = async () => {
-  const events = await Event.find({ status: "approved" })
+  console.log('[SERVICE] Final query:', JSON.stringify(query, null, 2));
+
+  // First, check for any events that still have the legacy participants field as number
+  const eventsToMigrate = await Event.find({
+    ...query,
+    participants: { $type: "number" }
+  });
+  
+  // Get all approved events with populated participants and NGO details
+  const events = await Event.find(query)
     .populate('participants', '_id name email')
+    .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize')
     .sort({ date: 1 });
   
-  // Auto-migrate events with number participants field
-  const eventsToMigrate = events.filter(event => typeof event.participants === 'number');
+  console.log('[SERVICE] Events found:', events.length);
+  console.log('[SERVICE] Event details:', events.map(e => ({ 
+    title: e.title, 
+    status: e.status, 
+    location: e.location,
+    date: e.date 
+  })));
+  console.log('[SERVICE] ====================================\n');
   
   if (eventsToMigrate.length > 0) {
-    console.log(`Auto-migrating ${eventsToMigrate.length} events with legacy participants field`);
-    
+    console.log(
+      `Auto-migrating ${eventsToMigrate.length} events with legacy participants`
+    );
     for (const event of eventsToMigrate) {
       try {
         await Event.updateOne(
@@ -73,9 +111,10 @@ const getAllPublishedEvents = async () => {
       }
     }
     
-    // Return fresh data after migration with populated participants
-    return await Event.find({ status: "approved" })
+    // Return fresh data after migration with populated participants and NGO details
+    return await Event.find(query)
       .populate('participants', '_id name email')
+      .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize')
       .sort({ date: 1 });
   }
   
@@ -85,28 +124,116 @@ const getAllPublishedEvents = async () => {
 // Get approved events that require sponsorship (use a real field)
 const getSponsorshipEvents = async () => {
   return await Event.find({
-    // status: "approved",
+    status: "approved",
     // sponsorshipRequired: true,
-    sponsorshipAmount: { $gt: 0 }
-  }).sort({ date: 1 });
+    sponsorshipAmount: { $gt: 0 },
+  })
+    .populate(
+      "organizationId",
+      "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+    )
+    .sort({ date: 1 });
 };
 
-
 const getEventsByOrganization = async (organizationId) => {
-  return await Event.find({ organizationId }).sort({ date: -1 });
+  console.log(
+    `[SERVICE] Fetching ALL events for organizationId: ${organizationId}`
+  );
+
+  // Fetch ALL events for this organization (pending, approved, rejected)
+  // NGO needs to see all their events with status banners
+  const events = await Event.find({
+    organizationId,
+  })
+    .populate("organizationId", "name email organizationType")
+    .populate("participants", "_id name email")
+    .sort({ createdAt: -1 }); // newest first
+
+  console.log(`[SERVICE] Query result: ${events.length} events found`);
+  return events;
+};
+
+export default {
+  getEventsByOrganization,
 };
 
 const getUpcomingEvents = async () => {
-  return await Event.find({ status: "approved", date: { $gt: new Date() } }).sort({ date: 1 });
+  return await Event.find({
+    status: "approved",
+    date: { $gt: new Date() },
+  })
+    .populate(
+      "organizationId",
+      "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+    )
+    .sort({ date: 1 });
+};
+
+// Get single event by ID
+const getEventById = async (eventId) => {
+  const event = await Event.findById(eventId)
+    .populate("participants", "_id name email")
+    .populate(
+      "organizationId",
+      "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+    );
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  return event;
+};
+
+// Update status (approve/reject)
+const updateEventStatus = async (eventId, status, rejectionReason = null) => {
+  if (!["approved", "rejected"].includes(status)) {
+    throw new ApiError(400, "Invalid status value");
+  }
+
+  // Prepare update data
+  const updateData = { status };
+  
+  // If rejecting, include rejection reason (if provided)
+  if (status === "rejected" && rejectionReason) {
+    updateData.rejectionReason = rejectionReason;
+  }
+  
+  // If approving, clear any previous rejection reason
+  if (status === "approved") {
+    updateData.rejectionReason = null;
+  }
+
+  const event = await Event.findByIdAndUpdate(
+    eventId,
+    updateData,
+    { new: true }
+  );
+
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  return event;
+};
+
+// Get all pending events (for admin)
+const getPendingEvents = async () => {
+  return await Event.find({ status: "pending" }).sort({ createdAt: -1 });
 };
 
 // Participate in an event
 const participateInEvent = async (eventId, userId) => {
   try {
     const event = await Event.findById(eventId);
-    
+
     if (!event) {
       throw new Error("Event not found");
+    }
+
+    // Check if user is the event creator
+    if (event.organizationId.toString() === userId.toString()) {
+      throw new Error("Event creators cannot participate in their own events");
     }
 
     if (event.status !== "approved") {
@@ -119,21 +246,17 @@ const participateInEvent = async (eventId, userId) => {
 
     // Auto-migrate legacy data: convert participants from number to array if needed
     let needsRefresh = false;
-    if (typeof event.participants === 'number') {
-      console.log(`Auto-migrating event ${eventId}: converting participants from number to array`);
-      await Event.updateOne(
-        { _id: eventId },
-        { $set: { participants: [] } }
+    if (typeof event.participants === "number") {
+      console.log(
+        `Auto-migrating event ${eventId}: converting participants from number to array`
       );
+      await Event.updateOne({ _id: eventId }, { $set: { participants: [] } });
       needsRefresh = true;
     }
 
     // Initialize participants array if it doesn't exist or isn't an array
     if (!event.participants || !Array.isArray(event.participants)) {
-      await Event.updateOne(
-        { _id: eventId },
-        { $set: { participants: [] } }
-      );
+      await Event.updateOne({ _id: eventId }, { $set: { participants: [] } });
       needsRefresh = true;
     }
 
@@ -157,23 +280,35 @@ const participateInEvent = async (eventId, userId) => {
 
     // Award participation points to user
     const User = (await import("../models/User.js")).User;
-    const { ParticipationReward } = await import("../controllers/rewards.controller.js");
-    
+    const { ParticipationReward } = await import(
+      "../controllers/rewards.controller.js"
+    );
+
     const user = await User.findById(userId);
     if (user) {
-      // No coins awarded for participation - just return the updated event
+      // No coins awarded for participation - just return the updated event with NGO details
       return {
-        event: await Event.findById(eventId).populate('participants', 'name email'),
-        pointsEarned: 0
+        event: await Event.findById(eventId)
+          .populate("participants", "name email")
+          .populate(
+            "organizationId",
+            "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+          ),
+        pointsEarned: 0,
       };
     }
 
     return {
-      event: await Event.findById(eventId).populate('participants', 'name email'),
-      pointsEarned: 0
+      event: await Event.findById(eventId)
+        .populate("participants", "name email")
+        .populate(
+          "organizationId",
+          "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+        ),
+      pointsEarned: 0,
     };
   } catch (error) {
-    console.error('Error in participateInEvent:', error);
+    console.error("Error in participateInEvent:", error);
     throw error;
   }
 };
@@ -182,28 +317,24 @@ const participateInEvent = async (eventId, userId) => {
 const leaveEvent = async (eventId, userId) => {
   try {
     const event = await Event.findById(eventId);
-    
+
     if (!event) {
       throw new Error("Event not found");
     }
 
     // Auto-migrate legacy data: convert participants from number to array if needed
     let needsRefresh = false;
-    if (typeof event.participants === 'number') {
-      console.log(`Auto-migrating event ${eventId}: converting participants from number to array`);
-      await Event.updateOne(
-        { _id: eventId },
-        { $set: { participants: [] } }
+    if (typeof event.participants === "number") {
+      console.log(
+        `Auto-migrating event ${eventId}: converting participants from number to array`
       );
+      await Event.updateOne({ _id: eventId }, { $set: { participants: [] } });
       needsRefresh = true;
     }
 
     // Initialize participants array if it doesn't exist or isn't an array
     if (!event.participants || !Array.isArray(event.participants)) {
-      await Event.updateOne(
-        { _id: eventId },
-        { $set: { participants: [] } }
-      );
+      await Event.updateOne({ _id: eventId }, { $set: { participants: [] } });
       needsRefresh = true;
     }
 
@@ -226,28 +357,201 @@ const leaveEvent = async (eventId, userId) => {
     );
 
     return {
-      event: await Event.findById(eventId).populate('participants', 'name email')
+      event: await Event.findById(eventId)
+        .populate("participants", "name email")
+        .populate(
+          "organizationId",
+          "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+        ),
     };
   } catch (error) {
-    console.error('Error in leaveEvent:', error);
+    console.error("Error in leaveEvent:", error);
     throw error;
   }
 };
 
 // Get user's participated events
 const getUserParticipatedEvents = async (userId) => {
-  return await Event.find({ 
-    participants: userId 
-  }).sort({ date: -1 });
+  return await Event.find({
+    participants: userId,
+  })
+    .populate(
+      "organizationId",
+      "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
+    )
+    .sort({ date: -1 });
 };
+
+const requestEventCompletion = async (eventId, organizationId, proofImage) => {
+  const event = await Event.findById(eventId);
+
+  if (!event) throw new ApiError(404, "Event not found");
+  if (event.organizationId.toString() !== organizationId.toString()) {
+    throw new ApiError(403, "Only event creator can request completion");
+  }
+  if (event.completionStatus === "pending") {
+    throw new ApiError(400, "Completion request already submitted");
+  }
+
+  // Only save proof and mark as pending
+  event.completionProof = proofImage; // { url, caption }
+  event.completionStatus = "pending"; // pending admin approval
+
+  await event.save();
+  return event;
+};
+
+// ngoEvent.service.js
+const getAllCompletionRequests = async () => {
+  return await Event.find({
+    completionStatus: "pending", // ✅ correct condition
+  })
+    .populate("organizationId", "name email")
+    .populate("participants", "_id name email")
+    .sort({ updatedAt: -1 });
+};
+
+const reviewEventCompletion = async (eventId, decision) => {
+  const event = await Event.findById(eventId).populate("participants");
+  if (!event) throw new ApiError(404, "Event not found");
+
+  if (event.completionStatus !== "pending") {
+    throw new ApiError(400, "No pending completion request for this event");
+  }
+
+  if (decision === "accepted") {
+    event.completionStatus = "accepted"; // admin approved
+    event.eventStatus = "completed"; // lifecycle field
+
+     const totalPoints = event.scoringRule?.totalPoints || 0;
+
+    // Award points to participants
+   for (const userId of event.participants) {
+    const user = await mongoose.model("User").findById(userId);
+    if (user) {
+      user.points += totalPoints;
+      await user.save();
+    }
+  }
+  } else if (decision === "rejected") {
+    event.completionStatus = "rejected"; // admin rejected
+    event.eventStatus = "ongoing"; // back to ongoing
+  } else {
+    throw new ApiError(400, "Invalid decision value");
+  }
+
+  await event.save();
+  return event;
+};
+
+// Get all completion requests (approved/rejected) history (admin)
+const getCompletionRequestHistory = async (ngoId) => {
+  const filter = {
+    completionStatus: { $in: ["accepted", "rejected"] }, // admin decisions
+  };
+
+  if (ngoId) {
+    filter.organizationId = ngoId; // filter by NGO if provided
+  }
+
+  const events = await Event.find(filter)
+    .populate("participants", "_id name email")
+    .populate("organizationId", "name email organizationType")
+    .sort({ updatedAt: -1 }); // latest decisions first
+
+  return events;
+};
+
+// Get completed events of a specific NGO
+const getCompletedEventsByNgo = async (ngoId) => {
+  const events = await Event.find({
+    organizationId: ngoId,
+    eventStatus: "completed", // completed lifecycle
+  })
+    .populate("participants", "_id name email")
+    .populate("organizationId", "name email organizationType")
+    .sort({ date: -1 }); // latest completed first
+
+  return events;
+};
+
+const approveEventWithScoring = async (
+  eventId,
+  baseCategoryOrPoints, // either category key (preferred) or numeric basePoints
+  difficultyKeyOrMultiplier,
+  hoursWorked // number
+) => {
+  const event = await Event.findById(eventId);
+  if (!event) throw new ApiError(404, "Event not found");
+
+  // Base Event Points mapping (A)
+  const basePointsMap = {
+    small: 50,
+    medium: 100,
+    highImpact: 150,
+    longTerm: 200,
+  };
+
+  // Difficulty multiplier mapping (B)
+  const difficultyMap = {
+    easy: 1.0,
+    moderate: 1.3,
+    challenging: 1.7,
+    extreme: 2.0,
+  };
+
+  // Determine basePoints (accept numeric or category key)
+  let basePoints = typeof baseCategoryOrPoints === "number"
+    ? baseCategoryOrPoints
+    : basePointsMap[baseCategoryOrPoints] ?? 50;
+
+  // Determine difficulty multiplier (accept numeric or key)
+  const difficultyMultiplier = typeof difficultyKeyOrMultiplier === "number"
+    ? difficultyKeyOrMultiplier
+    : difficultyMap[difficultyKeyOrMultiplier] ?? 1.0;
+
+  const hours = Number(hoursWorked) || 0;
+  const durationFactor = 1 + hours / 10; // DF = 1 + hours/10
+
+  const totalPoints = Math.round(basePoints * difficultyMultiplier * durationFactor);
+
+  event.status = "approved";
+  event.scoringRule = {
+    baseCategoryOrPoints,
+    difficulty: difficultyKeyOrMultiplier,
+    hoursWorked: hours,
+    totalPoints,
+  };
+
+  // Keep pointsOffered for compatibility with older code paths that used it
+  event.pointsOffered = totalPoints;
+
+  await event.save();
+  return event;
+};
+
+
 
 export const ngoEventService = {
   createEvent,
   getEventsByOrganization,
   getUpcomingEvents,
   getAllPublishedEvents,
+
   getSponsorshipEvents,
+  getEventById,
   participateInEvent,
   leaveEvent,
-  getUserParticipatedEvents
+  getUserParticipatedEvents,
+  getPendingEvents,
+  updateEventStatus,
+
+  requestEventCompletion,
+  reviewEventCompletion,
+  getAllCompletionRequests,
+
+  getCompletionRequestHistory,
+  getCompletedEventsByNgo,
+
+  approveEventWithScoring,
 };

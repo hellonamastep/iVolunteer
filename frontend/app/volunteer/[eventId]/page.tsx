@@ -4,20 +4,40 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useNGO } from "@/contexts/ngo-context";
+import api from "@/lib/api";
+import { toast } from "react-toastify";
 import {
   Calendar,
   MapPin,
   Users,
   Clock,
   CheckCircle,
+  XCircle,
   UserPlus,
   ArrowLeft,
   Award,
   Target,
   Tag,
   Image as ImageIcon,
+  Building,
+  Globe,
+  Phone,
+  Mail,
+  MapPinIcon,
+  Video,
+  AlertCircle,
 } from "lucide-react";
 import { Header } from "@/components/header";
+import { useParticipationRequest } from "@/contexts/participation-request-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const EventDetailsPage: React.FC = () => {
   const params = useParams();
@@ -25,67 +45,133 @@ const EventDetailsPage: React.FC = () => {
   const { user } = useAuth();
   const eventId = params.eventId as string;
   
-  const { events, fetchAvailableEvents, loading, error, participateInEvent, leaveEvent } = useNGO();
+  const { events, fetchAvailableEvents, loading: contextLoading, error: contextError } = useNGO();
+  const { 
+    createParticipationRequest, 
+    hasRequestedParticipation, 
+    getPendingRequestForEvent,
+    getRejectedRequestForEvent,
+    hasRejectedRequest,
+    cancelRequest 
+  } = useParticipationRequest();
   const [event, setEvent] = useState<any>(null);
   const [participating, setParticipating] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [participated, setParticipated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (events.length === 0) {
-      fetchAvailableEvents();
-    }
-  }, []);
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
 
-  useEffect(() => {
-    if (events.length > 0 && eventId) {
-      const foundEvent = events.find((e) => e._id === eventId);
-      setEvent(foundEvent);
+  // Fetch single event with NGO details
+  const fetchEventDetails = async () => {
+    if (!eventId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('Fetching event details for:', eventId);
       
-      if (foundEvent) {
-        // Check if user is already participating
-        const currentUserId = user?._id || "";
-        setParticipated(
-          Array.isArray(foundEvent.participants) && 
-          foundEvent.participants.some((participant: any) => 
-            participant._id === currentUserId || participant === currentUserId
-          )
-        );
+      // Try to fetch from the new single event endpoint first
+      try {
+        const response = await api.get(`/v1/event/${eventId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          withCredentials: true,
+        });
+
+        const responseData = response.data as any;
+        if (responseData.success && responseData.event) {
+          console.log('Event fetched successfully:', responseData.event);
+          console.log('Event image:', responseData.event.image);
+          console.log('Event time:', responseData.event.time);
+          console.log('NGO Details:', responseData.event.organizationId);
+          setEvent(responseData.event);
+          return;
+        }
+      } catch (singleEventError) {
+        console.log('Single event endpoint failed, trying all events endpoint');
+        
+        // Fallback to fetching all events
+        const allEventsResponse = await api.get("/v1/event/all-event", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          withCredentials: true,
+        });
+
+        const allEventsData = allEventsResponse.data as any;
+        const events = allEventsData.events || [];
+        const foundEvent = events.find((e: any) => e._id === eventId);
+        
+        if (foundEvent) {
+          console.log('Event found in all events:', foundEvent);
+          console.log('Event image:', foundEvent.image);
+          console.log('Event time:', foundEvent.time);
+          setEvent(foundEvent);
+        } else {
+          throw new Error("Event not found");
+        }
       }
+    } catch (err: any) {
+      console.error('Error fetching event:', err);
+      const errorMessage = err.response?.data?.message || "Failed to fetch event details";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  }, [events, eventId]);
+  };
+
+  useEffect(() => {
+    fetchEventDetails();
+  }, [eventId]);
+
+  useEffect(() => {
+    if (event && user) {
+      // Check if user is already participating
+      const currentUserId = user._id || "";
+      setParticipated(
+        Array.isArray(event.participants) && 
+        event.participants.some((participant: any) => 
+          participant._id === currentUserId || participant === currentUserId
+        )
+      );
+    }
+  }, [event, user]);
 
   const handleParticipate = async () => {
     if (!event?._id) return;
     
     setParticipating(true);
     try {
-      const success = await participateInEvent(event._id);
+      const success = await createParticipationRequest(event._id);
       if (success) {
-        setParticipated(true);
-        // Refresh events to get updated data
-        setTimeout(() => fetchAvailableEvents(), 500);
+        // Don't set participated since it's a request, not direct participation
+        // Refresh event details to get updated data
+        setTimeout(() => fetchEventDetails(), 500);
       }
     } catch (err) {
-      console.error("Participation failed:", err);
+      console.error("Participation request failed:", err);
     } finally {
       setParticipating(false);
     }
   };
 
-  const handleLeaveEvent = async () => {
+  const handleCancelRequest = async () => {
     if (!event?._id) return;
+    
+    const pendingRequest = getPendingRequestForEvent(event._id);
+    if (!pendingRequest) return;
     
     setLeaving(true);
     try {
-      const success = await leaveEvent(event._id);
+      const success = await cancelRequest(pendingRequest._id);
       if (success) {
-        setParticipated(false);
-        // Refresh events to get updated data
-        setTimeout(() => fetchAvailableEvents(), 500);
+        // Refresh event details to get updated data
+        setTimeout(() => fetchEventDetails(), 500);
       }
     } catch (err) {
-      console.error("Leave event failed:", err);
+      console.error("Cancel request failed:", err);
     } finally {
       setLeaving(false);
     }
@@ -111,10 +197,17 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">Loading event details...</p>
+            <img
+              src="/mascots/video_mascots/mascot_walking_video.gif"
+              alt="Loading..."
+              width={200}
+              height={200}
+              className="mx-auto mb-6"
+            />
+            <p className="text-gray-600 text-lg font-semibold">Loading event details...</p>
+            <p className="text-gray-400 text-sm mt-2">Please wait while we fetch the details! 🎉</p>
           </div>
         </div>
       </>
@@ -125,19 +218,19 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <div className="text-red-600 text-4xl mb-2">⚠️</div>
-              <h2 className="text-red-800 text-xl font-semibold mb-2">
+            <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
+              <div className="text-red-600 text-5xl mb-4">⚠️</div>
+              <h2 className="text-red-800 text-xl font-bold mb-2">
                 {error ? "Error" : "Event Not Found"}
               </h2>
-              <p className="text-red-600 mb-4">
+              <p className="text-red-600 mb-4 text-sm">
                 {error || "The event you're looking for could not be found."}
               </p>
               <button
                 onClick={() => router.back()}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                className="bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white px-6 py-2 rounded-lg transition-all shadow-lg"
               >
                 Go Back
               </button>
@@ -153,22 +246,55 @@ const EventDetailsPage: React.FC = () => {
   const currentParticipants = Array.isArray(event.participants) ? event.participants.length : 0;
   const maxParticipants = event.maxParticipants || Infinity;
 
+  // Check if current user is the event creator
+  const isEventCreator = user && event.organizationId && (
+    (typeof event.organizationId === 'object' ? event.organizationId._id : event.organizationId) === user._id
+  );
+
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] py-6 relative overflow-hidden">
+        <style jsx global>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #7DD9A6, #6BC794);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #6BC794, #5AB583);
+          }
+        `}</style>
+        
+        {/* Mascot Images in Background */}
+        <div className="fixed top-32 left-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_volunteer.png" alt="" className="w-24 h-24 animate-bounce" style={{ animationDuration: "3s" }} />
+        </div>
+        <div className="fixed bottom-20 right-10 opacity-15 z-0 pointer-events-none">
+          <img src="/mascots/mascot_help.png" alt="" className="w-28 h-28 animate-pulse" style={{ animationDuration: "4s" }} />
+        </div>
+        <div className="fixed top-1/2 right-5 opacity-10 z-0 pointer-events-none">
+          <img src="/mascots/mascot_star.png" alt="" className="w-20 h-20 animate-bounce" style={{ animationDuration: "5s" }} />
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+            className="flex items-center text-gray-600 hover:text-[#7DD9A6] mb-6 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
           </button>
 
           {/* Event Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             {/* Event Image */}
             {event.image?.url ? (
               <div className="h-64 md:h-80 relative">
@@ -208,24 +334,77 @@ const EventDetailsPage: React.FC = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Description */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">About This Event</h2>
-                <p className="text-gray-600 leading-relaxed">
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">📋</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">About This Event</h2>
+                </div>
+                <p className="text-gray-700 leading-relaxed text-base">
                   {event.description || "No description available for this event."}
                 </p>
               </div>
 
               {/* Event Details Grid */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Event Details</h2>
+              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
+                    <span className="text-white text-xl">ℹ️</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Event Details</h2>
+                </div>
+                
+                {/* Event Type */}
+                {event.eventType && (
+                  <div className="mb-6 pb-6 border-b-2 border-gray-100">
+                    <div className="flex items-start space-x-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        event.eventType === 'virtual' 
+                          ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
+                          : event.eventType === 'in-person'
+                          ? 'bg-gradient-to-br from-emerald-400 to-teal-500'
+                          : 'bg-gradient-to-br from-purple-400 to-pink-500'
+                      }`}>
+                        {event.eventType === 'virtual' ? (
+                          <Video className="h-5 w-5 text-white" />
+                        ) : event.eventType === 'in-person' ? (
+                          <Building className="h-5 w-5 text-white" />
+                        ) : (
+                          <Globe className="h-5 w-5 text-white" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Event Type</p>
+                        <div className="mt-2">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold shadow-md backdrop-blur-sm ${
+                            event.eventType === 'virtual' 
+                              ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white' 
+                              : event.eventType === 'in-person'
+                              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white'
+                              : 'bg-gradient-to-r from-purple-400 to-pink-500 text-white'
+                          }`}>
+                            {event.eventType === 'virtual' && <Video className="w-4 h-4 mr-1" />}
+                            {event.eventType === 'in-person' && <Building className="w-4 h-4 mr-1" />}
+                            {event.eventType === 'community' && <Globe className="w-4 h-4 mr-1" />}
+                            {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1).replace('-', ' ')} Event
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Date & Time */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Calendar className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
+                        <Calendar className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Date</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Date</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.date ? new Date(event.date).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -236,14 +415,23 @@ const EventDetailsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-blue-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-indigo-50 p-4 rounded-xl border-2 border-indigo-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
+                        <Clock className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Time</p>
-                        <p className="text-sm text-gray-600">
-                          {event.time || (event.date ? new Date(event.date).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
+                        <p className="text-sm font-bold text-gray-900">Time</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
+                          {event.time ? (() => {
+                            // Convert 24-hour format time string (e.g., "14:30") to 12-hour with AM/PM
+                            const [hours, minutes] = event.time.split(':').map(Number);
+                            const period = hours >= 12 ? 'PM' : 'AM';
+                            const displayHours = hours % 12 || 12;
+                            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+                          })() : (event.date ? new Date(event.date).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
                           }) : "Time not specified")}
                         </p>
                       </div>
@@ -252,21 +440,30 @@ const EventDetailsPage: React.FC = () => {
 
                   {/* Location & Category */}
                   <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="h-5 w-5 text-red-600 mt-1" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Location</p>
-                        <p className="text-sm text-gray-600">
+                    <div className="flex items-start space-x-3 bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">Location</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.location || "Location not specified"}
                         </p>
+                        {event.detailedAddress && (
+                          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                            {event.detailedAddress}
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-start space-x-3">
-                      <Tag className="h-5 w-5 text-purple-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+                        <Tag className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Category</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-bold text-gray-900">Category</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">
                           {event.category || "General"}
                         </p>
                       </div>
@@ -275,23 +472,27 @@ const EventDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Duration & Points */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t-2 border-gray-100">
                   {event.duration && (
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-orange-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-orange-50 p-4 rounded-xl border-2 border-orange-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-md">
+                        <Clock className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Duration</p>
-                        <p className="text-sm text-gray-600">{event.duration} hours</p>
+                        <p className="text-sm font-bold text-gray-900">Duration</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">⏱️ {event.duration} hours</p>
                       </div>
                     </div>
                   )}
 
                   {event.pointsOffered && (
-                    <div className="flex items-start space-x-3">
-                      <Award className="h-5 w-5 text-yellow-600 mt-1" />
+                    <div className="flex items-start space-x-3 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
+                        <Award className="h-5 w-5 text-white" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Points Offered</p>
-                        <p className="text-sm text-gray-600">{event.pointsOffered} points</p>
+                        <p className="text-sm font-bold text-gray-900">Points Offered</p>
+                        <p className="text-sm text-gray-700 font-medium mt-1">🏆 {event.pointsOffered} points</p>
                       </div>
                     </div>
                   )}
@@ -300,16 +501,208 @@ const EventDetailsPage: React.FC = () => {
 
               {/* Requirements */}
               {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4">Requirements</h2>
-                  <ul className="space-y-2">
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
+                      <span className="text-white text-xl">✓</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Requirements</h2>
+                  </div>
+                  <ul className="space-y-3">
                     {event.requirements.map((req: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <Target className="h-4 w-4 text-blue-600 mt-1 flex-shrink-0" />
-                        <span className="text-gray-600 text-sm">{req}</span>
+                      <li key={index} className="flex items-start space-x-3 bg-green-50 p-3 rounded-xl border-2 border-green-200">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center flex-shrink-0 shadow-md">
+                          <Target className="h-3 w-3 text-white" />
+                        </div>
+                        <span className="text-gray-700 text-sm font-medium">{req}</span>
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* NGO Information */}
+              {event.organizationId && typeof event.organizationId === 'object' && (
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8F5A5] to-[#D4E590] flex items-center justify-center shadow-md">
+                      <span className="text-gray-800 text-xl">🏢</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Organization Basic Info */}
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Organization Name</p>
+                          <p className="text-sm text-gray-600">
+                            {event.organizationId.name || event.organization}
+                          </p>
+                        </div>
+                      </div>
+
+                      {event.organizationId.organizationType && (
+                        <div className="flex items-start space-x-3">
+                          <Tag className="h-5 w-5 text-[#E8F5A5] mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Organization Type</p>
+                            <p className="text-sm text-gray-600 capitalize">
+                              {event.organizationId.organizationType.replace('-', ' ')}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {event.organizationId.yearEstablished && (
+                        <div className="flex items-start space-x-3">
+                          <Calendar className="h-5 w-5 text-green-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Established</p>
+                            <p className="text-sm text-gray-600">
+                              {event.organizationId.yearEstablished}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {event.organizationId.organizationSize && (
+                        <div className="flex items-start space-x-3">
+                          <Users className="h-5 w-5 text-orange-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Organization Size</p>
+                            <p className="text-sm text-gray-600">
+                              {event.organizationId.organizationSize} employees
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="space-y-4">
+                      {event.organizationId.email && (
+                        <div className="flex items-start space-x-3">
+                          <Mail className="h-5 w-5 text-red-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Email</p>
+                            <a 
+                              href={`mailto:${event.organizationId.email}`}
+                              className="text-sm text-[#7DD9A6] hover:text-[#6BC794] hover:underline"
+                            >
+                              {event.organizationId.email}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {event.organizationId.contactNumber && (
+                        <div className="flex items-start space-x-3">
+                          <Phone className="h-5 w-5 text-green-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Phone</p>
+                            <a 
+                              href={`tel:${event.organizationId.contactNumber}`}
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {event.organizationId.contactNumber}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {event.organizationId.websiteUrl && (
+                        <div className="flex items-start space-x-3">
+                          <Globe className="h-5 w-5 text-blue-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Website</p>
+                            <a 
+                              href={event.organizationId.websiteUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              Visit Website
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {event.organizationId.address && (
+                        <div className="flex items-start space-x-3">
+                          <MapPinIcon className="h-5 w-5 text-purple-600 mt-1" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Address</p>
+                            <div className="text-sm text-gray-600">
+                              {event.organizationId.address.street && (
+                                <p>{event.organizationId.address.street}</p>
+                              )}
+                              <p>
+                                {[
+                                  event.organizationId.address.city,
+                                  event.organizationId.address.state,
+                                  event.organizationId.address.zip
+                                ].filter(Boolean).join(', ')}
+                              </p>
+                              {event.organizationId.address.country && (
+                                <p>{event.organizationId.address.country}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Organization Description */}
+                  {event.organizationId.ngoDescription && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <h3 className="text-lg font-medium text-gray-900 mb-3">About Us</h3>
+                      <p className="text-gray-600 leading-relaxed">
+                        {event.organizationId.ngoDescription}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Focus Areas */}
+                  {event.organizationId.focusAreas && event.organizationId.focusAreas.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <h3 className="text-lg font-medium text-gray-900 mb-3">Focus Areas</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {event.organizationId.focusAreas.map((area: string, index: number) => (
+                          <span 
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize"
+                          >
+                            {area.replace('-', ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback for basic organization info when NGO details are not populated */}
+              {(!event.organizationId || typeof event.organizationId !== 'object') && event.organization && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">About the Organization</h2>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Organization Name</p>
+                      <p className="text-sm text-gray-600">{event.organization}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      <strong>Note:</strong> Detailed organization information is not available for this event. Only the organization name is provided.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -348,56 +741,150 @@ const EventDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Action Button */}
-                {participated ? (
+                {isEventCreator ? (
                   <div className="space-y-3">
                     <button
                       disabled
-                      className="w-full bg-green-100 text-green-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-gray-100 text-gray-600 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Already Participating
+                      <Building className="h-4 w-4 mr-2" />
+                      You Created This Event
                     </button>
+                    <p className="text-xs text-center text-gray-500">
+                      Event creators cannot participate in their own events
+                    </p>
+                  </div>
+                ) : (() => {
+                  const hasRequested = hasRequestedParticipation(event?._id || "");
+                  const pendingRequest = getPendingRequestForEvent(event?._id || "");
+                  const rejectedRequest = getRejectedRequestForEvent(event?._id || "");
+                  const isRejected = hasRejectedRequest(event?._id || "");
+                  
+                  if (participated) {
+                    return (
+                      <div className="space-y-3">
+                        <button
+                          disabled
+                          className="w-full bg-green-100 text-green-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Already Participating
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  if (isRejected && rejectedRequest) {
+                    return (
+                      <div className="space-y-3">
+                        <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
+                          <DialogTrigger asChild>
+                            <button
+                              className="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-red-200 transition-colors duration-200 flex items-center justify-center"
+                            >
+                              <AlertCircle className="h-4 w-4 mr-2" />
+                              Participation Rejected
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Participation Request Rejected</DialogTitle>
+                              <DialogDescription>
+                                Your participation request for this event was rejected.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="font-medium text-gray-900 mb-2">Rejection Reason:</h4>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                  <p className="text-gray-700 text-sm">
+                                    {rejectedRequest.rejectionReason || "No specific reason provided."}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex justify-end">
+                                <DialogClose asChild>
+                                  <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                                    Close
+                                  </button>
+                                </DialogClose>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <button
+                          disabled
+                          className="w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Not Eligible for This Event
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  if (hasRequested && pendingRequest) {
+                    return (
+                      <div className="space-y-3">
+                        <button
+                          disabled
+                          className="w-full bg-yellow-100 text-yellow-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          Requested Participation
+                        </button>
+                        <button
+                          onClick={handleCancelRequest}
+                          disabled={leaving}
+                          className="w-full bg-red-100 text-red-700 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium text-sm disabled:bg-red-200 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                          {leaving ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700 mr-2"></div>
+                              Cancelling...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Cancel Request
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  if (eventFull) {
+                    return (
+                      <button
+                        disabled
+                        className="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed"
+                      >
+                        Event Full
+                      </button>
+                    );
+                  }
+                  
+                  return (
                     <button
-                      onClick={handleLeaveEvent}
-                      disabled={leaving}
-                      className="w-full bg-red-100 text-red-700 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium text-sm disabled:bg-red-200 disabled:cursor-not-allowed flex items-center justify-center"
+                      onClick={handleParticipate}
+                      disabled={participating}
+                      className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white py-3 px-4 rounded-lg hover:from-[#6BC794] hover:to-[#5AB583] transition-all duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
                     >
-                      {leaving ? (
+                      {participating ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700 mr-2"></div>
-                          Leaving...
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Requesting...
                         </>
                       ) : (
-                        'Leave Event'
+                        <>
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Request Participation
+                        </>
                       )}
                     </button>
-                  </div>
-                ) : eventFull ? (
-                  <button
-                    disabled
-                    className="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed"
-                  >
-                    Event Full
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleParticipate}
-                    disabled={participating}
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {participating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Joining...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Join Event
-                      </>
-                    )}
-                  </button>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Event Status */}

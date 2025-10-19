@@ -35,11 +35,25 @@ console.log('✅ Cloudinary configured successfully');
 // Configure Cloudinary storage
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: {
-        folder: 'iVolunteer_posts',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-        transformation: [{ width: 1000, crop: "limit" }], // Resize images to max width of 1000px
-        upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET // Upload preset for client-side uploads
+    params: async (req, file) => {
+        // Determine folder based on field name
+        let folder = 'iVolunteer_posts';
+        if (file.fieldname === 'coverImage') {
+            folder = 'iVolunteer_donations/covers';
+        } else if (file.fieldname === 'governmentId') {
+            folder = 'iVolunteer_donations/verification/govt_id';
+        } else if (file.fieldname === 'proofOfNeed') {
+            folder = 'iVolunteer_donations/verification/proof';
+        } else if (file.fieldname === 'supportingMedia') {
+            folder = 'iVolunteer_donations/media';
+        }
+        
+        return {
+            folder: folder,
+            allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf'],
+            transformation: [{ width: 1000, crop: "limit" }],
+            public_id: `${file.fieldname}_${Date.now()}_${Math.round(Math.random() * 1e9)}`
+        };
     }
 });
 

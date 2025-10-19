@@ -29,7 +29,7 @@ export function Navigation() {
       navItems.push({ href: "/my-applications", icon: Heart, label: "My Applications" })
     }
   } else {
-    navItems.push({ href: "/auth", icon: LogIn, label: "Login" })
+    navItems.push({ href: "/login", icon: LogIn, label: "Login" })
   }
 
   return (

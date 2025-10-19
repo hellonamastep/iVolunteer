@@ -1,19 +1,76 @@
 import Post from '../models/Post.js';
 import { deleteImage } from '../config/cloudinary.js';
 
+// Get all available categories
+export const getCategories = async (req, res) => {
+    try {
+        const categories = [
+            'Volunteer Experience',
+            'Community Service',
+            'Environmental Action',
+            'Healthcare Initiative',
+            'Education Support',
+            'Animal Welfare',
+            'Disaster Relief',
+            'Fundraising',
+            'Social Impact',
+            'Personal Story',
+            'Achievement',
+            'Other'
+        ];
+        
+        res.json({ categories });
+    } catch (error) {
+        console.error('Error getting categories:', error);
+        res.status(500).json({ message: 'Error getting categories' });
+    }
+};
+
 // Create a new post
 export const createPost = async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'Image is required' });
+        const { title, category, description } = req.body;
+
+        // Validate required fields
+        if (!title || !category || !description) {
+            return res.status(400).json({ 
+                message: 'Title, category, and description are required' 
+            });
         }
 
-        const post = new Post({
+        // Get city from the logged-in user's profile
+        // Admin posts use 'global' as city to be visible to everyone
+        let city;
+        if (req.user.role === 'admin') {
+            city = 'global';
+        } else if (req.user.role === 'user') {
+            city = req.user.city;
+        } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+            city = req.user.address?.city;
+        }
+
+        if (!city) {
+            return res.status(400).json({ 
+                message: 'User must have a city set in their profile to create posts' 
+            });
+        }
+
+        // Create post object with required fields
+        const postData = {
             user: req.user._id,
-            description: req.body.description,
-            imageUrl: req.file.path,
-            cloudinaryPublicId: req.file.filename
-        });
+            title: title.trim(),
+            category,
+            description: description.trim(),
+            city: city.trim()
+        };
+
+        // Add image data only if an image was uploaded
+        if (req.file) {
+            postData.imageUrl = req.file.path;
+            postData.cloudinaryPublicId = req.file.filename;
+        }
+
+        const post = new Post(postData);
 
         await post.save();
         await post.populate('user', 'name profilePicture');
@@ -25,14 +82,55 @@ export const createPost = async (req, res) => {
     }
 };
 
-// Get all posts with pagination
+// Get all posts with pagination and optional category filtering
 export const getPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
+        const { category, showAll } = req.query;
 
-        const posts = await Post.find()
+        // Build query object
+        const query = {};
+        
+        // Check if user wants to see all posts (showAll=true parameter)
+        const shouldShowAll = showAll === 'true';
+        
+        // Admins can see all posts, others see posts from their city + global posts
+        // Unless showAll is explicitly requested
+        if (req.user.role !== 'admin' && !shouldShowAll) {
+            // Get the user's city
+            let userCity;
+            if (req.user.role === 'user') {
+                userCity = req.user.city;
+            } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
+                userCity = req.user.address?.city;
+            }
+
+            if (!userCity) {
+                return res.status(400).json({ 
+                    message: 'User city information is required to view posts' 
+                });
+            }
+
+            // Filter by user's city OR global posts (admin posts)
+            query.$or = [
+                { city: new RegExp(`^${userCity.trim()}$`, 'i') },
+                { city: 'global' }
+            ];
+            console.log('User city:', userCity);
+            console.log('Filtered view - showing local + global posts');
+        } else {
+            console.log(shouldShowAll ? 'Show all requested - showing all posts' : 'Admin user - showing all posts');
+        }
+        
+        if (category && category !== 'all') {
+            query.category = category;
+        }
+
+        console.log('Query:', JSON.stringify(query, null, 2));
+
+        const posts = await Post.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -40,7 +138,11 @@ export const getPosts = async (req, res) => {
             .populate('comments.user', 'name profilePicture')
             .populate('reactions.user', 'name profilePicture');
 
-        const total = await Post.countDocuments();
+        const total = await Post.countDocuments(query);
+        
+        console.log('Posts found:', posts.length);
+        console.log('Total posts:', total);
+        
         res.json({
             posts,
             currentPage: page,
@@ -166,15 +268,27 @@ export const updatePost = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update this post' });
         }
 
+        // Update title if provided
+        if (req.body.title !== undefined) {
+            post.title = req.body.title.trim();
+        }
+
+        // Update category if provided
+        if (req.body.category !== undefined) {
+            post.category = req.body.category;
+        }
+
         // Update description if provided
         if (req.body.description !== undefined) {
-            post.description = req.body.description;
+            post.description = req.body.description.trim();
         }
 
         // Update image if provided
         if (req.file) {
-            // Delete old image from Cloudinary
-            await deleteImage(post.cloudinaryPublicId);
+            // Delete old image from Cloudinary if it exists
+            if (post.cloudinaryPublicId) {
+                await deleteImage(post.cloudinaryPublicId);
+            }
             
             // Update with new image
             post.imageUrl = req.file.path;
@@ -210,8 +324,10 @@ export const deletePost = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to delete this post' });
         }
 
-        // Delete image from Cloudinary
-        await deleteImage(post.cloudinaryPublicId);
+        // Delete image from Cloudinary if it exists
+        if (post.cloudinaryPublicId) {
+            await deleteImage(post.cloudinaryPublicId);
+        }
         
         // Delete post from database
         await post.deleteOne();

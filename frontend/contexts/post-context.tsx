@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
 import api from '@/lib/api';
+import { usePoints } from './points-context';
+import { toast } from 'react-toastify';
 
 interface ApiError {
     message: string;
@@ -14,7 +16,10 @@ export interface Post {
         name: string;
         profilePicture?: string;
     };
+    title: string;
+    category: string;
     description: string;
+    city: string;
     imageUrl: string;
     cloudinaryPublicId: string;
     comments: Comment[];
@@ -49,7 +54,7 @@ interface PostContextType {
     posts: Post[];
     loading: boolean;
     error: string | null;
-    getPosts: (page?: number) => Promise<{ posts: Post[]; currentPage: number; totalPages: number; totalPosts: number }>;
+    getPosts: (page?: number, showAll?: boolean) => Promise<{ posts: Post[]; currentPage: number; totalPages: number; totalPosts: number }>;
     createPost: (formData: FormData) => Promise<Post>;
     updatePost: (postId: string, formData: FormData) => Promise<Post>;
     addComment: (postId: string, content: string) => Promise<Comment>;
@@ -81,15 +86,19 @@ export function PostProvider({ children }: PostProviderProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const getPosts = async (page = 1) => {
+     const { earnPoints } = usePoints(); 
+
+    const getPosts = async (page = 1, showAll = false) => {
         try {
+            
             setLoading(true);
+            const showAllParam = showAll ? '&showAll=true' : '';
             const response = await api.get<{
                 posts: Post[];
                 currentPage: number;
                 totalPages: number;
                 totalPosts: number;
-            }>(`/v1/posts?page=${page}`);
+            }>(`/v1/posts?page=${page}${showAllParam}`);
             setPosts(response.data.posts);
             return response.data;
         } catch (err) {
@@ -106,6 +115,10 @@ export function PostProvider({ children }: PostProviderProps) {
             setLoading(true);
             const response = await api.post<Post>('/v1/posts', formData);
             setPosts(prevPosts => [response.data, ...prevPosts]);
+
+             await earnPoints("addPost", response.data._id);
+             toast.success("5+ points");
+
             return response.data;
         } catch (err) {
             const message = handleError(err);

@@ -1,53 +1,63 @@
 "use client";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import api from "@/lib/api";
-import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface Opportunity {
+// Define the Opportunity type
+export interface Opportunity {
+  id?: string;
   title: string;
   description: string;
   image: string;
   date: string;
-  location: string;
+  location: string; // Required field, pre-filled from organization city but can be changed
   participants: string;
   goal: string;
   category: string;
   featured: boolean;
+  eventType?: string; // Event type field
 }
 
+// Context type
 interface CorporateContextType {
   opportunities: Opportunity[];
   fetchOpportunities: () => Promise<void>;
 }
 
+// Create context
 const CorporateContext = createContext<CorporateContextType | undefined>(undefined);
 
-export const CorporateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Provider component
+export const CorporateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
 
+  // Fetch opportunities from API
   const fetchOpportunities = async () => {
     try {
-      const res = await api.get("/v1/event/sponsorship");
+      const res = await api.get<{ availableSponsorEvent: any[] }>("/v1/event/sponsorship");
       const data = res.data;
 
-      // Map API data to your Opportunity type
-      const mapped = (data.availableSponsorEvent || []).map((item: any) => ({
-        title: item.title,
-        description: item.description,
-        image: item.images?.[0] || "/images/default-event.avif", // fallback
-        date: new Date(item.date).toLocaleDateString(),
-        location: item.location,
+      const mapped: Opportunity[] = (data.availableSponsorEvent || []).map((item: any) => ({
+        title: item.title || "",
+        description: item.description || "",
+        image: item.images?.[0] || "/images/default-event.avif",
+        date: item.date ? new Date(item.date).toLocaleDateString() : "",
+        location: item.location || "",
         participants: `${item.participants?.length || 0} / ${item.participantsNeeded || 0}`,
         goal: item.goal || `${item.sponsorshipAmount || 0} USD`,
-        category: item.category,
+        category: item.category || "",
         featured: false,
+        sponsorshipContactEmail: item.sponsorshipContactEmail || "", // ✅ add this
+  sponsorshipContactNumber: item.sponsorshipContactNumber || ""
       }));
 
       setOpportunities(mapped);
-    } catch (error) {
-      console.error("Failed to fetch opportunities", error);
+      console.log(opportunities)
+    } catch (err) {
+      console.error("Failed to fetch opportunities", err);
     }
   };
 
+  // Fetch once on mount
   useEffect(() => {
     fetchOpportunities();
   }, []);
@@ -59,7 +69,8 @@ export const CorporateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 };
 
-export const useCorporate = () => {
+// Custom hook
+export const useCorporate = (): CorporateContextType => {
   const context = useContext(CorporateContext);
   if (!context) {
     throw new Error("useCorporate must be used within a CorporateProvider");

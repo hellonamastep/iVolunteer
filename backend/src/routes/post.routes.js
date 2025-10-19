@@ -4,6 +4,7 @@ import { upload } from '../config/cloudinary.js';
 import {
     createPost,
     getPosts,
+    getCategories,
     addComment,
     deleteComment,
     toggleReaction,
@@ -13,8 +14,11 @@ import {
 
 const router = express.Router();
 
-// Get all posts (public route)
-router.get('/', getPosts);
+// Get all post categories (public route)
+router.get('/categories', getCategories);
+
+// Get all posts (requires authentication to filter by user's city)
+router.get('/', authMiddleware, getPosts);
 
 // Protected routes (require authentication)
 router.post('/', authMiddleware, upload.single('image'), createPost);

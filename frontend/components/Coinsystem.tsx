@@ -27,6 +27,7 @@ const Coinsystem = () => {
   ];
 
   return (
+
     <section className="relative w-full overflow-hidden">
       {/* Inverted Wave SVG at top */}
       <div className="absolute top-0 left-0 w-full h-[160px] z-0">
@@ -37,6 +38,31 @@ const Coinsystem = () => {
           className="object-cover object-top"
           priority
         />
+
+    <section className="py-16 px-6 md:px-12 text-center bg-gradient-to-br from-blue-100 to-white">
+      {/* Header */}
+      <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+        Kickstart Your Journey with iVolunteer 🚀
+      </h2>
+      <p className="text-gray-500 mb-8 max-w-2xl mx-auto text-xl">
+        Register today and get{" "}
+        <span className="font-semibold text-blue-600">5 free coins </span>
+        to begin your impact journey! Choose one of these simple actions to
+        unlock rewards and start making a difference.
+      </p>
+
+      {/* CTA Button */}
+      <div className="mb-12">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-md hover:bg-blue-700 transition-all"
+        >
+          <Link href="/signup">
+           Register & Get 5 Coins
+           </Link>
+        </motion.button>
+
       </div>
 
       {/* Content Container */}

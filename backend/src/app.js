@@ -4,7 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
-
+import path from "path";
 
 import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.js"
 import authRouter from "./routes/auth.routes.js"
@@ -24,19 +24,74 @@ import eventRouter from "./routes/event.routes.js";
 import donationRouter from "./routes/donation.routes.js";
 import donationEventRouter from "./routes/donationEvent.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
+import pointsBadgeRouter from "./routes/pointsBadge.routes.js";
+import groupRouter from "./routes/group.routes.js";
+import blogRouter from "./routes/blog.route.js";
+import corporateEventRouter from "./routes/corporateEvent.routes.js";
+import corporateBidRouter from "./routes/corporateBid.routes.js";
+import participationRequestRouter from "./routes/participationRequest.routes.js";
 
 const app = express();
+app.set('trust proxy', 1);
 
-app.use(helmet());
 app.use(
-  cors({
-    origin: "http://localhost:3000", // frontend URL
-    credentials: true,
+  helmet({
+    crossOriginEmbedderPolicy: false, // Keep this false
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Add this
   })
 );
+
+
+const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app","https://namastep-dlv8fosc4-namasteps-projects.vercel.app","https://namastep-g7cstmtg8-namasteps-projects.vercel.app"];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Allow non-browser requests (Postman)
+    // Allow official frontend + any Vercel preview deployments dynamically
+    if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true, // if you’re sending cookies
+};
+
+app.use(cors(corsOptions));
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // allow requests with no origin (like Postman)
+//       if (!origin) return callback(null, true);
+//       if (allowedOrigins.indexOf(origin) === -1) {
+//         const msg = "The CORS policy for this site does not allow access from the specified origin.";
+//         return callback(new Error(msg), false);
+//       }
+//       return callback(null, true);
+//     },
+//     credentials: true,
+//   })
+// );
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin) return callback(null, true); // allow Postman or curl
+//       if (allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         console.warn("Blocked by CORS:", origin);
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
+
 app.use(morgan("dev"));
-app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 
 function limiter(windowMs, max) {
@@ -57,6 +112,22 @@ app.use(globalRateLimiting);
 
 const authLimiter = limiter(15 * 60 * 1000, 100);
 
+app.use("/uploads", (req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
+
+
+app.use(
+  "/uploads",
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+  express.static(path.join(process.cwd(), "uploads"))
+);
+
+
 app.use("/api/v1/auth", authLimiter, authRouter);
 
 app.use("/api/v1/posts", globalRateLimiting, postRouter);
@@ -72,6 +143,22 @@ app.use("/api/v1/donation", globalRateLimiting, donationRouter);
 
 // Payment routes
 app.use("/api/v1/payment", globalRateLimiting, paymentRouter);
+
+// pointsBadge routes
+app.use("/api/v1/points-badge", globalRateLimiting, pointsBadgeRouter);
+
+// Group routes
+app.use("/api/v1/groups", globalRateLimiting, groupRouter);
+
+// blogs
+app.use("/api/v1/blogs", globalRateLimiting, blogRouter);
+
+// corporate events
+app.use("/api/v1/corporate-events", globalRateLimiting, corporateEventRouter);
+app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
+
+// Participation request routes
+app.use("/api/v1/participation-requests", globalRateLimiting, participationRequestRouter);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

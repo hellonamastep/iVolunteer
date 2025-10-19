@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://namastep-irod.onrender.com',
   withCredentials: true,
 });
 
@@ -70,7 +70,7 @@ api.interceptors.response.use(
             try {
                 // Try to refresh the token
                 const refreshResponse = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/v1/auth/refresh-access-token`,
+                    `${process.env.NEXT_PUBLIC_API_URL || 'https://namastep-irod.onrender.com'}/api/v1/auth/refresh-access-token`,
                     {},
                     { withCredentials: true }
                 );
@@ -97,7 +97,7 @@ api.interceptors.response.use(
                     window.dispatchEvent(new CustomEvent('token-expired'));
                     
                     // Redirect to login page
-                    window.location.href = '/auth';
+                    window.location.href = '/login';
                 }
             } finally {
                 isRefreshing = false;
