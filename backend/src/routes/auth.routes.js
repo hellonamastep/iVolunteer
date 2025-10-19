@@ -37,33 +37,37 @@ router.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
+// at top of file
+const FRONTEND = process.env.FRONTEND_URL || "http://localhost:3000";
+
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${FRONTEND}/login?oauth=failed`,
+  }),
   (req, res) => {
     const user = req.user;
-
-    // Access token only; add a refresh token flow if you need one
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-    // Cookie options differ in dev vs prod
-    const isProd = process.env.NODE_ENV === "production";
+    // FE is localhost:3000 or vercel, BE is onrender → cross-site always
     const cookieOpts = {
       httpOnly: true,
-      secure: isProd,                  // HTTPS only in prod
-      sameSite: isProd ? "None" : "Lax",
+      secure: true,      // Render is HTTPS
+      sameSite: "none",  // required for cross-site
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
-    // Set both names for compatibility with existing middleware/clients
-    res.cookie("accessToken", token, cookieOpts);
-    res.cookie("jwtToken", token, cookieOpts);
+    // single, consistent cookie name that middleware reads
+    res.cookie("access_token", token, cookieOpts);
 
-    const frontend = process.env.FRONTEND_URL || "http://localhost:3000";
-    // Redirect to your callback page which stores user in localStorage then goes to dashboard
-    // or send directly to /dashboard if you prefer.
-    res.redirect(`${frontend}/callback?linked=${user._linkedFromEmail ? "true" : "false"}`);
+    // optional: clear legacy names if previously set
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("jwtToken", { path: "/" });
+
+    res.redirect(`${FRONTEND}/callback?linked=${user._linkedFromEmail ? "true" : "false"}`);
   }
 );
+
 export default router;

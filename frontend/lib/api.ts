@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiHost = (process.env.NEXT_PUBLIC_API_URL || "https://namastep-irod.onrender.com").replace(/\/$/, "");
+const apiHost = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const api = axios.create({
   baseURL: `${apiHost}/api`,
   withCredentials: true,
