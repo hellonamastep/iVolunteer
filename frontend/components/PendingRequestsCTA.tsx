@@ -10,10 +10,10 @@ interface CTAButtonProps {
 }
 
 const PendingRequestsCTA = ({ className = "" }: CTAButtonProps) => {
-  const { pendingDonationEvents } = useAdmin();
-const pendingEvents = pendingDonationEvents || [];
+  const { pendingEvents } = useAdmin();
+  const volunteerEvents = pendingEvents || [];
 
-  const pendingCount = pendingEvents.length;
+  const pendingCount = volunteerEvents.length;
   const hasPending = pendingCount > 0;
 
   return (

@@ -133,7 +133,7 @@ const eventSchema = new mongoose.Schema(
         values: ["pending", "approved", "rejected", "completed", "cancelled"],
         message: "{VALUE} is not a valid status",
       },
-      default: "approved",
+      default: "pending",
     },
     rejectionReason: {
       type: String,

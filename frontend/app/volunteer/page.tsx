@@ -71,8 +71,8 @@ const AvailableEventsContent: React.FC = () => {
   );
   const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community'>('virtual');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  // For non-logged-in users, show all events by default
-  const [showAllEvents, setShowAllEvents] = useState(!user);
+  // TEMPORARY FIX: Always show all events regardless of user's city
+  const [showAllEvents, setShowAllEvents] = useState(true); // Changed from: !user
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -90,6 +90,8 @@ const AvailableEventsContent: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    console.log('[Volunteer Page] showAllEvents:', showAllEvents);
+    console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
     fetchAvailableEvents(showAllEvents);
   }, [showAllEvents]);
 
