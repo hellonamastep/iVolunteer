@@ -73,6 +73,14 @@ function AdminDashboard() {
 
 function NGODashboard() {
   return (
+
+    <section className="bg-[#f4f7fb] h-full min-w-[350px]">
+      <Header />
+      <Ngoanalytics />
+      <div className="flex md:flex-row flex-col w-full md:justify-around justify-center items-center">
+        <Eventbutton />
+        <Donationeventbutton />
+      </div>
     <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] relative overflow-hidden">
       {/* Decorative background pattern circles */}
       <div className="absolute w-32 h-32 bg-[#5BCCC4] opacity-[0.05] rounded-full top-16 left-16"></div>
@@ -608,8 +616,8 @@ function LandingPage() {
       <Header />
       <Hero />
       <Gamified />
-      <Howitworks />
       <Coinsystem />
+      <Howitworks />
       <Faq />
       <Footer />
     </div>
