@@ -354,7 +354,6 @@ const AddEventForm: React.FC = () => {
 
     setPendingDocument({ file, preview, type });
     setShowDocumentConfirmation(true);
-
     e.target.value = '';
   };
 
@@ -658,6 +657,7 @@ const AddEventForm: React.FC = () => {
                       </select>
                       {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
                       
+                      {/* Custom Category Input */}
                       {selectedCategory === "Other" && (
                         <div className="mt-3">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -778,7 +778,7 @@ const AddEventForm: React.FC = () => {
                   <div className="space-y-5 animate-in fade-in duration-300">
                     <div className="mb-6">
                       <h2 className="text-lg font-semibold text-gray-800">Step 2: Story</h2>
-                      <p className="text-sm text-gray-600 mt-1">Fill in the details below to continue</p>
+                      <p className="text-sm text-gray-600 mt-1">Tell your story below to continue</p>
                     </div>
 
                     <div>
@@ -840,6 +840,7 @@ const AddEventForm: React.FC = () => {
                       </label>
                       <p className="text-xs text-gray-600 mb-2">Photos or videos that show the cause (optional but highly recommended)</p>
                       
+                      {/* Preview Grid */}
                       {supportingMediaPreviews.length > 0 && (
                         <div className="grid grid-cols-3 gap-3 mb-4">
                           {supportingMediaPreviews.map((preview, index) => (
@@ -873,6 +874,7 @@ const AddEventForm: React.FC = () => {
                         </div>
                       )}
                       
+                      {/* Upload Area */}
                       {supportingMediaPreviews.length < 5 ? (
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#7DD9A6] transition-colors bg-gray-50">
                           <input 
@@ -922,6 +924,7 @@ const AddEventForm: React.FC = () => {
                       )}
                     </div>
 
+                    {/* Writing Tips Box */}
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
                       <div className="flex items-start space-x-2">
                         <span className="text-yellow-600 text-lg">💡</span>
@@ -939,7 +942,7 @@ const AddEventForm: React.FC = () => {
                   </div>
                 )}
 
-                {/* Remaining steps continue... */}
+                {/* Step 3: Verification */}
                 {activeStep === 3 && (
                   <div className="space-y-6 animate-in fade-in duration-300">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Verification Documents</h2>
@@ -1068,8 +1071,412 @@ const AddEventForm: React.FC = () => {
                   </div>
                 )}
 
-                {/* Step 4 & 5 abbreviated for length - same structure continues... */}
-                
+                {/* Step 4: Settings */}
+                {activeStep === 4 && (
+                  <div className="space-y-5 animate-in fade-in duration-300">
+                    <div className="mb-4">
+                      <h2 className="text-lg font-semibold text-gray-800">Step 4: Settings</h2>
+                      <p className="text-sm text-gray-600 mt-1">Configure details below to continue</p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Display Settings</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-2">
+                            <div className="mt-0.5">
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-800">Display Raised Amount Publicly</label>
+                              <p className="text-xs text-gray-500 mt-0.5">Show donation progress to visitors</p>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input {...register("displayRaisedAmount")} type="checkbox" className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7DD9A6] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7DD9A6]"></div>
+                          </label>
+                        </div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-2">
+                            <div className="mt-0.5">
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-800">Allow Anonymous Donations</label>
+                              <p className="text-xs text-gray-500 mt-0.5">Let users hide their names if they wish</p>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input {...register("allowAnonymous")} type="checkbox" className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7DD9A6] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7DD9A6]"></div>
+                          </label>
+                        </div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-2">
+                            <div className="mt-0.5">
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-800">Enable Comments & Updates</label>
+                              <p className="text-xs text-gray-500 mt-0.5">Allow supporters to comment and receive updates</p>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input {...register("enableComments")} type="checkbox" className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#7DD9A6] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7DD9A6]"></div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Minimum Donation Amount (₹)
+                      </label>
+                      <input
+                        {...register("minimumDonation", {
+                          required: "Minimum donation amount is required",
+                          min: { value: 10, message: "Minimum amount must be at least ₹10" },
+                        })}
+                        type="number"
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                        placeholder="100"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Default: ₹100</p>
+                      {errors.minimumDonation && <p className="text-red-500 text-xs mt-1">{errors.minimumDonation.message}</p>}
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Bank Account / Payment Details</h3>
+                      <p className="text-xs text-gray-500 mb-3">Provide account where funds will be sent (encrypted & secure)</p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Account Holder Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            {...register("accountHolder", { required: "Account holder name is required" })}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="John Doe"
+                          />
+                          {errors.accountHolder && <p className="text-red-500 text-xs mt-1">{errors.accountHolder.message}</p>}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Account Number <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            {...register("accountNumber", { required: "Account number is required" })}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="XXXXXXXXX7890"
+                          />
+                          {errors.accountNumber && <p className="text-red-500 text-xs mt-1">{errors.accountNumber.message}</p>}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            IFSC Code <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            {...register("ifscCode", {
+                              required: "IFSC code is required",
+                              pattern: { value: /^[A-Z]{4}0[A-Z0-9]{6}$/, message: "Invalid IFSC code format" },
+                            })}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="SBIN0001234"
+                          />
+                          {errors.ifscCode && <p className="text-red-500 text-xs mt-1">{errors.ifscCode.message}</p>}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            UPI ID (Optional)
+                          </label>
+                          <input
+                            {...register("upiId")}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="yourname@bank"
+                          />
+                        </div>
+                        
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                          <p className="text-xs text-yellow-800">⚠️ This information is only visible to administrators</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Payout Method</label>
+                      <div className="space-y-3">
+                        <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${watchedFields.paymentMethod === "manual" ? "border-[#7DD9A6] bg-[#7DD9A6]/5" : "border-gray-200 hover:border-gray-300"}`}>
+                          <input {...register("paymentMethod")} type="radio" value="manual" className="w-4 h-4 text-[#7DD9A6] border-gray-300 focus:ring-[#7DD9A6]" />
+                          <div className="ml-3 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-800">Manual Approval</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">Funds transferred upon admin review (recommended)</p>
+                          </div>
+                        </label>
+                        <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${watchedFields.paymentMethod === "auto" ? "border-[#7DD9A6] bg-[#7DD9A6]/5" : "border-gray-200 hover:border-gray-300"}`}>
+                          <input {...register("paymentMethod")} type="radio" value="auto" className="w-4 h-4 text-[#7DD9A6] border-gray-300 focus:ring-[#7DD9A6]" />
+                          <div className="ml-3 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-800">Auto Withdrawal</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">Automatic transfer to your account (requires verification)</p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Visibility & Engagement</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Social Share Message
+                          </label>
+                          <textarea
+                            {...register("socialShareMessage", { required: "Social share message is required" })}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all resize-none text-sm"
+                            rows={3}
+                            placeholder="Help support this cause! Every contribution matters..."
+                          />
+                          {errors.socialShareMessage && <p className="text-red-500 text-xs mt-1">{errors.socialShareMessage.message}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Hashtags / Tags
+                          </label>
+                          <input
+                            {...register("hashtags")}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="#Education #ClimateAction #CommunitySupport"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Helps categorize and discover your campaign</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Location (Optional)
+                          </label>
+                          <input
+                            {...register("location")}
+                            type="text"
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            placeholder="Mumbai, Maharashtra"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">City or area where the cause is located</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Review */}
+                {activeStep === 5 && (
+                  <div className="space-y-5 animate-in fade-in duration-300">
+                    <div className="mb-4">
+                      <h2 className="text-lg font-semibold text-gray-800">Step 5: Review</h2>
+                      <p className="text-sm text-gray-600 mt-1">Review your campaign details</p>
+                    </div>
+
+                    {/* Campaign Completion Progress */}
+                    <div className="bg-[#E8F5A5] border border-[#D4E7B8] rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-sm font-medium text-gray-700">Campaign Completion</h3>
+                        <span className="text-sm font-semibold text-gray-700">
+                          {(() => {
+                            const totalFields = 13;
+                            const filledFields = [
+                              title, watchedFields.category, watchedFields.goalAmount, watchedFields.endDate, coverImagePreview,
+                              shortDescription, whyRaising, whoBenefits, howFundsUsed,
+                              watchedFields.accountHolder, watchedFields.accountNumber,
+                              governmentIdPreview, confirmCheckbox
+                            ].filter(f => f && (typeof f === 'boolean' ? f : (typeof f === 'string' ? f.trim() : true))).length;
+                            return `${filledFields}/${totalFields}`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[#7DD9A6] h-full transition-all duration-500"
+                          style={{ 
+                            width: `${(() => {
+                              const totalFields = 13;
+                              const filledFields = [
+                                title, watchedFields.category, watchedFields.goalAmount, watchedFields.endDate, coverImagePreview,
+                                shortDescription, whyRaising, whoBenefits, howFundsUsed,
+                                watchedFields.accountHolder, watchedFields.accountNumber,
+                                governmentIdPreview, confirmCheckbox
+                              ].filter(f => f && (typeof f === 'boolean' ? f : (typeof f === 'string' ? f.trim() : true))).length;
+                              return Math.round((filledFields / totalFields) * 100);
+                            })()}%` 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2">
+                        Complete {(() => {
+                          const totalFields = 13;
+                          const filledFields = [
+                            title, watchedFields.category, watchedFields.goalAmount, watchedFields.endDate, coverImagePreview,
+                            shortDescription, whyRaising, whoBenefits, howFundsUsed,
+                            watchedFields.accountHolder, watchedFields.accountNumber,
+                            governmentIdPreview, confirmCheckbox
+                          ].filter(f => f && (typeof f === 'boolean' ? f : (typeof f === 'string' ? f.trim() : true))).length;
+                          return totalFields - filledFields;
+                        })()} more required field(s) to publish.
+                      </p>
+                    </div>
+
+                    {/* Required Fields */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Required Fields</h3>
+                      <div className="space-y-2">
+                        {[
+                          { label: "Title", value: title },
+                          { label: "Category", value: watchedFields.category },
+                          { label: "Goal Amount", value: watchedFields.goalAmount },
+                          { label: "End Date", value: watchedFields.endDate },
+                          { label: "Cover Image", value: coverImagePreview },
+                          { label: "Short Description", value: shortDescription },
+                          { label: "Full Story (Why Raising)", value: whyRaising },
+                          { label: "Beneficiary (Who Benefits)", value: whoBenefits },
+                          { label: "Funds Usage (How Used)", value: howFundsUsed },
+                          { label: "Account Holder Name", value: watchedFields.accountHolder },
+                          { label: "Account Number", value: watchedFields.accountNumber },
+                          { label: "Government ID", value: governmentIdPreview },
+                          { label: "Consent Confirmation", value: confirmCheckbox },
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                {item.value ? (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#7DD9A6]"></div>
+                                ) : (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                                )}
+                              </div>
+                              <span className="text-sm text-gray-700">{item.label}</span>
+                            </div>
+                            <span className={`text-xs font-medium ${item.value ? "text-[#6BC794]" : "text-red-600"}`}>
+                              {item.value ? "✓" : "Missing"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Optional (Boosts Trust) */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Optional (Boosts Trust)</h3>
+                      <div className="space-y-2">
+                        {[
+                          { label: "Supporting Media", value: supportingMediaPreviews.length > 0 },
+                          { label: "Proof of Need Document", value: proofOfNeedPreview },
+                          { label: "IFSC Code", value: watchedFields.ifscCode },
+                          { label: "UPI ID", value: watchedFields.upiId },
+                          { label: "Location", value: watchedFields.location },
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                {item.value ? (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-[#7DD9A6]"></div>
+                                ) : (
+                                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                                )}
+                              </div>
+                              <span className="text-sm text-gray-700">{item.label}</span>
+                            </div>
+                            <span className="text-xs font-medium text-gray-500">
+                              {item.value ? "Added" : "Recommended"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Campaign Summary */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-3">Campaign Summary</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Title:</span>
+                          <span className="font-medium text-gray-800 text-right max-w-[200px] truncate">{title || "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Category:</span>
+                          <span className="font-medium text-gray-800">{watchedFields.category || "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Goal:</span>
+                          <span className="font-medium text-gray-800">{watchedFields.goalAmount ? `₹${watchedFields.goalAmount}` : "₹0"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Account Holder:</span>
+                          <span className="font-medium text-gray-800">{watchedFields.accountHolder || "Not set"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type:</span>
+                          <span className="font-medium text-gray-800">Individual</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Min Donation:</span>
+                          <span className="font-medium text-gray-800">{watchedFields.minimumDonation ? `₹${watchedFields.minimumDonation}` : "₹10"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Required Notice */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <div className="flex items-start space-x-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-orange-800">Action Required</p>
+                          <p className="text-xs text-orange-700 mt-1">
+                            Please complete all required fields before submitting. Use the "Previous" button to go back and fill in missing information.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="pt-4">
+                      <button 
+                        type="submit" 
+                        disabled={isSubmitting} 
+                        className="w-full px-8 py-3.5 bg-[#7DD9A6] text-white font-semibold rounded-lg hover:bg-[#6BC794] transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-base flex items-center justify-center space-x-2"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="h-5 w-5 animate-spin" />
+                            <span>Creating Campaign...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-5 w-5" />
+                            <span>{submitButtonText}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-between pt-6 border-t border-gray-100 mt-8">
                   {activeStep > 1 && (
                     <button 
@@ -1097,6 +1504,7 @@ const AddEventForm: React.FC = () => {
 
           {/* Preview Section */}
           <div className="bg-gradient-to-br from-[#E8F5A5] to-[#7DD9A6] rounded-2xl shadow-lg overflow-hidden sticky top-8 self-start max-h-[calc(100vh-4rem)]">
+            {/* Header */}
             <div className="bg-[#7DD9A6] p-6">
               <div className="flex items-center space-x-2 mb-2">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1107,8 +1515,10 @@ const AddEventForm: React.FC = () => {
               <p className="text-sm text-white/90">{previewText}</p>
             </div>
 
+            {/* Preview Card */}
             <div className="bg-white p-6 w-full">
               <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+                {/* Cover Image */}
                 <div className="h-64 bg-gradient-to-br from-[#E8F5A5] to-[#7DD9A6] relative overflow-hidden flex items-center justify-center">
                   {coverImagePreview ? (
                     <img src={coverImagePreview} alt="Cover preview" className="w-full h-full object-cover" />
@@ -1119,15 +1529,19 @@ const AddEventForm: React.FC = () => {
                   )}
                 </div>
 
+                {/* Content */}
                 <div className="p-6 space-y-4">
+                  {/* Title */}
                   <h4 className="text-xl font-semibold text-gray-800">
                     {watchedFields.title || defaultTitlePlaceholder}
                   </h4>
 
+                  {/* Description */}
                   <p className="text-sm text-gray-600">
                     {watchedFields.shortDescription || "Your catchy tagline will appear here"}
                   </p>
 
+                  {/* Progress Section */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-start text-sm">
                       <div>
@@ -1142,6 +1556,7 @@ const AddEventForm: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Progress Bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-gray-300 h-2 rounded-full w-0"></div>
                     </div>
@@ -1149,6 +1564,7 @@ const AddEventForm: React.FC = () => {
                     <p className="text-xs text-gray-500">0% funded</p>
                   </div>
 
+                  {/* Donate Button */}
                   <button className="w-full bg-[#7DD9A6] text-white py-3 rounded-lg font-medium hover:bg-[#6BC794] transition-colors">
                     Donate Now
                   </button>
@@ -1159,7 +1575,7 @@ const AddEventForm: React.FC = () => {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Back Confirmation Modal */}
       {showBackConfirmation && (
         <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in duration-200">
@@ -1199,6 +1615,7 @@ const AddEventForm: React.FC = () => {
         </div>
       )}
 
+      {/* Document Upload Confirmation Modal */}
       {showDocumentConfirmation && pendingDocument && (
         <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 animate-in fade-in duration-200">
@@ -1221,6 +1638,7 @@ const AddEventForm: React.FC = () => {
                 Are you sure you want to upload this document? Please verify the document is correct before confirming.
               </p>
               
+              {/* Document Preview */}
               <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
                 {pendingDocument.preview === 'PDF_FILE' ? (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -1277,14 +1695,14 @@ const AddEventForm: React.FC = () => {
   );
 };
 
-// Main component with Suspense wrapper
+// Main component with Suspense boundary
 const AddEventPage: React.FC = () => {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-12 w-12 text-[#7DD9A6] animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading form...</p>
+          <p className="text-gray-600 font-medium">Loading form...</p>
         </div>
       </div>
     }>
