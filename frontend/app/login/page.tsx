@@ -49,7 +49,7 @@ function LoginForm() {
       {/* Logo Section */}
       <div className="flex flex-col items-center mb-4 w-full max-w-xs sm:max-w-sm">
         <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 mb-2">
-          <Image src="/images/auth.png" alt="Namastep Logo" width={150} height={150} className="w-full h-full object-contain" priority />
+          <Image src="/images/loginmascot.gif" alt="Namastep Logo" width={150} height={150} className="w-full h-full object-contain" priority />
         </div>
         <h1 className="text-[#50C878] font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-wide text-center">NAMASTEP</h1>
         <p className="text-gray-600 text-sm sm:text-md mt-1 text-center px-2">Make Doing Good Fun, Rewarding & Impactful</p>

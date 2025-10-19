@@ -221,7 +221,7 @@ export default function SignupPage() {
       <div className="flex flex-col items-center mb-4 sm:mb-6 lg:mb-8">
         <div className="relative">
           <Image
-            src="/images/auth.png"
+            src="/images/loginmascot.gif"
             alt="Namastep Logo"
             width={80}
             height={80}
