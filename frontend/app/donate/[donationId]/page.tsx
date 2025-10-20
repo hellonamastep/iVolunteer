@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 import {
   Calendar,
   MapPin,
-  DollarSign,
   Clock,
   Target,
   ArrowLeft,

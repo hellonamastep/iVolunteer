@@ -151,7 +151,7 @@ const eventSchema = new mongoose.Schema(
     eventType: {
       type: String,
       enum: {
-        values: ["community", "virtual", "in-person"],
+        values: ["community", "virtual", "in-person", "special"],
         message: "{VALUE} is not a valid event type",
       },
       required: [true, "Event type is required"],

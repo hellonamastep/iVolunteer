@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useSearchParams } from "next/navigation";
 
 import Coinsystem from "@/components/Coinsystem";
 import Faq from "@/components/Faq";
@@ -72,6 +73,28 @@ function AdminDashboard() {
 }
 
 function NGODashboard() {
+  const searchParams = useSearchParams();
+  const ngoEventTableRef = useRef<HTMLDivElement>(null);
+
+  // Handle scrollTo parameter
+  useEffect(() => {
+    const scrollTo = searchParams.get('scrollTo');
+    if (scrollTo === 'ngoeventtable' && ngoEventTableRef.current) {
+      setTimeout(() => {
+        if (ngoEventTableRef.current) {
+          const tableTop = ngoEventTableRef.current.getBoundingClientRect().top + window.pageYOffset;
+          const screenHeight = window.innerHeight;
+          const scrollOffset = screenHeight * 0.3;
+          
+          window.scrollTo({ 
+            top: tableTop - scrollOffset, 
+            behavior: "smooth" 
+          });
+        }
+      }, 300); // Small delay to ensure content is rendered
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] relative overflow-hidden">
       {/* Decorative background pattern circles */}
@@ -88,7 +111,7 @@ function NGODashboard() {
       <motion.img
         src="/mascots/video_mascots/mascot_joyDance_video.gif"
         alt="joy dance mascot"
-        className="absolute top-20 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-8 pointer-events-none z-[5]"
+        className="absolute top-20 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-8 pointer-events-none z-[5] hidden md:block"
         animate={{
           y: [0, -15, 0],
           rotate: [0, 5, -5, 0],
@@ -103,7 +126,7 @@ function NGODashboard() {
       <motion.img
         src="/mascots/video_mascots/mascot_holdingmoney_video.gif"
         alt="holding money mascot"
-        className="absolute top-24 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-8 pointer-events-none z-[5]"
+        className="absolute top-24 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-8 pointer-events-none z-[5] hidden md:block"
         animate={{
           y: [0, 12, 0],
           rotate: [0, -5, 5, 0],
@@ -329,7 +352,9 @@ function NGODashboard() {
             <Donationeventbutton />
           </div>
     
-      <Ngoeventtable />
+      <div ref={ngoEventTableRef}>
+        <Ngoeventtable />
+      </div>
           
           {/* Inspirational Quote Section */}
           <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-8">

@@ -9,7 +9,7 @@ import {
   Calendar,
   MapPin,
   Users,
-  DollarSign,
+  IndianRupee,
   CheckCircle,
   UserPlus,
   Video,
@@ -18,6 +18,8 @@ import {
   RefreshCcw,
   XCircle,
   Share2,
+  AlertCircle,
+  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import { Header } from "@/components/header";
@@ -26,6 +28,8 @@ import { ParticipationRequestBanner } from "@/components/ParticipationRequestBan
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { toast } from "@/hooks/use-toast";
 import Pagination from "@/components/Pagination";
+import StatusBanner from "@/components/StatusBanner";
+import api from "@/lib/api";
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
@@ -70,7 +74,7 @@ const AvailableEventsContent: React.FC = () => {
   const [participated, setParticipated] = useState<{ [key: string]: boolean }>(
     {}
   );
-  const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community'>('virtual');
+  const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community' | 'special'>('virtual');
   const [isRefreshing, setIsRefreshing] = useState(false);
   // TEMPORARY FIX: Always show all events regardless of user's city
   const [showAllEvents, setShowAllEvents] = useState(true); // Changed from: !user
@@ -85,6 +89,73 @@ const AvailableEventsContent: React.FC = () => {
   
   // Refs for scrolling to specific events
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // NGO Status Banner states
+  const [myVolunteerEvents, setMyVolunteerEvents] = useState<any[]>([]);
+  const [loadingMyEvents, setLoadingMyEvents] = useState(false);
+  const [dismissedBanners, setDismissedBanners] = useState<{
+    rejectedBanner: boolean;
+    approvedBanner: boolean;
+  }>({
+    rejectedBanner: false,
+    approvedBanner: false,
+  });
+
+  // Load dismissed banners from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('dismissedVolunteerBrowseBanners');
+    if (stored) {
+      try {
+        setDismissedBanners(JSON.parse(stored));
+      } catch (e) {
+        console.error('Error parsing dismissed banners:', e);
+      }
+    }
+  }, []);
+
+  // Function to dismiss a banner
+  const dismissBanner = (bannerType: 'rejectedBanner' | 'approvedBanner') => {
+    const newDismissedState = {
+      ...dismissedBanners,
+      [bannerType]: true,
+    };
+    setDismissedBanners(newDismissedState);
+    localStorage.setItem('dismissedVolunteerBrowseBanners', JSON.stringify(newDismissedState));
+  };
+
+  // Navigate to home page Ngoeventtable section
+  const navigateToNgoTable = () => {
+    router.push('/?scrollTo=ngoeventtable');
+  };
+
+  // Fetch NGO's own volunteer events
+  const fetchMyVolunteerEvents = async () => {
+    if (!user || user.role !== 'ngo') return;
+    
+    setLoadingMyEvents(true);
+    try {
+      const token = localStorage.getItem("auth-token");
+      if (!token) return;
+
+      const res = await api.get<{ success: boolean; events: any[] }>(
+        `/v1/event/organization`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMyVolunteerEvents(res.data.events || []);
+    } catch (err) {
+      console.error("Failed to fetch NGO's volunteer events", err);
+    } finally {
+      setLoadingMyEvents(false);
+    }
+  };
+
+  // Fetch NGO's events when user is authenticated
+  useEffect(() => {
+    if (user?.role === 'ngo') {
+      fetchMyVolunteerEvents();
+    }
+  }, [user]);
 
   // Update showAllEvents when user authentication status changes
   useEffect(() => {
@@ -229,6 +300,38 @@ const AvailableEventsContent: React.FC = () => {
     }
   }, [searchQuery, events, activeTab, filterType]);
 
+  // Calculate NGO's event stats for banners
+  const myEventStats = useMemo(() => {
+    const pending = myVolunteerEvents.filter(e => e.status === "pending");
+    const rejected = myVolunteerEvents.filter(e => e.status === "rejected");
+    const approved = myVolunteerEvents.filter(e => e.status === "approved");
+    
+    // Count approved events by their display status
+    const openCount = approved.filter(e => {
+      const participantCount = e.participants?.length || 0;
+      return participantCount < e.maxParticipants && new Date(e.date) >= new Date();
+    }).length;
+    
+    const ongoingCount = approved.filter(e => {
+      const participantCount = e.participants?.length || 0;
+      return participantCount < e.maxParticipants && new Date(e.date) < new Date();
+    }).length;
+    
+    const fullCount = approved.filter(e => {
+      const participantCount = e.participants?.length || 0;
+      return participantCount >= e.maxParticipants;
+    }).length;
+    
+    return {
+      pending,
+      rejected,
+      approved,
+      openCount,
+      ongoingCount,
+      fullCount
+    };
+  }, [myVolunteerEvents]);
+
   // Count events by type
   const eventCounts = useMemo(() => {
     const currentUserId = user?._id || "";
@@ -244,6 +347,7 @@ const AvailableEventsContent: React.FC = () => {
       virtual: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'virtual').length,
       'in-person': events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'in-person').length,
       community: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'community').length,
+      special: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'special').length,
       joined: joinedCount,
       completed: 0, // TODO: Implement when completed events tracking is available
       youth: 6, // Static for now
@@ -422,14 +526,14 @@ const AvailableEventsContent: React.FC = () => {
       `}</style>
       
       {/* Video Mascots with Proper Spacing - Full opacity, no overlay */}
-      <div className="fixed top-24 left-8 z-0 pointer-events-none">
+      <div className="fixed top-24 left-8 z-0 pointer-events-none hidden md:block">
         <img 
           src="/mascots/video_mascots/mascot_joyDance_video.gif"
           alt="" 
           className="w-32 h-32"
         />
       </div>
-      <div className="fixed bottom-16 right-8 z-0 pointer-events-none">
+      <div className="fixed bottom-16 right-8 z-0 pointer-events-none hidden md:block">
         <img 
           src="/mascots/video_mascots/mascot_watering_video.gif"
           alt="" 
@@ -456,6 +560,86 @@ const AvailableEventsContent: React.FC = () => {
 
         {/* Participation Request Banner */}
         <ParticipationRequestBanner />
+
+        {/* NGO Status Banners */}
+        {user?.role === 'ngo' && !loadingMyEvents && (
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            {myEventStats.pending.length > 0 && (
+              <StatusBanner
+                type="pending"
+                icon={AlertCircle}
+                count={myEventStats.pending.length}
+                title={`${myEventStats.pending.length} Volunteer Event${myEventStats.pending.length > 1 ? 's' : ''} Awaiting Approval`}
+                message={
+                  <>
+                    You have {myEventStats.pending.length} volunteer event{myEventStats.pending.length > 1 ? 's' : ''} pending admin approval. 
+                    {myEventStats.pending.length > 1 ? ' They' : ' It'} will appear here once approved.
+                    <span className="font-semibold ml-1 underline">Click for more details.</span>
+                  </>
+                }
+                onClick={navigateToNgoTable}
+              />
+            )}
+
+            {myEventStats.rejected.length > 0 && (
+              <StatusBanner
+                type="rejected"
+                icon={XCircle}
+                count={myEventStats.rejected.length}
+                title={`${myEventStats.rejected.length} Volunteer Event${myEventStats.rejected.length > 1 ? 's' : ''} Rejected`}
+                message={
+                  <div className="space-y-2">
+                    {myEventStats.rejected.map((event: any, index: number) => (
+                      <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
+                        <p className="font-medium leading-relaxed">
+                          "{event.title}" was rejected by admin
+                          {event.rejectionReason && (
+                            <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                    <p className="font-semibold mt-3 underline">Review your rejected events.</p>
+                  </div>
+                }
+                onClick={navigateToNgoTable}
+                onDismiss={() => dismissBanner('rejectedBanner')}
+                isDismissed={dismissedBanners.rejectedBanner}
+              />
+            )}
+
+            {myEventStats.approved.length > 0 && (
+              <StatusBanner
+                type="approved-volunteer"
+                icon={CheckCircle}
+                count={myEventStats.approved.length}
+                title={`${myEventStats.approved.length} Volunteer Event${myEventStats.approved.length > 1 ? 's' : ''} Active`}
+                message={
+                  <>
+                    Your volunteer events status: 
+                    {myEventStats.openCount > 0 && (
+                      <span className="font-semibold ml-1">{myEventStats.openCount} Open</span>
+                    )}
+                    {myEventStats.ongoingCount > 0 && (
+                      <span className="font-semibold ml-1">
+                        {myEventStats.openCount > 0 && ', '}{myEventStats.ongoingCount} Ongoing
+                      </span>
+                    )}
+                    {myEventStats.fullCount > 0 && (
+                      <span className="font-semibold ml-1">
+                        {(myEventStats.openCount > 0 || myEventStats.ongoingCount > 0) && ', '}{myEventStats.fullCount} Full
+                      </span>
+                    )}
+                    <span className="font-semibold ml-1 underline">. Click to view.</span>
+                  </>
+                }
+                onClick={navigateToNgoTable}
+                onDismiss={() => dismissBanner('approvedBanner')}
+                isDismissed={dismissedBanners.approvedBanner}
+              />
+            )}
+          </div>
+        )}
 
           {/* Old Stats Section - Removed to avoid duplication */}
           <div className="hidden">
@@ -605,14 +789,17 @@ const AvailableEventsContent: React.FC = () => {
 
             {/* Special Events */}
             <button
-              onClick={() => setShowSpecialEvents(!showSpecialEvents)}
+              onClick={() => {
+                setActiveTab('special');
+                setFilterType('all');
+              }}
               className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
-                showSpecialEvents
+                activeTab === 'special' && filterType === 'all'
                   ? 'bg-white text-amber-600 border-amber-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              ✨ Special Events
+              ✨ Special ({eventCounts.special})
             </button>
           </div>
 
@@ -898,7 +1085,7 @@ const AvailableEventsContent: React.FC = () => {
                     {/* Points Awarded */}
                     {event.pointsOffered && (
                       <div className="flex items-center text-gray-600 mt-2">
-                        <DollarSign className="h-4 w-4 mr-3 text-yellow-600" />
+                        <IndianRupee className="h-4 w-4 mr-3 text-yellow-600" />
                         <span className="text-sm">
                           Points: {event.pointsOffered}
                         </span>

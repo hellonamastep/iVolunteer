@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, AlertCircle, XCircle, Edit2, Trash2, X as CloseIcon } from "lucide-react";
+import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, AlertCircle, XCircle, Edit2, Trash2, X as CloseIcon, Heart } from "lucide-react";
 import api from "@/lib/api"; // your axios instance
 import { toast } from "react-toastify";
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
+import StatusBanner from "@/components/StatusBanner";
 
 interface EventItem {
   _id: string;
@@ -30,6 +31,9 @@ interface EventItem {
   detailedAddress?: string;
   eventType?: string;
   rejectionReason?: string;
+  isDonationEvent?: boolean; // New field to distinguish donation events
+  goalAmount?: number; // For donation events
+  collectedAmount?: number; // For donation events
 }
 
 const Ngoeventtable = () => {
@@ -45,6 +49,39 @@ const Ngoeventtable = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedEvent, setEditedEvent] = useState<EventItem | null>(null);
   const tableRef = useRef<HTMLElement>(null);
+
+  // State for dismissed banners
+  const [dismissedBanners, setDismissedBanners] = useState<{
+    rejectedBanner: boolean;
+    volunteerStatusBanner: boolean;
+    donationStatusBanner: boolean;
+  }>({
+    rejectedBanner: false,
+    volunteerStatusBanner: false,
+    donationStatusBanner: false,
+  });
+
+  // Load dismissed banners from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('dismissedEventBanners');
+    if (stored) {
+      try {
+        setDismissedBanners(JSON.parse(stored));
+      } catch (e) {
+        console.error('Error parsing dismissed banners:', e);
+      }
+    }
+  }, []);
+
+  // Function to dismiss a banner
+  const dismissBanner = (bannerType: 'rejectedBanner' | 'volunteerStatusBanner' | 'donationStatusBanner') => {
+    const newDismissedState = {
+      ...dismissedBanners,
+      [bannerType]: true,
+    };
+    setDismissedBanners(newDismissedState);
+    localStorage.setItem('dismissedEventBanners', JSON.stringify(newDismissedState));
+  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,21 +99,36 @@ const Ngoeventtable = () => {
 
       // Add cache-busting parameter to prevent 304 responses
       const timestamp = new Date().getTime();
-      const res = await api.get<{ success: boolean; events: any[] }>(
-        `/v1/event/organization?_t=${timestamp}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        }
-      );
+      
+      // Fetch both volunteer events and donation events
+      const [volunteerRes, donationRes] = await Promise.all([
+        api.get<{ success: boolean; events: any[] }>(
+          `/v1/event/organization?_t=${timestamp}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          }
+        ),
+        api.get<{ success: boolean; events: any[] }>(
+          `/v1/donation-event/organization/events?_t=${timestamp}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          }
+        ).catch((err) => {
+          console.log("Donation events fetch error:", err);
+          return { data: { events: [] } };
+        }) // Gracefully handle if endpoint doesn't exist
+      ]);
 
-      console.log("Fetched events:", res.data); // Debug log
-
-      // Map backend fields to frontend display fields
-      const mappedEvents = res.data.events.map((e) => {
+      // Map volunteer events
+      const mappedVolunteerEvents = volunteerRes.data.events.map((e) => {
         const participantCount = e.participants?.length || 0;
         const progress = e.maxParticipants ? Math.round((participantCount / e.maxParticipants) * 100) : 0;
         
@@ -120,10 +172,55 @@ const Ngoeventtable = () => {
           sponsorshipAmount: e.sponsorshipAmount,
           detailedAddress: e.detailedAddress,
           eventType: e.eventType,
-          rejectionReason: e.rejectionReason
+          rejectionReason: e.rejectionReason,
+          isDonationEvent: false
         };
       });
-      setEvents(mappedEvents);
+
+      // Map donation events
+      const mappedDonationEvents = donationRes.data.events?.map((e: any) => {
+        const collectedAmount = e.collectedAmount || 0;
+        const goalAmount = e.goalAmount || 0;
+        const progress = goalAmount ? Math.round((collectedAmount / goalAmount) * 100) : 0;
+        
+        // Use approvalStatus for donation events (not status)
+        const approvalStatus = e.approvalStatus || "pending";
+        
+        // Determine display status for donation events
+        let displayStatus: "Open" | "Ongoing" | "Full" = "Open";
+        if (approvalStatus === "approved") {
+          if (collectedAmount >= goalAmount) {
+            displayStatus = "Full"; // Goal achieved
+          } else if (new Date(e.endDate) < new Date()) {
+            displayStatus = "Ongoing"; // Past end date but not fully funded
+          } else {
+            displayStatus = "Open";
+          }
+        }
+        
+        return {
+          _id: e._id,
+          title: e.title,
+          date: e.startDate, // Use start date for donation events
+          location: e.location || "N/A",
+          filled: collectedAmount,
+          maxParticipants: goalAmount,
+          status: approvalStatus, // Use approvalStatus for donation events
+          displayStatus: displayStatus,
+          progress: progress,
+          eventStatus: approvalStatus, // Use approvalStatus
+          description: e.description || e.shortDescription,
+          category: e.category,
+          rejectionReason: e.rejectionReason,
+          isDonationEvent: true,
+          goalAmount: goalAmount,
+          collectedAmount: collectedAmount
+        };
+      }) || [];
+
+      // Combine both event types
+      const allEvents = [...mappedVolunteerEvents, ...mappedDonationEvents];
+      setEvents(allEvents);
     } catch (err) {
       console.error("Failed to fetch events", err);
     } finally {
@@ -177,8 +274,24 @@ const Ngoeventtable = () => {
     setCurrentPage(1);
   }, [filter, searchQuery, sortConfig]);
 
+  // const scrollToTable = () => {
+  //   if (tableRef.current) {
+  //     const tableTop = tableRef.current.getBoundingClientRect().top + window.pageYOffset;
+  //     const screenHeight = window.innerHeight;
+  //     const scrollOffset = screenHeight * 0.3; // 30% of screen height
+      
+  //     // Scroll to position that keeps table 30% from top of screen
+  //     window.scrollTo({ 
+  //       top: tableTop - scrollOffset, 
+  //       behavior: "smooth" 
+  //     });
+  //   }
+  // };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Scroll to table when page changes
+    // scrollToTable();
   };
 
   const requestSort = (key: keyof EventItem) => {
@@ -285,24 +398,46 @@ const Ngoeventtable = () => {
     }
   };
 
-  const scrollToTable = () => {
-    if (tableRef.current) {
-      tableRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   if (loading) return <div className="p-8 text-center text-gray-500">Loading events...</div>;
 
   const pendingCount = events.filter(e => e.status === "pending").length;
   const rejectedEvents = events.filter(e => e.status === "rejected");
+  const pendingVolunteerEvents = events.filter(e => e.status === "pending" && !e.isDonationEvent).length;
+  const pendingDonationEvents = events.filter(e => e.status === "pending" && e.isDonationEvent).length;
 
-  const handleBannerClick = () => {
-    setFilter("pending");
-    scrollToTable();
-  };
+  // Approved events stats
+  const approvedVolunteerEvents = events.filter(e => e.status === "approved" && !e.isDonationEvent);
+  const approvedDonationEvents = events.filter(e => e.status === "approved" && e.isDonationEvent);
+  
+  const volunteerOpenCount = approvedVolunteerEvents.filter(e => e.displayStatus === "Open").length;
+  const volunteerOngoingCount = approvedVolunteerEvents.filter(e => e.displayStatus === "Ongoing").length;
+  const volunteerFullCount = approvedVolunteerEvents.filter(e => e.displayStatus === "Full").length;
 
-  const handleRejectedBannerClick = () => {
-    setFilter("rejected");
+  const donationOpenCount = approvedDonationEvents.filter(e => e.displayStatus === "Open").length;
+  const donationOngoingCount = approvedDonationEvents.filter(e => e.displayStatus === "Ongoing").length;
+  const donationFullCount = approvedDonationEvents.filter(e => e.displayStatus === "Full").length;
+
+  // Scroll to table function
+  const scrollToTable = () => {
+  if (tableRef.current) {
+    const tableTop = tableRef.current.getBoundingClientRect().top + window.pageYOffset;
+    const tableHeight = tableRef.current.offsetHeight;
+    const screenHeight = window.innerHeight;
+    const scrollOffset = screenHeight * 0.2; // 20% above bottom
+
+    // Scroll so that the table bottom sits 20% above the bottom of the screen
+    const scrollPosition = tableTop + tableHeight - (screenHeight - scrollOffset);
+
+    window.scrollTo({
+      top: scrollPosition,
+      behavior: "smooth"
+    });
+  }
+};
+
+
+  const handleBannerClick = (filterType: string) => {
+    setFilter(filterType);
     scrollToTable();
   };
 
@@ -310,58 +445,125 @@ const Ngoeventtable = () => {
     <section ref={tableRef} className="px-4 py-6 md:px-8 md:py-10 max-w-[1200px] mx-auto">
       {/* Pending Events Alert */}
       {pendingCount > 0 && (
-        <div 
-          onClick={handleBannerClick}
-          className="mb-6 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200/60 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
-        >
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-yellow-100 rounded-xl">
-              <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-yellow-900 mb-2 text-lg">
-                {pendingCount} Event{pendingCount > 1 ? 's' : ''} Awaiting Approval
-              </h4>
-              <p className="text-sm text-yellow-800 leading-relaxed">
-                You have {pendingCount} event{pendingCount > 1 ? 's' : ''} pending admin approval. 
-                {pendingCount > 1 ? ' They' : ' It'} will be visible to volunteers once approved.
-                <span className="font-semibold ml-1 underline">Click to view details.</span>
-              </p>
-            </div>
-          </div>
-        </div>
+        <StatusBanner
+          type="pending"
+          icon={AlertCircle}
+          count={pendingCount}
+          title={`${pendingCount} Event${pendingCount > 1 ? 's' : ''} Awaiting Approval`}
+          message={
+            <>
+              You have {pendingCount} event{pendingCount > 1 ? 's' : ''} pending admin approval
+              {pendingVolunteerEvents > 0 && pendingDonationEvents > 0 && (
+                <span> ({pendingVolunteerEvents} volunteer event{pendingVolunteerEvents > 1 ? 's' : ''}, {pendingDonationEvents} donation event{pendingDonationEvents > 1 ? 's' : ''})</span>
+              )}
+              {pendingVolunteerEvents > 0 && pendingDonationEvents === 0 && (
+                <span> (volunteer event{pendingVolunteerEvents > 1 ? 's' : ''})</span>
+              )}
+              {pendingVolunteerEvents === 0 && pendingDonationEvents > 0 && (
+                <span> (donation event{pendingDonationEvents > 1 ? 's' : ''})</span>
+              )}
+              . {pendingCount > 1 ? ' They' : ' It'} will be visible once approved.
+              <span className="font-semibold ml-1 underline">Click to view details.</span>
+            </>
+          }
+          onClick={() => handleBannerClick("pending")}
+        />
       )}
 
       {/* Rejected Events Alert */}
       {rejectedEvents.length > 0 && (
-        <div 
-          onClick={handleRejectedBannerClick}
-          className="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200/60 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
-        >
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-red-100 rounded-xl">
-              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+        <StatusBanner
+          type="rejected"
+          icon={XCircle}
+          count={rejectedEvents.length}
+          title={`${rejectedEvents.length} Event${rejectedEvents.length > 1 ? 's' : ''} Rejected`}
+          message={
+            <div className="space-y-2">
+              {rejectedEvents.map((event, index) => (
+                <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
+                  <p className="font-medium leading-relaxed">
+                    "{event.title}" was rejected by admin
+                    {event.rejectionReason && (
+                      <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
+                    )}
+                  </p>
+                </div>
+              ))}
+              <p className="font-semibold mt-3 underline">Click to view and manage rejected events.</p>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-red-900 mb-2 text-lg">
-                {rejectedEvents.length} Event{rejectedEvents.length > 1 ? 's' : ''} Rejected
-              </h4>
-              <div className="text-sm text-red-800 space-y-2">
-                {rejectedEvents.map((event, index) => (
-                  <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
-                    <p className="font-medium leading-relaxed">
-                      "{event.title}" was rejected by admin
-                      {event.rejectionReason && (
-                        <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
-                      )}
-                    </p>
-                  </div>
-                ))}
-                <p className="font-semibold mt-3 underline">Click to view and manage rejected events.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          }
+          onClick={() => handleBannerClick("rejected")}
+          onDismiss={() => dismissBanner('rejectedBanner')}
+          isDismissed={dismissedBanners.rejectedBanner}
+        />
+      )}
+
+      {/* Volunteer Events Status Banner */}
+      {approvedVolunteerEvents.length > 0 && (
+        <StatusBanner
+          type="approved-volunteer"
+          icon={CheckCircle}
+          count={approvedVolunteerEvents.length}
+          title={`${approvedVolunteerEvents.length} Volunteer Event${approvedVolunteerEvents.length > 1 ? 's' : ''} Active`}
+          message={
+            <>
+              Your volunteer events status: 
+              {volunteerOpenCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {volunteerOpenCount} Open
+                </span>
+              )}
+              {volunteerOngoingCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {volunteerOpenCount > 0 && ', '}{volunteerOngoingCount} Ongoing
+                </span>
+              )}
+              {volunteerFullCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {(volunteerOpenCount > 0 || volunteerOngoingCount > 0) && ', '}{volunteerFullCount} Full
+                </span>
+              )}
+              <span className="font-semibold ml-1 underline">. Click to view details.</span>
+            </>
+          }
+          onClick={() => handleBannerClick("approved")}
+          onDismiss={() => dismissBanner('volunteerStatusBanner')}
+          isDismissed={dismissedBanners.volunteerStatusBanner}
+        />
+      )}
+
+      {/* Donation Events Status Banner */}
+      {approvedDonationEvents.length > 0 && (
+        <StatusBanner
+          type="approved-donation"
+          icon={Heart}
+          count={approvedDonationEvents.length}
+          title={`${approvedDonationEvents.length} Donation Campaign${approvedDonationEvents.length > 1 ? 's' : ''} Active`}
+          message={
+            <>
+              Your donation campaigns status: 
+              {donationOpenCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {donationOpenCount} Open
+                </span>
+              )}
+              {donationOngoingCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {donationOpenCount > 0 && ', '}{donationOngoingCount} Ongoing
+                </span>
+              )}
+              {donationFullCount > 0 && (
+                <span className="font-semibold ml-1">
+                  {(donationOpenCount > 0 || donationOngoingCount > 0) && ', '}{donationFullCount} Goal Achieved
+                </span>
+              )}
+              <span className="font-semibold ml-1 underline">. Click to view details.</span>
+            </>
+          }
+          onClick={() => handleBannerClick("approved")}
+          onDismiss={() => dismissBanner('donationStatusBanner')}
+          isDismissed={dismissedBanners.donationStatusBanner}
+        />
       )}
       
       {/* Header */}
@@ -408,22 +610,22 @@ const Ngoeventtable = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table - Responsive with horizontal scroll on mobile */}
       <div className="overflow-x-auto rounded-2xl border border-teal-100 shadow-lg bg-white/80 backdrop-blur-sm">
-        <table className="w-full">
+        <table className="w-full min-w-[640px]">
           <thead>
-            <tr className="bg-gradient-to-r from-teal-50 to-cyan-50 text-left text-sm text-gray-700 border-b-2 border-teal-200">
+            <tr className="bg-gradient-to-r from-teal-50 to-cyan-50 text-left text-xs md:text-sm text-gray-700 border-b-2 border-teal-200">
               {["title", "date", "location", "volunteers", "status", "action"].map((col) => (
                 <th
                   key={col}
-                  className="p-4 font-bold cursor-pointer hover:bg-teal-100/50 transition-all uppercase tracking-wide"
+                  className="p-2 md:p-4 font-bold cursor-pointer hover:bg-teal-100/50 transition-all uppercase tracking-wide whitespace-nowrap"
                   onClick={() => col !== "volunteers" && col !== "action" && requestSort(col as keyof EventItem)}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 md:gap-2">
                     {col.charAt(0).toUpperCase() + col.slice(1)}
                     {col !== "volunteers" && col !== "action" && (
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-200 ${
+                        className={`w-3 h-3 md:w-4 md:h-4 transition-transform duration-200 ${
                           sortConfig.key === col && sortConfig.direction === "descending" ? "rotate-180" : ""
                         }`}
                       />
@@ -444,17 +646,30 @@ const Ngoeventtable = () => {
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className="border-t border-teal-50 bg-white hover:bg-gradient-to-r hover:from-teal-50/30 hover:to-cyan-50/30 transition-all duration-200"
                 >
-                  <td className="p-4 font-semibold text-gray-900">{event.title}</td>
-                  <td className="p-4 text-gray-600 font-medium">{new Date(event.date).toLocaleDateString()}</td>
-                  <td className="p-4 text-gray-600">{event.location}</td>
-                  <td className="p-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="text-gray-800 font-bold text-sm">
-                        {event.filled}/{event.maxParticipants}
+                  <td className="p-2 md:p-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-semibold text-gray-900 text-xs md:text-base">{event.title}</span>
+                      {event.isDonationEvent && (
+                        <span className="inline-flex items-center px-1.5 md:px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-medium bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white w-fit">
+                          💝 Donation
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-2 md:p-4 text-gray-600 font-medium text-xs md:text-base whitespace-nowrap">{new Date(event.date).toLocaleDateString()}</td>
+                  <td className="p-2 md:p-4 text-gray-600 text-xs md:text-base">{event.location}</td>
+                  <td className="p-2 md:p-4">
+                    <div className="flex flex-col gap-1 md:gap-2 min-w-[100px]">
+                      <div className="text-gray-800 font-bold text-xs md:text-sm">
+                        {event.isDonationEvent ? (
+                          <>₹{event.filled?.toLocaleString()}/₹{event.maxParticipants?.toLocaleString()}</>
+                        ) : (
+                          <>{event.filled}/{event.maxParticipants}</>
+                        )}
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 md:h-2 shadow-inner">
                         <div
-                          className={`h-2 rounded-full transition-all duration-500 ${
+                          className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${
                             event.progress === 100
                               ? "bg-gradient-to-r from-green-400 to-green-500"
                               : event.progress >= 70
@@ -466,33 +681,33 @@ const Ngoeventtable = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="p-2 md:p-4">
                     {event.status === "pending" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 text-xs font-bold shadow-sm">
-                        <AlertCircle className="w-3.5 h-3.5" /> Pending
+                      <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 text-[10px] md:text-xs font-bold shadow-sm whitespace-nowrap">
+                        <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Pending
                       </span>
                     ) : event.status === "rejected" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-100 to-rose-100 text-red-700 text-xs font-bold shadow-sm">
-                        <XCircle className="w-3.5 h-3.5" /> Rejected
+                      <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-red-100 to-rose-100 text-red-700 text-[10px] md:text-xs font-bold shadow-sm whitespace-nowrap">
+                        <XCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Rejected
                       </span>
                     ) : event.displayStatus === "Full" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-xs font-bold shadow-sm">
-                        <CheckCircle className="w-3.5 h-3.5" /> Full
+                      <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-[10px] md:text-xs font-bold shadow-sm whitespace-nowrap">
+                        <CheckCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Full
                       </span>
                     ) : event.displayStatus === "Ongoing" ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-bold shadow-sm">
-                        <Clock className="w-3.5 h-3.5" /> Ongoing
+                      <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-[10px] md:text-xs font-bold shadow-sm whitespace-nowrap">
+                        <Clock className="w-3 h-3 md:w-3.5 md:h-3.5" /> Ongoing
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 text-xs font-bold shadow-sm">
-                        <Users className="w-3.5 h-3.5" /> Open
+                      <span className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 text-[10px] md:text-xs font-bold shadow-sm whitespace-nowrap">
+                        <Users className="w-3 h-3 md:w-3.5 md:h-3.5" /> Open
                       </span>
                     )}
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-2 md:p-4 text-right">
                     <button 
                       onClick={() => handleManageClick(event)}
-                      className="px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 bg-gradient-to-r from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 shadow-md hover:shadow-lg hover:scale-105"
+                      className="px-3 md:px-5 py-1.5 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold transition-all duration-300 bg-gradient-to-r from-teal-400 to-cyan-500 text-white hover:from-teal-500 hover:to-cyan-600 shadow-md hover:shadow-lg hover:scale-105 whitespace-nowrap"
                     >
                       Manage
                     </button>
@@ -504,11 +719,11 @@ const Ngoeventtable = () => {
         </table>
 
         {filteredEvents.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="inline-block p-4 bg-gray-100 rounded-full mb-3">
-              <Calendar className="w-8 h-8 text-gray-400" />
+          <div className="p-8 md:p-12 text-center">
+            <div className="inline-block p-3 md:p-4 bg-gray-100 rounded-full mb-2 md:mb-3">
+              <Calendar className="w-6 h-6 md:w-8 md:h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500 text-lg font-medium">No events found matching your criteria</p>
+            <p className="text-gray-500 text-sm md:text-lg font-medium">No events found matching your criteria</p>
           </div>
         )}
       </div>
@@ -529,20 +744,20 @@ const Ngoeventtable = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-800">Event Details</h2>
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center z-10">
+              <div className="flex items-center gap-2 md:gap-3">
+                <h2 className="text-lg md:text-2xl font-bold text-gray-800">Event Details</h2>
                 {selectedEvent.status === "pending" ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                    <AlertCircle className="w-3.5 h-3.5" /> Pending
+                  <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full bg-yellow-100 text-yellow-700 text-[10px] md:text-xs font-semibold">
+                    <AlertCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Pending
                   </span>
                 ) : selectedEvent.status === "rejected" ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                    <XCircle className="w-3.5 h-3.5" /> Rejected
+                  <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full bg-red-100 text-red-700 text-[10px] md:text-xs font-semibold">
+                    <XCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Rejected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                    <CheckCircle className="w-3.5 h-3.5" /> Approved
+                  <span className="inline-flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-full bg-green-100 text-green-700 text-[10px] md:text-xs font-semibold">
+                    <CheckCircle className="w-3 h-3 md:w-3.5 md:h-3.5" /> Approved
                   </span>
                 )}
               </div>
@@ -551,21 +766,21 @@ const Ngoeventtable = () => {
                   setSelectedEvent(null);
                   setIsEditMode(false);
                 }}
-                className="text-gray-400 hover:text-gray-600 transition"
+                className="text-gray-400 hover:text-gray-600 transition p-1"
               >
-                <CloseIcon className="w-6 h-6" />
+                <CloseIcon className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="px-6 py-6">
+            <div className="px-4 md:px-6 py-4 md:py-6">
               {selectedEvent.status === "pending" && !isEditMode && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <h4 className="font-semibold text-yellow-900 mb-1">Pending Admin Approval</h4>
-                      <p className="text-sm text-yellow-800">
+                      <h4 className="font-semibold text-yellow-900 mb-1 text-sm md:text-base">Pending Admin Approval</h4>
+                      <p className="text-xs md:text-sm text-yellow-800">
                         This event is awaiting admin review. You can edit or withdraw your request.
                       </p>
                     </div>
@@ -574,22 +789,18 @@ const Ngoeventtable = () => {
               )}
 
               {selectedEvent.status === "rejected" && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
                   <div className="flex items-start gap-2">
-                    <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                    <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-red-900 mb-1">Event Rejected</h4>
-                      <p className="text-sm text-red-800 mb-2">
+                      <h4 className="font-semibold text-red-900 mb-1 text-sm md:text-base">Event Rejected</h4>
+                      <p className="text-xs md:text-sm text-red-800 mb-2">
                         This event was rejected by the admin.
                       </p>
-                      {/* Debug info */}
-                      <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
-                        <strong>Debug:</strong> rejectionReason = {JSON.stringify(selectedEvent.rejectionReason)}
-                      </div>
                       {selectedEvent.rejectionReason && selectedEvent.rejectionReason.trim() !== "" ? (
-                        <div className="mt-2 p-3 bg-red-100 rounded-md">
-                          <p className="text-sm font-semibold text-red-900 mb-1">Rejection Reason:</p>
-                          <p className="text-sm text-red-800">{selectedEvent.rejectionReason}</p>
+                        <div className="mt-2 p-2 md:p-3 bg-red-100 rounded-md">
+                          <p className="text-xs md:text-sm font-semibold text-red-900 mb-1">Rejection Reason:</p>
+                          <p className="text-xs md:text-sm text-red-800">{selectedEvent.rejectionReason}</p>
                         </div>
                       ) : (
                         <div className="mt-2 p-2 bg-gray-100 rounded-md">
@@ -601,45 +812,45 @@ const Ngoeventtable = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Title */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Event Title</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Event Title</label>
                   {isEditMode ? (
                     <input
                       type="text"
                       value={editedEvent?.title || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-900 text-lg">{selectedEvent.title}</p>
+                    <p className="text-gray-900 text-sm md:text-lg">{selectedEvent.title}</p>
                   )}
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Description</label>
                   {isEditMode ? (
                     <textarea
                       value={editedEvent?.description || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, description: e.target.value })}
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.description || "No description provided"}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.description || "No description provided"}</p>
                   )}
                 </div>
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Category</label>
                   {isEditMode ? (
                     <select
                       value={editedEvent?.category || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     >
                       <option value="environmental">Environmental</option>
                       <option value="education">Education</option>
@@ -649,91 +860,91 @@ const Ngoeventtable = () => {
                       <option value="other">Other</option>
                     </select>
                   ) : (
-                    <p className="text-gray-700 capitalize">{selectedEvent.category || "N/A"}</p>
+                    <p className="text-gray-700 capitalize text-sm md:text-base">{selectedEvent.category || "N/A"}</p>
                   )}
                 </div>
 
                 {/* Event Type */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Event Type</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Event Type</label>
                   {isEditMode ? (
                     <select
                       value={editedEvent?.eventType || "community"}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, eventType: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     >
                       <option value="community">Community Event</option>
                       <option value="virtual">Virtual Event</option>
                       <option value="in-person">In-Person Event</option>
                     </select>
                   ) : (
-                    <p className="text-gray-700 capitalize">{selectedEvent.eventType?.replace('-', ' ') || "N/A"}</p>
+                    <p className="text-gray-700 capitalize text-sm md:text-base">{selectedEvent.eventType?.replace('-', ' ') || "N/A"}</p>
                   )}
                 </div>
 
                 {/* Location */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Location</label>
                   {isEditMode ? (
                     <input
                       type="text"
                       value={editedEvent?.location || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, location: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.location}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.location}</p>
                   )}
                 </div>
 
-                {/* Detailed Address */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Detailed Address</label>
+                {/* Detailed Address - Hidden on mobile when not in edit mode */}
+                <div className={!isEditMode ? "hidden md:block" : ""}>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Detailed Address</label>
                   {isEditMode ? (
                     <input
                       type="text"
                       value={editedEvent?.detailedAddress || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, detailedAddress: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.detailedAddress || "N/A"}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.detailedAddress || "N/A"}</p>
                   )}
                 </div>
 
                 {/* Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Date</label>
                   {isEditMode ? (
                     <input
                       type="date"
                       value={editedEvent?.date ? new Date(editedEvent.date).toISOString().split('T')[0] : ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, date: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{new Date(selectedEvent.date).toLocaleDateString()}</p>
                   )}
                 </div>
 
                 {/* Time */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Time</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Time</label>
                   {isEditMode ? (
                     <input
                       type="time"
                       value={editedEvent?.time || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, time: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.time || "N/A"}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.time || "N/A"}</p>
                   )}
                 </div>
 
-                {/* Duration */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Duration (hours)</label>
+                {/* Duration - Hidden on mobile when not in edit mode */}
+                <div className={!isEditMode ? "hidden md:block" : ""}>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Duration (hours)</label>
                   {isEditMode ? (
                     <input
                       type="number"
@@ -741,106 +952,106 @@ const Ngoeventtable = () => {
                       onChange={(e) => setEditedEvent({ ...editedEvent!, duration: Number(e.target.value) })}
                       min="1"
                       max="12"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.duration || "N/A"} hours</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.duration || "N/A"} hours</p>
                   )}
                 </div>
 
                 {/* Max Participants */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Max Participants</label>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Max Participants</label>
                   {isEditMode ? (
                     <input
                       type="number"
                       value={editedEvent?.maxParticipants || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, maxParticipants: Number(e.target.value) })}
                       min="1"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.maxParticipants}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.maxParticipants}</p>
                   )}
                 </div>
 
                 {/* Current Participants */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Current Participants</label>
-                  <p className="text-gray-700">{selectedEvent.filled} / {selectedEvent.maxParticipants}</p>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Current Participants</label>
+                  <p className="text-gray-700 text-sm md:text-base">{selectedEvent.filled} / {selectedEvent.maxParticipants}</p>
                 </div>
 
-                {/* Points Offered */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Points Offered</label>
+                {/* Points Offered - Hidden on mobile when not in edit mode */}
+                <div className={!isEditMode ? "hidden md:block" : ""}>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Points Offered</label>
                   {isEditMode ? (
                     <input
                       type="number"
                       value={editedEvent?.pointsOffered || ""}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, pointsOffered: Number(e.target.value) })}
                       min="0"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.pointsOffered || 0} points</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.pointsOffered || 0} points</p>
                   )}
                 </div>
 
-                {/* Sponsorship Required */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Sponsorship Required</label>
+                {/* Sponsorship Required - Hidden on mobile when not in edit mode */}
+                <div className={!isEditMode ? "hidden md:block" : ""}>
+                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Required</label>
                   {isEditMode ? (
                     <select
                       value={editedEvent?.sponsorshipRequired ? "yes" : "no"}
                       onChange={(e) => setEditedEvent({ ...editedEvent!, sponsorshipRequired: e.target.value === "yes" })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     >
                       <option value="yes">Yes</option>
                       <option value="no">No</option>
                     </select>
                   ) : (
-                    <p className="text-gray-700">{selectedEvent.sponsorshipRequired ? "Yes" : "No"}</p>
+                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.sponsorshipRequired ? "Yes" : "No"}</p>
                   )}
                 </div>
 
                 {/* Sponsorship Amount */}
                 {(isEditMode ? editedEvent?.sponsorshipRequired : selectedEvent.sponsorshipRequired) && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Sponsorship Amount</label>
+                  <div className={!isEditMode ? "hidden md:block" : ""}>
+                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Amount</label>
                     {isEditMode ? (
                       <input
                         type="number"
                         value={editedEvent?.sponsorshipAmount || ""}
                         onChange={(e) => setEditedEvent({ ...editedEvent!, sponsorshipAmount: Number(e.target.value) })}
                         min="0"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                       />
                     ) : (
-                      <p className="text-gray-700">${selectedEvent.sponsorshipAmount || 0}</p>
+                      <p className="text-gray-700 text-sm md:text-base">${selectedEvent.sponsorshipAmount || 0}</p>
                     )}
                   </div>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-8 flex flex-wrap gap-3 justify-end border-t border-gray-200 pt-6">
+              <div className="mt-6 md:mt-8 flex flex-wrap gap-2 md:gap-3 justify-end border-t border-gray-200 pt-4 md:pt-6">
                 {selectedEvent.status === "pending" && (
                   <>
                     {!isEditMode ? (
                       <>
                         <button
                           onClick={handleEditToggle}
-                          className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                          className="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm md:text-base"
                         >
-                          <Edit2 className="w-4 h-4" />
-                          Edit Event
+                          <Edit2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          Edit
                         </button>
                         <button
                           onClick={handleWithdrawRequest}
-                          className="flex items-center gap-2 px-6 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                          className="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium text-sm md:text-base"
                         >
-                          <XCircle className="w-4 h-4" />
-                          Withdraw Request
+                          <XCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          Withdraw
                         </button>
                       </>
                     ) : (
@@ -850,15 +1061,15 @@ const Ngoeventtable = () => {
                             setIsEditMode(false);
                             setEditedEvent({ ...selectedEvent });
                           }}
-                          className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                          className="px-4 md:px-6 py-2 md:py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium text-sm md:text-base"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={handleSaveEdit}
-                          className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                          className="px-4 md:px-6 py-2 md:py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm md:text-base"
                         >
-                          Save Changes
+                          Save
                         </button>
                       </>
                     )}
@@ -867,10 +1078,10 @@ const Ngoeventtable = () => {
                 
                 <button
                   onClick={handleDeleteEvent}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                  className="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm md:text-base"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Delete Event
+                  <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  Delete
                 </button>
               </div>
             </div>

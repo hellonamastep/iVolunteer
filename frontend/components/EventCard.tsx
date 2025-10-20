@@ -91,7 +91,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-teal-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
       {/* Cover Image */}
-      <div className="relative h-48 w-full overflow-hidden rounded-2xl mb-3">
+      <div className="relative h-44 w-full overflow-hidden rounded-2xl mb-3">
         {image.url ? (
           <>
             <img

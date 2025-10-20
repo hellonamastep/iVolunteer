@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAdmin, DonationEventItem } from "@/contexts/admin-context";
-import { Gift, Building, Calendar, Target, CheckCircle, XCircle, ArrowRight, Sparkles, Users, DollarSign } from "lucide-react";
+import { Gift, Building, Calendar, Target, CheckCircle, XCircle, ArrowRight, Sparkles, Users, IndianRupee } from "lucide-react";
 
 const PendingDonationEventsPage = () => {
   const { 
@@ -196,12 +196,12 @@ const PendingDonationEventsPage = () => {
                           {/* Target Amount */}
                           <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
                             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100">
-                              <DollarSign className="w-5 h-5 text-emerald-600" />
+                              <IndianRupee className="w-5 h-5 text-emerald-600" />
                             </div>
                             <div>
                               <p className="text-xs font-medium text-gray-500">Goal Amount</p>
                               <p className="text-sm font-semibold text-emerald-600">
-                                ${formatCurrency(event.goalAmount)}
+                                ₹{formatCurrency(event.goalAmount)}
                               </p>
                             </div>
                           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { EventCard } from './EventCard';
 import {
   Share2,
-  DollarSign,
+  IndianRupee,
   Target,
   CheckCircle,
   TrendingUp,
@@ -90,7 +90,7 @@ export const DonationEventCard: React.FC<DonationEventCardProps> = ({
           iconColor: 'text-teal-600',
         },
         {
-          icon: <DollarSign className="w-4 h-4 text-cyan-600" />,
+          icon: <IndianRupee className="w-4 h-4 text-cyan-600" />,
           label: 'Collected',
           value: formatCurrency(event.collectedAmount),
           bgColor: 'bg-cyan-50/80',

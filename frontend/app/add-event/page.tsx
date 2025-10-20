@@ -15,7 +15,7 @@ import {
   Calendar,
   Clock,
   Users,
-  DollarSign,
+  IndianRupee,
   Activity,
   Settings,
   AlertCircle,
@@ -97,7 +97,7 @@ const CreateEventForm: React.FC = () => {
       duration: 3,
       maxParticipants: 50,
       eventStatus: "upcoming",
-      eventType: "community",
+      eventType: isSpecialEvent ? "special" : "community",
       location: "",
     },
   });
@@ -160,6 +160,13 @@ const CreateEventForm: React.FC = () => {
 
     fetchDefaultLocation();
   }, [setValue]);
+
+  // Set eventType for special events and make it immutable
+  useEffect(() => {
+    if (isSpecialEvent) {
+      setValue("eventType", "special");
+    }
+  }, [isSpecialEvent, setValue]);
 
   // Sync custom time picker with form time field
   useEffect(() => {
@@ -267,10 +274,16 @@ const CreateEventForm: React.FC = () => {
       if (selectedCategory === "Other" || selectedCategory === "other") {
         fieldsToValidate.push("customCategory");
       }
+      
+      // Validate event image is uploaded in step 1
+      if (!eventImageFile && !eventImagePreview) {
+        toast.error("Please upload an event image before proceeding");
+        return;
+      }
     } else if (activeStep === 2) {
       fieldsToValidate = ["duration", "eventType", "eventStatus", "detailedAddress"];
     } else if (activeStep === 3) {
-      fieldsToValidate = ["maxParticipants", "requirements"];
+      fieldsToValidate = ["maxParticipants"];
     } else if (activeStep === 4) {
       if (sponsorshipRequired) {
         fieldsToValidate = ["sponsorshipAmount", "sponsorshipContactEmail", "sponsorshipContactNumber"];
@@ -611,7 +624,7 @@ const CreateEventForm: React.FC = () => {
                   {/* Event Image */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Event Image
+                      Event Image <span className="text-red-500">*</span>
                     </label>
                     {eventImagePreview ? (
                       <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
@@ -643,6 +656,12 @@ const CreateEventForm: React.FC = () => {
                           className="hidden"
                         />
                       </label>
+                    )}
+                    {!eventImagePreview && !eventImageFile && (
+                      <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Image is required to proceed to next step
+                      </p>
                     )}
                   </div>
 
@@ -818,14 +837,21 @@ const CreateEventForm: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
                       Event Type <span className="text-red-500">*</span>
+                      {isSpecialEvent && <span className="text-xs text-gray-500 ml-2">(Special events only)</span>}
                     </label>
                     <select
                       {...register("eventType", { required: "Event type is required" })}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
                     >
-                      <option value="community">Community Event</option>
-                      <option value="virtual">Virtual Event</option>
-                      <option value="in-person">In-Person Event</option>
+                      {isSpecialEvent ? (
+                        <option value="special">Special Event</option>
+                      ) : (
+                        <>
+                          <option value="community">Community Event</option>
+                          <option value="virtual">Virtual Event</option>
+                          <option value="in-person">In-Person Event</option>
+                        </>
+                      )}
                     </select>
                     {errors.eventType && <p className="text-red-500 text-xs mt-1">{errors.eventType.message}</p>}
                   </div>
@@ -851,14 +877,17 @@ const CreateEventForm: React.FC = () => {
                   {/* Detailed Address */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Detailed Address
+                      Detailed Address <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      {...register("detailedAddress")}
+                      {...register("detailedAddress", {
+                        required: "Detailed address is required"
+                      })}
                       rows={3}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
                       placeholder="Street address, building name, landmarks..."
                     />
+                    {errors.detailedAddress && <p className="text-red-500 text-xs mt-1">{errors.detailedAddress.message}</p>}
                   </div>
                 </div>
               </div>
@@ -897,7 +926,7 @@ const CreateEventForm: React.FC = () => {
                   {/* Requirements */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Requirements <span className="text-red-500">*</span>
+                      Requirements <span className="text-gray-400 text-xs">(Optional)</span>
                     </label>
                     <div className="space-y-3">
                       {requirementInputs.map((req, index) => (
@@ -930,11 +959,8 @@ const CreateEventForm: React.FC = () => {
                     </div>
                     <input
                       type="hidden"
-                      {...register("requirements", {
-                        validate: () => requirementInputs.some(req => req.trim() !== "") || "At least one requirement is needed"
-                      })}
+                      {...register("requirements")}
                     />
-                    {errors.requirements && <p className="text-red-500 text-xs mt-1">{errors.requirements.message}</p>}
                   </div>
                 </div>
               </div>
@@ -973,7 +999,7 @@ const CreateEventForm: React.FC = () => {
                           Sponsorship Amount (₹) <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="number"
                             {...register("sponsorshipAmount", {
@@ -1260,7 +1286,7 @@ const CreateEventForm: React.FC = () => {
                     {sponsorshipRequired && (
                       <div className="pt-3 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-sm">
-                          <DollarSign className="w-4 h-4 text-amber-500" />
+                          <IndianRupee className="w-4 h-4 text-amber-500" />
                           <span className="font-medium text-amber-700">Sponsorship Required</span>
                         </div>
                         {watch("sponsorshipAmount") && (

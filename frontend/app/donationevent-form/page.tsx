@@ -13,7 +13,7 @@ import {
   MapPin,
   Hash,
   Share2,
-  DollarSign,
+  IndianRupee,
   CreditCard,
   ShieldCheck,
   Settings,

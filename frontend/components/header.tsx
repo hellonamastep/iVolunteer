@@ -7,7 +7,7 @@ import {
   User,
   LogOut,
   HeartHandshake,
-  DollarSign,
+  IndianRupee,
   Calendar,
   Users,
   BookOpen,
@@ -38,7 +38,7 @@ export function Header() {
   const baseNavItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/volunteer", label: "Volunteer", icon: HeartHandshake },
-    { href: "/donate", label: "Donate", icon: DollarSign },
+    { href: "/donate", label: "Donate", icon: IndianRupee },
     { href: "/posts", label: "Community", icon: Users },
     { href: "/blogs", label: "Blogs", icon: BookOpen },
   ];

@@ -6,7 +6,7 @@ import { Navigation } from "@/components/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { useAppState } from "@/hooks/use-app-state"
 import { Badge } from "@/components/ui/badge"
-import { Heart, DollarSign, Users, Trophy, Flame, Star, Award, Sparkles } from "lucide-react"
+import { Heart, IndianRupee, Users, Trophy, Flame, Star, Award, Sparkles } from "lucide-react"
 
 export default function ActivitiesPage() {
   const { user } = useAuth()
@@ -18,7 +18,7 @@ export default function ActivitiesPage() {
 
   const activities = [
     { id: "volunteer", title: "Volunteer", description: "Find local NGOs and volunteer opportunities", icon: Heart, color: "from-blue-400 to-indigo-600", coins: 50 },
-    { id: "donate", title: "Donate", description: "Make a donation and earn rewards", icon: DollarSign, color: "from-emerald-400 to-teal-600", coins: 75 },
+    { id: "donate", title: "Donate", description: "Make a donation and earn rewards", icon: IndianRupee, color: "from-emerald-400 to-teal-600", coins: 75 },
     { id: "community", title: "Community Events", description: "Join local community activities", icon: Users, color: "from-rose-400 to-pink-600", coins: 40 },
   ]
 
