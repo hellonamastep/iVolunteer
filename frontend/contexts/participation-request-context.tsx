@@ -428,7 +428,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./auth-context";
 import { toast } from "@/hooks/use-toast";
 
-const API_BASE_URL = "https://namastep-irod.onrender.com/api/v1";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://namastep-irod.onrender.com/api'}/v1`;
 
 interface ParticipationRequest {
   _id: string;

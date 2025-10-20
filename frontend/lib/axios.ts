@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://namastep-irod.onrender.com/api';
+const API_HOST = API_BASE.replace(/\/api$/, '');
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://namastep-irod.onrender.com',
+  baseURL: API_HOST,
   withCredentials: true,
 });
 
@@ -70,7 +73,7 @@ api.interceptors.response.use(
             try {
                 // Try to refresh the token
                 const refreshResponse = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL || 'https://namastep-irod.onrender.com'}/api/v1/auth/refresh-access-token`,
+                    `${API_HOST}/api/v1/auth/refresh-access-token`,
                     {},
                     { withCredentials: true }
                 );

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCorporate } from "@/contexts/corporate-context";
 import Link from "next/link";
+import Pagination from "@/components/Pagination";
 
 export default function AllEventsPage() {
   const { opportunities } = useCorporate();
@@ -30,6 +31,10 @@ export default function AllEventsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Set to 2 for testing
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
@@ -72,6 +77,21 @@ export default function AllEventsPage() {
     const participants = parseInt(opp.participants) || 0;
     return sum + participants;
   }, 0);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredOpportunities.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentOpportunities = filteredOpportunities.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, sortBy]);
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -235,7 +255,7 @@ export default function AllEventsPage() {
                 </div>
               </motion.div>
             ) : (
-              filteredOpportunities.map((item, index) => (
+              currentOpportunities.map((item, index) => (
                 <EventCard
                   key={item.id || index}
                   item={item}
@@ -246,6 +266,17 @@ export default function AllEventsPage() {
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Pagination */}
+        {filteredOpportunities.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredOpportunities.length}
+          />
+        )}
 
         {/* Results Count */}
         {filteredOpportunities.length > 0 && (

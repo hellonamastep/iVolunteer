@@ -9,6 +9,9 @@ import {
   useCallback,
 } from "react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://namastep-irod.onrender.com/api';
+const API_HOST = API_BASE_URL.replace(/\/api$/, '');
+
 export interface Event {
   id: string;
   title: string;
@@ -85,7 +88,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch("https://namastep-irod.onrender.com/api/v1/event/all-event", {
+      const response = await fetch(`${API_BASE_URL}/v1/event/all-event`, {
         headers,
         credentials: 'include'
       });
@@ -112,16 +115,13 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
 
       // Add cache-busting parameter and headers
       const timestamp = new Date().getTime();
-      const response = await fetch(`https://namastep-irod.onrender.com/api/v1/event/organization?_t=${timestamp}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (response.ok) {
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+      const response = await fetch(`${API_BASE_URL}/v1/event/organization?_t=${timestamp}`, {
+        headers,
+        credentials: 'include'
+      });      if (response.ok) {
         const data = await response.json();
         setOrganizationEvents(data.events || []);
       } else {
@@ -139,9 +139,9 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
       try {
         let endpoint = "";
         if (userId) {
-          endpoint = `https://namastep-irod.onrender.com/api/applications/user/${userId}`;
+          endpoint = `${API_HOST}/api/applications/user/${userId}`;
         } else if (eventId) {
-          endpoint = `https://namastep-irod.onrender.com/api/applications/event/${eventId}`;
+          endpoint = `${API_HOST}/api/applications/event/${eventId}`;
         }
 
         if (endpoint) {
@@ -173,7 +173,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   ): Promise<boolean> => {
     try {
       const token = localStorage.getItem('auth-token');
-      const response = await fetch("https://namastep-irod.onrender.com/api/v1/event/add-event", {
+      const response = await fetch(`${API_BASE_URL}/v1/event/add-event`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -205,7 +205,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `https://namastep-irod.onrender.com/api/v1/event/participate/${eventId}`,
+        `${API_BASE_URL}/v1/event/participate/${eventId}`,
         {
           method: "POST",
           headers: { 
@@ -235,7 +235,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `https://namastep-irod.onrender.com/api/v1/event/status/${eventId}`,
+        `${API_BASE_URL}/v1/event/status/${eventId}`,
         {
           method: "PUT",
           headers: {
@@ -264,7 +264,7 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem('auth-token');
       const response = await fetch(
-        `https://namastep-irod.onrender.com/api/v1/event/status/${eventId}`,
+        `${API_BASE_URL}/v1/event/status/${eventId}`,
         {
           method: "PUT",
           headers: {
