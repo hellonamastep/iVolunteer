@@ -40,7 +40,7 @@ const PrivacyPolicy = () => {
             Privacy Policy
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Vall Impact Ventures Private Limited is committed to protecting your privacy and ensuring the security of your personal information.
+            Namastep is committed to protecting your privacy and ensuring the security of your personal information.
           </p>
         </div>
 
@@ -51,7 +51,7 @@ const PrivacyPolicy = () => {
               {/* Introduction */}
               <div className="p-8 border-b border-gray-100">
                 <p className="text-gray-700 leading-relaxed">
-                  Vall Impact Ventures Private Limited (hereinafter referred to as "the Company") is a company undertaking the business of engaging young adults to translate time and talent in order to raise funds for social impact organisations incorporated in India.
+                  Namastep (hereinafter referred to as "the Company") is a company undertaking the business of engaging young adults to translate time and talent in order to raise funds for social impact organisations incorporated in India.
                 </p>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   At the Company, respect for privacy is of fundamental value. For us, privacy is like a liability insurance to our users/service providers, their parents and guardians where the Company collects and processes certain personal data.
