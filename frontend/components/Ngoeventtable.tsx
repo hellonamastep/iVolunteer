@@ -49,6 +49,7 @@ const Ngoeventtable = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedEvent, setEditedEvent] = useState<EventItem | null>(null);
   const tableRef = useRef<HTMLElement>(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // State for dismissed banners
   const [dismissedBanners, setDismissedBanners] = useState<{
@@ -441,6 +442,26 @@ const Ngoeventtable = () => {
     scrollToTable();
   };
 
+  // Helper function to highlight matching text
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return (
+      <>
+        {parts.map((part, index) => 
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={index} className="bg-yellow-200 text-gray-900 font-semibold">
+              {part}
+            </mark>
+          ) : (
+            <span key={index}>{part}</span>
+          )
+        )}
+      </>
+    );
+  };
+
   return (
     <section ref={tableRef} className="px-4 py-6 md:px-8 md:py-10 max-w-[1200px] mx-auto">
       {/* Pending Events Alert */}
@@ -592,8 +613,10 @@ const Ngoeventtable = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {["all", "open", "pending", "approved", "rejected"].map((status) => (
+        
+        {/* Desktop Filters - Hidden on mobile */}
+        <div className="hidden lg:flex gap-2 flex-wrap">
+          {["all", "pending", "approved", "rejected"].map((status) => (
             <button
               key={status}
               className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all duration-300 ${
@@ -607,6 +630,49 @@ const Ngoeventtable = () => {
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </button>
           ))}
+        </div>
+
+        {/* Mobile Filter Button */}
+        <div className="lg:hidden relative">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+              showMobileFilters
+                ? "bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-md"
+                : "bg-white text-gray-700 border border-gray-200"
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            {filter.charAt(0).toUpperCase() + filter.slice(1)}
+            <ChevronDown 
+              className={`w-4 h-4 transition-transform duration-200 ${
+                showMobileFilters ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {/* Mobile Filters Dropdown */}
+          {showMobileFilters && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-gray-200 shadow-lg z-10 p-2 space-y-2">
+              {["all", "pending", "approved", "rejected"].map((status) => (
+                <button
+                  key={status}
+                  className={`w-full px-4 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all duration-300 ${
+                    filter === status
+                      ? "bg-gradient-to-r from-teal-400 to-cyan-500 text-white shadow-md"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    setFilter(status);
+                    setShowMobileFilters(false);
+                  }}
+                >
+                  <Filter className="w-4 h-4" />
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -648,7 +714,9 @@ const Ngoeventtable = () => {
                 >
                   <td className="p-2 md:p-4">
                     <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-gray-900 text-xs md:text-base">{event.title}</span>
+                      <span className="font-semibold text-gray-900 text-xs md:text-base">
+                        {highlightText(event.title, searchQuery)}
+                      </span>
                       {event.isDonationEvent && (
                         <span className="inline-flex items-center px-1.5 md:px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-medium bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white w-fit">
                           💝 Donation
@@ -657,7 +725,9 @@ const Ngoeventtable = () => {
                     </div>
                   </td>
                   <td className="p-2 md:p-4 text-gray-600 font-medium text-xs md:text-base whitespace-nowrap">{new Date(event.date).toLocaleDateString()}</td>
-                  <td className="p-2 md:p-4 text-gray-600 text-xs md:text-base">{event.location}</td>
+                  <td className="p-2 md:p-4 text-gray-600 text-xs md:text-base">
+                    {highlightText(event.location, searchQuery)}
+                  </td>
                   <td className="p-2 md:p-4">
                     <div className="flex flex-col gap-1 md:gap-2 min-w-[100px]">
                       <div className="text-gray-800 font-bold text-xs md:text-sm">

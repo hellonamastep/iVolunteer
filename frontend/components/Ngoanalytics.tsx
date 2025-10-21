@@ -127,7 +127,7 @@ const Ngoanalytics = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="hidden md:block mb-8"
+          className="hidden md:block mb-6"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-gradient-to-br from-[#4FC3DC] to-[#5BCCC4] rounded-xl">
@@ -157,7 +157,7 @@ const Ngoanalytics = () => {
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className={`${stat.bg} rounded-2xl p-5 flex flex-col justify-between shadow-lg min-w-[280px] snap-center flex-shrink-0`}
+                    className={`${stat.bg} rounded-2xl p-5 flex flex-col justify-between shadow-lg min-w-[240px] snap-center flex-shrink-0`}
                   >
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-7">
@@ -187,41 +187,49 @@ const Ngoanalytics = () => {
           )}
         </AnimatePresence>
 
-        {/* Desktop: Grid View (Always Visible on Desktop) */}
-        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className={`${stat.bg} rounded-2xl p-5 flex flex-col justify-between shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-hidden relative cursor-pointer transition-all duration-300 hover:shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.15),0px_4px_6px_-2px_rgba(0,0,0,0.1)] hover:brightness-105 hover:saturate-150`}
-            >
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-7">
-                  <div className="flex-1">
-                    {stat.icon}
+        {/* Desktop: Horizontal Scrollable Cards */}
+        <div className="hidden md:block overflow-hidden">
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#4FC3DC] scrollbar-track-gray-100 hover:scrollbar-thumb-[#5BCCC4]">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.title}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className={`${stat.bg} rounded-2xl p-5 flex flex-col justify-between shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-hidden relative cursor-pointer transition-all duration-300 hover:shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.15),0px_4px_6px_-2px_rgba(0,0,0,0.1)] hover:brightness-105 hover:saturate-150 min-w-[200px] snap-center flex-shrink-0`}
+              >
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-7">
+                    <div className="flex-1">
+                      {stat.icon}
+                    </div>
                   </div>
-                  {/* <div className="p-2 rounded-xl bg-white/60">
-                    <TrendingUp className={`w-4 h-4 ${stat.trend.isPositive ? 'text-[#7FD47F]' : 'text-[#EF4444] rotate-180'}`} />
-                  </div> */}
-                </div>
-                
-                <div className="">
-                  <p className={`text-3xl font-medium ${stat.color} mb-3`}>{stat.value}</p>
-                  <p className="text-xs font-normal text-[#6B7280] uppercase tracking-wide">{stat.title}</p>
-                </div>
-                
-                {/* <div className="flex items-center pt-3 border-t border-gray-100">
-                  <div className={`flex items-center text-xs font-normal ${stat.trend.isPositive ? 'text-[#7FD47F]' : 'text-[#EF4444]'}`}>
-                    <span>+{stat.trend.value}%</span>
+                  
+                  <div className="">
+                    <p className={`text-3xl font-medium ${stat.color} mb-3`}>{stat.value}</p>
+                    <p className="text-xs font-normal text-[#6B7280] uppercase tracking-wide">{stat.title}</p>
                   </div>
-                  <span className="text-xs text-[#6B7280] ml-1">from last month</span>
-                </div> */}
-              </div>
-            </motion.div>
-          ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <style jsx>{`
+            .scrollbar-thin::-webkit-scrollbar {
+              height: 8px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-track {
+              background: #f1f1f1;
+              border-radius: 10px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+              background: #4FC3DC;
+              border-radius: 10px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+              background: #5BCCC4;
+            }
+          `}</style>
         </div>
       </div>
     </section>

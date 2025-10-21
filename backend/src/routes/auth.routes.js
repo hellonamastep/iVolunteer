@@ -17,6 +17,7 @@ import passport from "../config/passport.js"; // <-- not "passport"
 const router = Router();
 
 router.post("/register", validate(authValidator.registerSchema), authController.register);
+router.post("/check-email", authController.checkEmail);
 router.post("/login", validate(authValidator.loginSchema), authController.login);
 router.post("/logout", authentication, authController.logout);
 router.post("/change-password", authentication, authController.changePassword);

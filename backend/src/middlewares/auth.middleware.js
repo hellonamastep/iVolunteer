@@ -20,24 +20,40 @@ export const authentication = async (req, res, next) => {
     const jwtToken = pickToken(req);
     if (!jwtToken) throw new ApiError(401, "Authentication token is required");
 
-    // Do NOT log the full token
     logger.debug("JWT token present", { len: jwtToken.length });
 
     const decoded = jwt.verify(jwtToken, process.env.JWT_SECRET);
+    
+    logger.debug("Token decoded successfully", { 
+      decoded: decoded,
+      keys: Object.keys(decoded) 
+    });
 
     const userId = decoded.id || decoded.userId || decoded._id || decoded.sub;
     if (!userId) {
-      logger.error("Token payload missing user identifier", { keys: Object.keys(decoded) });
+      logger.error("Token payload missing user identifier", { 
+        keys: Object.keys(decoded),
+        decoded: decoded 
+      });
       return res.status(401).json({ success: false, message: "Invalid token payload" });
     }
 
+    logger.debug("Looking up user with ID", { userId });
     const user = await User.findById(userId);
-    if (!user) throw new ApiError(401, "Invalid token - user not found");
+    if (!user) {
+      logger.error("User not found for ID", { userId });
+      throw new ApiError(401, "Invalid token - user not found");
+    }
 
+    logger.debug("User authenticated successfully", { userId: user._id, email: user.email });
     req.user = user;
     next();
   } catch (error) {
-    logger.error("Authentication middleware error", { message: error.message, name: error.name });
+    logger.error("Authentication middleware error", { 
+      message: error.message, 
+      name: error.name,
+      stack: error.stack 
+    });
     if (error instanceof jwt.TokenExpiredError)
       return res.status(401).json({ success: false, message: "Token expired" });
     if (error instanceof jwt.JsonWebTokenError)
