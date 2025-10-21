@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Heart, DollarSign, Gift, Building2, LogIn, Shield, Settings } from "lucide-react"
+import { Home, Heart, IndianRupee, Gift, Building2, LogIn, Shield, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 export function Navigation() {
@@ -13,7 +13,7 @@ export function Navigation() {
     { href: "/", icon: Home, label: "Home" },
     { href: "/posts", icon: Heart, label: "Posts" },
     { href: "/volunteer", icon: Heart, label: "Volunteer" },
-    { href: "/donate", icon: DollarSign, label: "Donate" },
+    { href: "/donate", icon: IndianRupee, label: "Donate" },
     { href: "/activities", icon: Building2, label: "Activities" }, // added Activities
   ]
 

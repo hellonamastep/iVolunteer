@@ -34,11 +34,13 @@ type SignupFormValues = {
   age?: number;
   city?: string;
   profession?: string;
+  professionOther?: string; // For when "other" is selected
+  contactNumber?: string;
+  nearestRailwayStation?: string;
   // ngo-specific
   organizationType?: string;
   websiteUrl?: string;
   yearEstablished?: number;
-  contactNumber?: string;
   address?: {
     street?: string;
     city?: string;
@@ -58,6 +60,8 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeStep, setActiveStep] = useState(1);
   const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>([]);
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
 
   const {
     register,
@@ -66,6 +70,8 @@ export default function SignupPage() {
     formState: { errors, isSubmitting },
     trigger,
     setValue,
+    setError,
+    clearErrors,
   } = useForm<SignupFormValues>({
     mode: "onChange",
   });
@@ -96,14 +102,69 @@ export default function SignupPage() {
 
   const selectedRole = watch("role");
   const watchedFields = watch();
+  const selectedProfession = watch("profession");
+  const emailValue = watch("email");
+
+  // Check if email already exists
+  const checkEmailExists = async (email: string) => {
+    if (!email || !/^\S+@\S+$/i.test(email)) return;
+    
+    setEmailCheckLoading(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.exists) {
+        setEmailExists(true);
+        setError("email", {
+          type: "manual",
+          message: "This email is already registered. Please login instead.",
+        });
+      } else {
+        setEmailExists(false);
+        clearErrors("email");
+      }
+    } catch (error) {
+      console.error("Error checking email:", error);
+    } finally {
+      setEmailCheckLoading(false);
+    }
+  };
+
+  // Debounce email check
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (emailValue && emailValue.length > 0) {
+        checkEmailExists(emailValue);
+      }
+    }, 800); // Wait 800ms after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [emailValue]);
 
   const steps = [
     { number: 1, title: "Account Type", fields: ["role"] },
     {
       number: 2,
       title: "Basic Info",
-      fields: ["name", "email", "password", "confirmPassword"],
+      fields: ["name", "email", "age", "city"],
     },
+    ...(selectedRole === "user"
+      ? [
+          {
+            number: 3,
+            title: "Personal Details",
+            fields: ["password", "confirmPassword", "contactNumber", "nearestRailwayStation", "profession"],
+          },
+        ]
+      : []),
     ...(selectedRole === "ngo"
       ? [
           {
@@ -118,7 +179,7 @@ export default function SignupPage() {
           },
         ]
       : []),
-    { number: selectedRole === "ngo" ? 5 : 3, title: "Complete" },
+    { number: selectedRole === "ngo" ? 5 : 4, title: "Complete" },
   ];
 
   const handleNext = async () => {
@@ -180,7 +241,10 @@ export default function SignupPage() {
         // volunteer required fields
         signupData.age = data.age ? Number(data.age) : undefined;
         signupData.city = data.city || "";
-        signupData.profession = data.profession || "";
+        // If profession is "other", use the professionOther value, otherwise use profession
+        signupData.profession = data.profession === "other" ? data.professionOther : data.profession;
+        signupData.contactNumber = data.contactNumber || "";
+        signupData.nearestRailwayStation = data.nearestRailwayStation || "";
       }
 
       console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
@@ -287,9 +351,10 @@ export default function SignupPage() {
             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
               {activeStep === 1 && "Choose your account type to get started"}
               {activeStep === 2 && "Tell us about yourself"}
+              {activeStep === 3 && selectedRole === "user" && "Secure your account and additional details"}
               {activeStep === 3 && selectedRole === "ngo" && "Organization information"}
               {activeStep === 4 && selectedRole === "ngo" && "Additional details"}
-              {activeStep === (selectedRole === "ngo" ? 5 : 3) && "Complete your profile"}
+              {activeStep === (selectedRole === "ngo" ? 5 : 4) && "Complete your profile"}
             </p>
           </div>
 
@@ -388,75 +453,26 @@ export default function SignupPage() {
                             message: "Invalid email address",
                           },
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.email ? "border-red-400" : "border-gray-200"
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-10 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.email ? "border-red-400" : emailExists ? "border-red-400" : "border-gray-200"
                         }`}
                       />
+                      {emailCheckLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <svg className="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </div>
+                      )}
+                      {!emailCheckLoading && emailValue && !errors.email && !emailExists && (
+                        <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      )}
                     </div>
                     {errors.email && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.email.message}</p>}
                   </div>
 
-                  {/* Password Field */}
-                  <div className="space-y-1 sm:space-y-2">
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">Password *</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...register("password", {
-                          required: "Password is required",
-                          minLength: {
-                            value: 8,
-                            message: "Minimum 8 characters",
-                          },
-                        })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.password ? "border-red-400" : "border-gray-200"
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.password.message}</p>}
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="space-y-1 sm:space-y-2">
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">Confirm Password *</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...register("confirmPassword", {
-                          required: "Please confirm your password",
-                          validate: (val) => val === watchedFields.password || "Passwords do not match",
-                        })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.confirmPassword ? "border-red-400" : "border-gray-200"
-                        }`}
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
-                        {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    {errors.confirmPassword && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.confirmPassword.message}</p>}
-                  </div>
-
-                  {/* Volunteer-specific fields */}
+                  {/* Volunteer-specific fields in Step 2 */}
                   {selectedRole === "user" && (
                     <>
                       <div className="space-y-1 sm:space-y-2">
@@ -469,7 +485,8 @@ export default function SignupPage() {
                             {...register("age", {
                               required: "Age is required",
                               valueAsNumber: true,
-                              min: { value: 1, message: "Invalid age" },
+                              min: { value: 13, message: "Must be at least 13 years old" },
+                              max: { value: 120, message: "Invalid age" },
                             })}
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
@@ -483,12 +500,32 @@ export default function SignupPage() {
                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                           <input
                             type="text"
-                            placeholder="Your city"
+                            placeholder="e.g., Mumbai, Delhi, Bangalore"
                             {...register("city", {
                               required: "City is required",
+                              minLength: {
+                                value: 2,
+                                message: "City name must be at least 2 characters"
+                              },
                               maxLength: {
-                                value: 6,
-                                message: "Max 6 characters"
+                                value: 50,
+                                message: "City name cannot exceed 50 characters"
+                              },
+                              pattern: {
+                                value: /^[a-zA-Z\s\-'.]+$/,
+                                message: "Please enter a valid city name (letters, spaces, hyphens, apostrophes only)"
+                              },
+                              validate: {
+                                noNumbers: (value) => 
+                                  !/\d/.test(value || "") || "City name cannot contain numbers",
+                                noSpecialChars: (value) =>
+                                  /^[a-zA-Z\s\-'.]+$/.test(value || "") || "City name contains invalid characters",
+                                notOnlySpaces: (value) =>
+                                  (value || "").trim().length > 0 || "City name cannot be only spaces",
+                                validFormat: (value) => {
+                                  const trimmed = (value || "").trim();
+                                  return trimmed.length >= 2 || "Please enter a valid city name";
+                                }
                               }
                             })}
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
@@ -496,24 +533,259 @@ export default function SignupPage() {
                         </div>
                         {errors.city && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.city.message}</p>}
                       </div>
+                    </>
+                  )}
 
-                      <div className="space-y-1 sm:space-y-2 col-span-1 sm:col-span-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Profession *</label>
+                  {/* NGO-specific fields: Password fields only for NGOs in Step 2 */}
+                  {selectedRole === "ngo" && (
+                    <>
+                      {/* Password Field */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Password *</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...register("password", {
+                              required: "Password is required",
+                              minLength: {
+                                value: 8,
+                                message: "Minimum 8 characters",
+                              },
+                            })}
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.password ? "border-red-400" : "border-gray-200"
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                          </button>
+                        </div>
+                        {errors.password && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.password.message}</p>}
+                      </div>
+
+                      {/* Confirm Password */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Confirm Password *</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...register("confirmPassword", {
+                              required: "Please confirm your password",
+                              validate: (val) => val === watchedFields.password || "Passwords do not match",
+                            })}
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.confirmPassword ? "border-red-400" : "border-gray-200"
+                            }`}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
+                            {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        {errors.confirmPassword && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.confirmPassword.message}</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Volunteer Personal Details - Responsive */}
+            {activeStep === 3 && selectedRole === "user" && (
+              <div className="space-y-3 sm:space-y-6 animate-fadeIn">
+                <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#3ABBA5]/20">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-[#3ABBA5] mb-3 sm:mb-4 lg:mb-6 text-center">Secure Your Account & Additional Details</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                    {/* Password Field */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">Password *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...register("password", {
+                            required: "Password is required",
+                            minLength: {
+                              value: 8,
+                              message: "Minimum 8 characters",
+                            },
+                          })}
+                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                            errors.password ? "border-red-400" : "border-gray-200"
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                        </button>
+                      </div>
+                      {errors.password && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.password.message}</p>}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">Confirm Password *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...register("confirmPassword", {
+                            required: "Please confirm your password",
+                            validate: (val) => val === watchedFields.password || "Passwords do not match",
+                          })}
+                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                            errors.confirmPassword ? "border-red-400" : "border-gray-200"
+                          }`}
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
+                          {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      {errors.confirmPassword && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.confirmPassword.message}</p>}
+                    </div>
+
+                    {/* Contact Number Field */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">Contact Number *</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                        <input
+                          type="tel"
+                          placeholder="9876543210"
+                          maxLength={10}
+                          {...register("contactNumber", {
+                            required: "Contact number is required",
+                            pattern: {
+                              value: /^[6-9]\d{9}$/,
+                              message: "Please enter a valid 10-digit mobile number"
+                            },
+                            minLength: {
+                              value: 10,
+                              message: "Contact number must be exactly 10 digits"
+                            },
+                            maxLength: {
+                              value: 10,
+                              message: "Contact number must be exactly 10 digits"
+                            }
+                          })}
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        />
+                      </div>
+                      {errors.contactNumber && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.contactNumber.message}</p>}
+                    </div>
+
+                    {/* Nearest Railway Station Field */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">Nearest Railway Station *</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                        <input
+                          type="text"
+                          placeholder="e.g., Mumbai Central"
+                          {...register("nearestRailwayStation", {
+                            required: "Nearest railway station is required",
+                            maxLength: {
+                              value: 100,
+                              message: "Railway station name cannot exceed 100 characters"
+                            }
+                          })}
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        />
+                      </div>
+                      {errors.nearestRailwayStation && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.nearestRailwayStation.message}</p>}
+                    </div>
+
+                    {/* Profession Dropdown Field */}
+                    <div className="space-y-1 sm:space-y-2 col-span-1 sm:col-span-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">Profession *</label>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
+                        <select
+                          {...register("profession", {
+                            required: "Profession is required",
+                          })}
+                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
+                        >
+                          <option value="">Select your profession</option>
+                          <option value="student">Student</option>
+                          <option value="teacher">Teacher/Educator</option>
+                          <option value="engineer">Engineer</option>
+                          <option value="doctor">Doctor/Healthcare Professional</option>
+                          <option value="nurse">Nurse</option>
+                          <option value="software-developer">Software Developer/IT Professional</option>
+                          <option value="designer">Designer</option>
+                          <option value="accountant">Accountant</option>
+                          <option value="lawyer">Lawyer</option>
+                          <option value="business-owner">Business Owner</option>
+                          <option value="manager">Manager</option>
+                          <option value="sales-marketing">Sales/Marketing Professional</option>
+                          <option value="consultant">Consultant</option>
+                          <option value="artist">Artist/Creative Professional</option>
+                          <option value="writer">Writer/Journalist</option>
+                          <option value="social-worker">Social Worker</option>
+                          <option value="government-employee">Government Employee</option>
+                          <option value="retired">Retired</option>
+                          <option value="homemaker">Homemaker</option>
+                          <option value="freelancer">Freelancer</option>
+                          <option value="entrepreneur">Entrepreneur</option>
+                          <option value="researcher">Researcher/Scientist</option>
+                          <option value="skilled-worker">Skilled Worker/Technician</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      {errors.profession && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.profession.message}</p>}
+                    </div>
+
+                    {/* Conditional: If "other" is selected, show text input */}
+                    {selectedProfession === "other" && (
+                      <div className="space-y-1 sm:space-y-2 col-span-1 sm:col-span-2 animate-fadeIn">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Please specify your profession *</label>
                         <div className="relative">
                           <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                           <input
                             type="text"
-                            placeholder="Your profession"
-                            {...register("profession", {
-                              required: "Profession is required",
+                            placeholder="Enter your profession"
+                            {...register("professionOther", {
+                              required: selectedProfession === "other" ? "Please specify your profession" : false,
+                              maxLength: {
+                                value: 100,
+                                message: "Profession cannot exceed 100 characters"
+                              }
                             })}
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
-                        {errors.profession && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.profession.message}</p>}
+                        {errors.professionOther && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.professionOther.message}</p>}
                       </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -553,19 +825,20 @@ export default function SignupPage() {
                         <input
                           type="tel"
                           placeholder="9876543210"
+                          maxLength={10}
                           {...register("contactNumber", {
                             required: "Contact number is required",
-                            maxLength: {
-                              value: 10,
-                              message: "Must be 10 digits"
+                            pattern: {
+                              value: /^[6-9]\d{9}$/,
+                              message: "Please enter a valid 10-digit mobile number"
                             },
                             minLength: {
                               value: 10,
-                              message: "Must be 10 digits"
+                              message: "Contact number must be exactly 10 digits"
                             },
-                            pattern: {
-                              value: /^\d+$/,
-                              message: "Only digits allowed"
+                            maxLength: {
+                              value: 10,
+                              message: "Contact number must be exactly 10 digits"
                             }
                           })}
                           className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
@@ -712,9 +985,23 @@ export default function SignupPage() {
                             placeholder="City"
                             {...register("address.city", {
                               required: "City is required",
+                              minLength: {
+                                value: 2,
+                                message: "City name must be at least 2 characters"
+                              },
                               maxLength: {
-                                value: 6,
-                                message: "City name must not exceed 6 characters"
+                                value: 50,
+                                message: "City name cannot exceed 50 characters"
+                              },
+                              pattern: {
+                                value: /^[a-zA-Z\s\-'.]+$/,
+                                message: "Please enter a valid city name"
+                              },
+                              validate: {
+                                noNumbers: (value) => 
+                                  !/\d/.test(value || "") || "City name cannot contain numbers",
+                                notOnlySpaces: (value) =>
+                                  (value || "").trim().length > 0 || "City name cannot be only spaces"
                               }
                             })}
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
@@ -765,8 +1052,8 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Step 5/3: Complete - Responsive */}
-            {activeStep === (selectedRole === "ngo" ? 5 : 3) && (
+            {/* Step 5/4: Complete - Responsive */}
+            {activeStep === (selectedRole === "ngo" ? 5 : 4) && (
               <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 animate-fadeIn">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-green-500" />
@@ -795,7 +1082,9 @@ export default function SignupPage() {
                       <>
                         <p><strong>Age:</strong> {watchedFields.age}</p>
                         <p><strong>City:</strong> {watchedFields.city}</p>
-                        <p><strong>Profession:</strong> {watchedFields.profession}</p>
+                        <p><strong>Contact Number:</strong> {watchedFields.contactNumber}</p>
+                        <p><strong>Nearest Railway Station:</strong> {watchedFields.nearestRailwayStation}</p>
+                        <p><strong>Profession:</strong> {watchedFields.profession === "other" ? watchedFields.professionOther : watchedFields.profession}</p>
                       </>
                     )}
                   </div>

@@ -480,6 +480,13 @@ const deleteAccount = async (id, password) => {
   }
 };
 
+// Check if email exists
+const checkEmailExists = async (email) => {
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail });
+  return !!user; // Returns true if user exists, false otherwise
+};
+
 export const authService = {
   register,
   login,
@@ -490,5 +497,6 @@ export const authService = {
   resetPassword,
   updateProfile,
   deleteAccount,
-  googleLogin
+  googleLogin,
+  checkEmailExists,
 };

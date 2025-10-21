@@ -10,6 +10,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/globalErrorHandler.
 import authRouter from "./routes/auth.routes.js"
 import postRouter from "./routes/post.routes.js"
 import rewardsRouter from "./routes/rewards.routes.js"
+import uploadRouter from "./routes/upload.routes.js"
 
 // import {
 //   errorHandler,
@@ -133,6 +134,7 @@ app.use("/api/v1/auth", authLimiter, authRouter);
 
 app.use("/api/v1/posts", globalRateLimiting, postRouter);
 app.use("/api/v1/rewards", globalRateLimiting, rewardsRouter);
+app.use("/api/v1/upload", globalRateLimiting, uploadRouter);
 // app.use("/api/v1/communities", globalRateLimiting, communityRouter);
 
 app.use("/api/v1/communities", globalRateLimiting, communityRouter);

@@ -77,7 +77,7 @@ export const generateJwtToken = (user) => {
 };
 
 export const tokenExpiresAt = () =>
-  new Date(Date.now() + 15 * 60 * 1000); // matches 15m
+  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days for refresh token
 
 const COOKIE_OPTS = {
   httpOnly: true,

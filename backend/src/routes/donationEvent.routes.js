@@ -8,6 +8,7 @@ import {
   getAllEvents, getEventById,
   getPendingEvents,
   updateEventApproval,
+  getOrganizationEvents,
 } from "../controllers/donationEvent.controller.js";
 import { upload } from "../config/cloudinary.js";
 
@@ -26,6 +27,13 @@ donationEventRouter.post(
   createEvent
 );
 donationEventRouter.get("/getallevent", getAllEvents);
+
+// NGO routes - get their own events
+donationEventRouter.get(
+  "/organization/events",
+  authMiddleware,
+  getOrganizationEvents
+);
 
 // 👇 Admin routes
 donationEventRouter.get(

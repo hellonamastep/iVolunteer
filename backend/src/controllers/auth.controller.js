@@ -146,6 +146,16 @@ const logout = asyncHandler(async (req, res) => {
 
 const getUser = asyncHandler(async (req, res) => {
   const id = req.user?._id;
+  
+  if (!id) {
+    console.error("getUser: req.user or req.user._id is undefined", { 
+      hasReqUser: !!req.user, 
+      reqUser: req.user 
+    });
+    throw new ApiError(401, "User not authenticated");
+  }
+  
+  console.log("getUser: Fetching user with ID:", id);
   const user = await authService.getUser(id);
 
   return res
@@ -341,6 +351,22 @@ const deleteAccount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Account deleted successfully"));
 });
 
+// Check if email exists
+const checkEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const exists = await authService.checkEmailExists(email);
+
+  return res.status(200).json({
+    exists,
+    message: exists ? "Email already registered" : "Email available",
+  });
+});
+
 export const authController = {
   register,
   login,
@@ -354,5 +380,6 @@ export const authController = {
   uploadProfilePicture,
   removeProfilePicture,
   deleteAccount,
-  googleLogin
+  googleLogin,
+  checkEmail,
 };

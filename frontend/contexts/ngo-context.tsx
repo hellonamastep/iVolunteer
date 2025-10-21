@@ -20,7 +20,7 @@ export type EventData = {
   sponsorshipAmount: number;
   sponsorshipContactEmail?: string; // 🆕 Added
   sponsorshipContactNumber?: string; // 🆕 Added
-  image?: { url: string; caption: string };
+  image?: { url: string; caption: string; publicId?: string };
   eventStatus: string;
   eventType?: string; // Event type field
   organization?: string; // Organization name

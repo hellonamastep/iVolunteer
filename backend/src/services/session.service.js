@@ -14,7 +14,7 @@ export const createSession = async (user) => {
         const expiresAt = tokenExpiresAt();
     
         const session = new Session({
-            userId: user.id,
+            userId: user._id || user.id,
             refreshToken: hashedToken,
             expiresAt
         });

@@ -33,7 +33,7 @@ export const createEvent = async (req, res) => {
       }
     }
 
-    const event = await eventService.createEventService(ngoId, eventData); 
+    const event = await eventService.createEventService(ngoId, eventData);
     res.status(201).json({ success: true, event });
   } catch (err) {
     console.error('Create event error:', err);
@@ -83,6 +83,16 @@ export const getEventById = async (req, res) => {
     const eventId = req.params.eventId;
     const event = await eventService.getEventByIdService(eventId);
     res.json({ success: true, event });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getOrganizationEvents = async (req, res) => {
+  try {
+    const ngoId = req.user._id;
+    const events = await eventService.getOrganizationEventsService(ngoId);
+    res.json({ success: true, events });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -15,7 +15,7 @@ import {
   Calendar,
   Clock,
   Users,
-  DollarSign,
+  IndianRupee,
   Activity,
   Settings,
   AlertCircle,
@@ -69,6 +69,7 @@ const CreateEventForm: React.FC = () => {
   
   const [activeStep, setActiveStep] = useState(1);
   const [eventImagePreview, setEventImagePreview] = useState<string | null>(null);
+  const [eventImageFile, setEventImageFile] = useState<File | null>(null); // 🆕 Store the actual File object
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
@@ -96,7 +97,7 @@ const CreateEventForm: React.FC = () => {
       duration: 3,
       maxParticipants: 50,
       eventStatus: "upcoming",
-      eventType: "community",
+      eventType: isSpecialEvent ? "special" : "community",
       location: "",
     },
   });
@@ -160,6 +161,13 @@ const CreateEventForm: React.FC = () => {
     fetchDefaultLocation();
   }, [setValue]);
 
+  // Set eventType for special events and make it immutable
+  useEffect(() => {
+    if (isSpecialEvent) {
+      setValue("eventType", "special");
+    }
+  }, [isSpecialEvent, setValue]);
+
   // Sync custom time picker with form time field
   useEffect(() => {
     const convert12to24 = (hour: string, minute: string, period: string) => {
@@ -181,7 +189,6 @@ const CreateEventForm: React.FC = () => {
     const loadDraft = () => {
       try {
         const savedDraft = localStorage.getItem(STORAGE_KEY);
-        const savedImages = localStorage.getItem(IMAGES_STORAGE_KEY);
         
         if (savedDraft) {
           const draftData = JSON.parse(savedDraft);
@@ -207,12 +214,9 @@ const CreateEventForm: React.FC = () => {
               }
             });
             
-            if (savedImages) {
-              const imageData = JSON.parse(savedImages);
-              if (imageData.eventImage) setEventImagePreview(imageData.eventImage);
-            }
+            // Don't restore images from draft - user will need to re-select
             
-            toast.info("Draft restored successfully!", { autoClose: 2000 });
+            toast.info("Draft restored successfully! Please re-select your image if you had one.", { autoClose: 3000 });
             setLastSaved(new Date(draftData._savedAt));
           }
         }
@@ -242,11 +246,8 @@ const CreateEventForm: React.FC = () => {
         
         localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
         
-        const imageData: any = {};
-        if (eventImagePreview) imageData.eventImage = eventImagePreview;
-        if (Object.keys(imageData).length > 0) {
-          localStorage.setItem(IMAGES_STORAGE_KEY, JSON.stringify(imageData));
-        }
+        // Don't save images to localStorage - they cause issues with FileList
+        // User will need to re-select image if they restore a draft
         
         setLastSaved(new Date());
       } catch (error) {
@@ -273,10 +274,16 @@ const CreateEventForm: React.FC = () => {
       if (selectedCategory === "Other" || selectedCategory === "other") {
         fieldsToValidate.push("customCategory");
       }
+      
+      // Validate event image is uploaded in step 1
+      if (!eventImageFile && !eventImagePreview) {
+        toast.error("Please upload an event image before proceeding");
+        return;
+      }
     } else if (activeStep === 2) {
       fieldsToValidate = ["duration", "eventType", "eventStatus", "detailedAddress"];
     } else if (activeStep === 3) {
-      fieldsToValidate = ["maxParticipants", "requirements"];
+      fieldsToValidate = ["maxParticipants"];
     } else if (activeStep === 4) {
       if (sponsorshipRequired) {
         fieldsToValidate = ["sponsorshipAmount", "sponsorshipContactEmail", "sponsorshipContactNumber"];
@@ -332,6 +339,9 @@ const CreateEventForm: React.FC = () => {
     if (!file) return;
 
     try {
+      // Store the actual File object in state
+      setEventImageFile(file);
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setEventImagePreview(reader.result as string);
@@ -344,7 +354,9 @@ const CreateEventForm: React.FC = () => {
   };
 
   const removeImage = () => {
+    console.log('🗑️ [DEBUG] removeImage called - clearing image');
     setEventImagePreview(null);
+    setEventImageFile(null); // Clear the stored file
     setValue("eventImage", undefined as any);
   };
 
@@ -352,9 +364,9 @@ const CreateEventForm: React.FC = () => {
     try {
       let imageData: any = null;
 
-      if (eventImage && eventImage.length > 0) {
+      if (eventImageFile) {
         const formData = new FormData();
-        formData.append("image", eventImage[0]);
+        formData.append("image", eventImageFile);
 
         const response = await api.post(
           "/v1/upload/single",
@@ -404,6 +416,13 @@ const CreateEventForm: React.FC = () => {
         sponsorshipContactNumber: data.sponsorshipContactNumber,
       };
 
+      console.log('📦 [DEBUG] Formatted data for event creation:', {
+        ...formattedData,
+        hasImage: !!formattedData.image,
+        imageUrl: formattedData.image?.url,
+        imagePublicId: formattedData.image?.publicId
+      });
+
       await createEvent(formattedData);
       
       localStorage.removeItem(STORAGE_KEY);
@@ -414,6 +433,7 @@ const CreateEventForm: React.FC = () => {
       reset();
       setActiveStep(1);
       setEventImagePreview(null);
+      setEventImageFile(null); // Clear the stored file
       setRequirementInputs([""]);
       setLastSaved(null);
       
@@ -432,6 +452,7 @@ const CreateEventForm: React.FC = () => {
       localStorage.removeItem(IMAGES_STORAGE_KEY);
       reset();
       setEventImagePreview(null);
+      setEventImageFile(null); // Clear the stored file
       setRequirementInputs([""]);
       setActiveStep(1);
       setLastSaved(null);
@@ -603,7 +624,7 @@ const CreateEventForm: React.FC = () => {
                   {/* Event Image */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Event Image
+                      Event Image <span className="text-red-500">*</span>
                     </label>
                     {eventImagePreview ? (
                       <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
@@ -630,12 +651,17 @@ const CreateEventForm: React.FC = () => {
                         </div>
                         <input
                           type="file"
-                          {...register("eventImage")}
                           onChange={handleImageUpload}
                           accept="image/*"
                           className="hidden"
                         />
                       </label>
+                    )}
+                    {!eventImagePreview && !eventImageFile && (
+                      <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Image is required to proceed to next step
+                      </p>
                     )}
                   </div>
 
@@ -811,14 +837,21 @@ const CreateEventForm: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
                       Event Type <span className="text-red-500">*</span>
+                      {isSpecialEvent && <span className="text-xs text-gray-500 ml-2">(Special events only)</span>}
                     </label>
                     <select
                       {...register("eventType", { required: "Event type is required" })}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
                     >
-                      <option value="community">Community Event</option>
-                      <option value="virtual">Virtual Event</option>
-                      <option value="in-person">In-Person Event</option>
+                      {isSpecialEvent ? (
+                        <option value="special">Special Event</option>
+                      ) : (
+                        <>
+                          <option value="community">Community Event</option>
+                          <option value="virtual">Virtual Event</option>
+                          <option value="in-person">In-Person Event</option>
+                        </>
+                      )}
                     </select>
                     {errors.eventType && <p className="text-red-500 text-xs mt-1">{errors.eventType.message}</p>}
                   </div>
@@ -844,14 +877,17 @@ const CreateEventForm: React.FC = () => {
                   {/* Detailed Address */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Detailed Address
+                      Detailed Address <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      {...register("detailedAddress")}
+                      {...register("detailedAddress", {
+                        required: "Detailed address is required"
+                      })}
                       rows={3}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
                       placeholder="Street address, building name, landmarks..."
                     />
+                    {errors.detailedAddress && <p className="text-red-500 text-xs mt-1">{errors.detailedAddress.message}</p>}
                   </div>
                 </div>
               </div>
@@ -890,7 +926,7 @@ const CreateEventForm: React.FC = () => {
                   {/* Requirements */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Requirements <span className="text-red-500">*</span>
+                      Requirements <span className="text-gray-400 text-xs">(Optional)</span>
                     </label>
                     <div className="space-y-3">
                       {requirementInputs.map((req, index) => (
@@ -923,11 +959,8 @@ const CreateEventForm: React.FC = () => {
                     </div>
                     <input
                       type="hidden"
-                      {...register("requirements", {
-                        validate: () => requirementInputs.some(req => req.trim() !== "") || "At least one requirement is needed"
-                      })}
+                      {...register("requirements")}
                     />
-                    {errors.requirements && <p className="text-red-500 text-xs mt-1">{errors.requirements.message}</p>}
                   </div>
                 </div>
               </div>
@@ -966,7 +999,7 @@ const CreateEventForm: React.FC = () => {
                           Sponsorship Amount (₹) <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="number"
                             {...register("sponsorshipAmount", {
@@ -1253,7 +1286,7 @@ const CreateEventForm: React.FC = () => {
                     {sponsorshipRequired && (
                       <div className="pt-3 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-sm">
-                          <DollarSign className="w-4 h-4 text-amber-500" />
+                          <IndianRupee className="w-4 h-4 text-amber-500" />
                           <span className="font-medium text-amber-700">Sponsorship Required</span>
                         </div>
                         {watch("sponsorshipAmount") && (

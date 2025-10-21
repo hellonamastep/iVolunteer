@@ -42,7 +42,7 @@ const Pagination: React.FC<PaginationProps> = ({
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       onPageChange(page);
       // Scroll to top smoothly when page changes
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    //   window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 

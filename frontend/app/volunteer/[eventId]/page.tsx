@@ -14,11 +14,9 @@ import {
   CheckCircle,
   XCircle,
   UserPlus,
-  ArrowLeft,
   Award,
   Target,
   Tag,
-  Image as ImageIcon,
   Building,
   Globe,
   Phone,
@@ -27,7 +25,6 @@ import {
   Video,
   AlertCircle,
 } from "lucide-react";
-import { Header } from "@/components/header";
 import { useParticipationRequest } from "@/contexts/participation-request-context";
 import {
   Dialog,
@@ -38,6 +35,8 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import { DetailPageLayout } from "@/components/DetailPageLayout";
+import { DetailSection, DetailInfoRow, DetailColumnHeader, DetailDescription } from "@/components/DetailSection";
 
 const EventDetailsPage: React.FC = () => {
   const params = useParams();
@@ -196,7 +195,7 @@ const EventDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <>
-        <Header />
+        {/* <Header /> */}
         <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
             <img
@@ -217,7 +216,7 @@ const EventDetailsPage: React.FC = () => {
   if (error || !event) {
     return (
       <>
-        <Header />
+        {/* <Header /> */}
         <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
           <div className="text-center">
             <div className="bg-white border border-red-200 rounded-xl shadow-md p-8 max-w-md">
@@ -251,672 +250,486 @@ const EventDetailsPage: React.FC = () => {
     (typeof event.organizationId === 'object' ? event.organizationId._id : event.organizationId) === user._id
   );
 
-  return (
+  // Status badge component
+  const statusBadge = participated ? (
+    <div className="inline-flex items-center bg-green-500 text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm md:text-base font-semibold">
+      <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+      <span className="truncate">You're participating in this event</span>
+    </div>
+  ) : null;
+
+  // Left column content
+  const leftColumnContent = (
     <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-[#FFFFFF] to-[#7DD9A6] py-6 relative overflow-hidden">
-        <style jsx global>{`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(148, 163, 184, 0.1);
-            border-radius: 10px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #7DD9A6, #6BC794);
-            border-radius: 10px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(to bottom, #6BC794, #5AB583);
-          }
-        `}</style>
-        
-        {/* Mascot Images in Background */}
-        <div className="fixed top-32 left-10 opacity-15 z-0 pointer-events-none">
-          <img src="/mascots/mascot_volunteer.png" alt="" className="w-24 h-24 animate-bounce" style={{ animationDuration: "3s" }} />
-        </div>
-        <div className="fixed bottom-20 right-10 opacity-15 z-0 pointer-events-none">
-          <img src="/mascots/mascot_help.png" alt="" className="w-28 h-28 animate-pulse" style={{ animationDuration: "4s" }} />
-        </div>
-        <div className="fixed top-1/2 right-5 opacity-10 z-0 pointer-events-none">
-          <img src="/mascots/mascot_star.png" alt="" className="w-20 h-20 animate-bounce" style={{ animationDuration: "5s" }} />
-        </div>
-        
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-[#7DD9A6] mb-6 transition-colors font-medium"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Events
-          </button>
+      <DetailColumnHeader 
+        title="Event Details"
+        subtitle="Learn more about this volunteer opportunity"
+      />
+      
+      {/* Description */}
+      <DetailSection title="About This Event" icon="📋">
+        <DetailDescription 
+          text={event.description || "No description available for this event."}
+        />
+      </DetailSection>
 
-          {/* Event Header */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
-            {/* Event Image */}
-            {event.image?.url ? (
-              <div className="h-64 md:h-80 relative">
-                <img
-                  src={event.image.url}
-                  alt={event.image.caption || event.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
-                  <p className="text-white/90">{event.organization || "Organization"}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-64 md:h-80 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <ImageIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
-                  <p className="text-white/90">{event.organization || "Organization"}</p>
-                </div>
-              </div>
-            )}
+      {/* Event Information */}
+      <DetailSection title="Event Information" icon="ℹ️">
+        <div className="space-y-2">
+          {/* Event Type */}
+          {event.eventType && (
+            <DetailInfoRow
+              icon={event.eventType === 'virtual' ? (
+                <Video className="h-3 w-3" />
+              ) : event.eventType === 'in-person' ? (
+                <Building className="h-3 w-3" />
+              ) : (
+                <Globe className="h-3 w-3" />
+              )}
+              label="Event Type"
+              value={<span className="capitalize">{event.eventType.replace('-', ' ')}</span>}
+            />
+          )}
+          
+          {/* Date */}
+          <DetailInfoRow
+            icon={<Calendar className="h-3 w-3" />}
+            label="Date"
+            value={event.date ? new Date(event.date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            }) : "Not specified"}
+          />
+          
+          {/* Time */}
+          <DetailInfoRow
+            icon={<Clock className="h-3 w-3" />}
+            label="Time"
+            value={event.time ? (() => {
+              const [hours, minutes] = event.time.split(':').map(Number);
+              const period = hours >= 12 ? 'PM' : 'AM';
+              const displayHours = hours % 12 || 12;
+              return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+            })() : "Not specified"}
+          />
+          
+          {/* Location */}
+          <DetailInfoRow
+            icon={<MapPin className="h-3 w-3" />}
+            label="Location"
+            value={event.location || "Not specified"}
+          />
+          
+          {/* Category */}
+          <DetailInfoRow
+            icon={<Tag className="h-3 w-3" />}
+            label="Category"
+            value={<span className="capitalize">{event.category || "General"}</span>}
+          />
+          
+          {/* Duration */}
+          {event.duration && (
+            <DetailInfoRow
+              icon={<Clock className="h-3 w-3" />}
+              label="Duration"
+              value={`${event.duration} hours`}
+            />
+          )}
+          
+          {/* Points Offered */}
+          {event.pointsOffered && (
+            <DetailInfoRow
+              icon={<Award className="h-3 w-3" />}
+              label="Points Offered"
+              value={`${event.pointsOffered} points`}
+              isLast
+            />
+          )}
+        </div>
+      </DetailSection>
+      
+      {/* Detailed Address */}
+      {event.detailedAddress && (
+        <DetailSection title="Detailed Address" icon={<MapPinIcon className="h-4 w-4 text-white" />}>
+          <DetailDescription text={event.detailedAddress} />
+        </DetailSection>
+      )}
 
-            {/* Participation Status */}
-            {participated && (
-              <div className="bg-green-50 border-b border-green-200 px-6 py-3">
-                <div className="flex items-center justify-center text-green-700 text-sm font-medium">
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  You're participating in this event
+      {/* Requirements */}
+      {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
+        <DetailSection title="Requirements" icon="✓">
+          <ul className="space-y-2">
+            {event.requirements.map((req: string, index: number) => (
+              <li key={index} className="flex items-start space-x-2 text-gray-700 text-sm">
+                <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Target className="h-3 w-3 text-white" />
                 </div>
-              </div>
-            )}
-          </div>
+                <span className="leading-relaxed">{req}</span>
+              </li>
+            ))}
+          </ul>
+        </DetailSection>
+      )}
+    </>
+  );
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Description */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
-                    <span className="text-white text-xl">📋</span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">About This Event</h2>
-                </div>
-                <p className="text-gray-700 leading-relaxed text-base">
-                  {event.description || "No description available for this event."}
+  // Right column content
+  const rightColumnContent = (
+    <>
+      <DetailColumnHeader 
+        title="Join This Event"
+        subtitle="Become a volunteer and make a difference"
+      />
+
+      {/* NGO Information */}
+      {event.organizationId && typeof event.organizationId === 'object' && (
+        <DetailSection title="About the Organization" icon="🏢">
+          <div className="space-y-3">
+            <div className="flex items-start space-x-2">
+              <Building className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-gray-900">Organization Name</p>
+                <p className="text-xs text-gray-600">
+                  {event.organizationId.name || event.organization}
                 </p>
               </div>
-
-              {/* Event Details Grid */}
-              <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md">
-                    <span className="text-white text-xl">ℹ️</span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Event Details</h2>
-                </div>
-                
-                {/* Event Type */}
-                {event.eventType && (
-                  <div className="mb-6 pb-6 border-b-2 border-gray-100">
-                    <div className="flex items-start space-x-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        event.eventType === 'virtual' 
-                          ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
-                          : event.eventType === 'in-person'
-                          ? 'bg-gradient-to-br from-emerald-400 to-teal-500'
-                          : 'bg-gradient-to-br from-purple-400 to-pink-500'
-                      }`}>
-                        {event.eventType === 'virtual' ? (
-                          <Video className="h-5 w-5 text-white" />
-                        ) : event.eventType === 'in-person' ? (
-                          <Building className="h-5 w-5 text-white" />
-                        ) : (
-                          <Globe className="h-5 w-5 text-white" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Event Type</p>
-                        <div className="mt-2">
-                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold shadow-md backdrop-blur-sm ${
-                            event.eventType === 'virtual' 
-                              ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white' 
-                              : event.eventType === 'in-person'
-                              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white'
-                              : 'bg-gradient-to-r from-purple-400 to-pink-500 text-white'
-                          }`}>
-                            {event.eventType === 'virtual' && <Video className="w-4 h-4 mr-1" />}
-                            {event.eventType === 'in-person' && <Building className="w-4 h-4 mr-1" />}
-                            {event.eventType === 'community' && <Globe className="w-4 h-4 mr-1" />}
-                            {event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1).replace('-', ' ')} Event
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Date & Time */}
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3 bg-blue-50 p-4 rounded-xl border-2 border-blue-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center shadow-md">
-                        <Calendar className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Date</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {event.date ? new Date(event.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          }) : "Date not specified"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3 bg-indigo-50 p-4 rounded-xl border-2 border-indigo-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-md">
-                        <Clock className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Time</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {event.time ? (() => {
-                            // Convert 24-hour format time string (e.g., "14:30") to 12-hour with AM/PM
-                            const [hours, minutes] = event.time.split(':').map(Number);
-                            const period = hours >= 12 ? 'PM' : 'AM';
-                            const displayHours = hours % 12 || 12;
-                            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-                          })() : (event.date ? new Date(event.date).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          }) : "Time not specified")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location & Category */}
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3 bg-red-50 p-4 rounded-xl border-2 border-red-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center shadow-md">
-                        <MapPin className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-gray-900">Location</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {event.location || "Location not specified"}
-                        </p>
-                        {event.detailedAddress && (
-                          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                            {event.detailedAddress}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3 bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
-                        <Tag className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Category</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">
-                          {event.category || "General"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Duration & Points */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t-2 border-gray-100">
-                  {event.duration && (
-                    <div className="flex items-start space-x-3 bg-orange-50 p-4 rounded-xl border-2 border-orange-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-md">
-                        <Clock className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Duration</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">⏱️ {event.duration} hours</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {event.pointsOffered && (
-                    <div className="flex items-start space-x-3 bg-yellow-50 p-4 rounded-xl border-2 border-yellow-200">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md">
-                        <Award className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Points Offered</p>
-                        <p className="text-sm text-gray-700 font-medium mt-1">🏆 {event.pointsOffered} points</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Requirements */}
-              {event.requirements && Array.isArray(event.requirements) && event.requirements.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#7DD9A6] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center shadow-md">
-                      <span className="text-white text-xl">✓</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Requirements</h2>
-                  </div>
-                  <ul className="space-y-3">
-                    {event.requirements.map((req: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-3 bg-green-50 p-3 rounded-xl border-2 border-green-200">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7DD9A6] to-[#6BC794] flex items-center justify-center flex-shrink-0 shadow-md">
-                          <Target className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-gray-700 text-sm font-medium">{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* NGO Information */}
-              {event.organizationId && typeof event.organizationId === 'object' && (
-                <div className="bg-white rounded-2xl shadow-lg border-2 border-[#E8F5A5] p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 transform">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E8F5A5] to-[#D4E590] flex items-center justify-center shadow-md">
-                      <span className="text-gray-800 text-xl">🏢</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900">About the Organization</h2>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Organization Basic Info */}
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">Organization Name</p>
-                          <p className="text-sm text-gray-600">
-                            {event.organizationId.name || event.organization}
-                          </p>
-                        </div>
-                      </div>
-
-                      {event.organizationId.organizationType && (
-                        <div className="flex items-start space-x-3">
-                          <Tag className="h-5 w-5 text-[#E8F5A5] mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Organization Type</p>
-                            <p className="text-sm text-gray-600 capitalize">
-                              {event.organizationId.organizationType.replace('-', ' ')}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {event.organizationId.yearEstablished && (
-                        <div className="flex items-start space-x-3">
-                          <Calendar className="h-5 w-5 text-green-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Established</p>
-                            <p className="text-sm text-gray-600">
-                              {event.organizationId.yearEstablished}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {event.organizationId.organizationSize && (
-                        <div className="flex items-start space-x-3">
-                          <Users className="h-5 w-5 text-orange-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Organization Size</p>
-                            <p className="text-sm text-gray-600">
-                              {event.organizationId.organizationSize} employees
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Contact Information */}
-                    <div className="space-y-4">
-                      {event.organizationId.email && (
-                        <div className="flex items-start space-x-3">
-                          <Mail className="h-5 w-5 text-red-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Email</p>
-                            <a 
-                              href={`mailto:${event.organizationId.email}`}
-                              className="text-sm text-[#7DD9A6] hover:text-[#6BC794] hover:underline"
-                            >
-                              {event.organizationId.email}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {event.organizationId.contactNumber && (
-                        <div className="flex items-start space-x-3">
-                          <Phone className="h-5 w-5 text-green-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Phone</p>
-                            <a 
-                              href={`tel:${event.organizationId.contactNumber}`}
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              {event.organizationId.contactNumber}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {event.organizationId.websiteUrl && (
-                        <div className="flex items-start space-x-3">
-                          <Globe className="h-5 w-5 text-blue-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Website</p>
-                            <a 
-                              href={event.organizationId.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              Visit Website
-                            </a>
-                          </div>
-                        </div>
-                      )}
-
-                      {event.organizationId.address && (
-                        <div className="flex items-start space-x-3">
-                          <MapPinIcon className="h-5 w-5 text-purple-600 mt-1" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">Address</p>
-                            <div className="text-sm text-gray-600">
-                              {event.organizationId.address.street && (
-                                <p>{event.organizationId.address.street}</p>
-                              )}
-                              <p>
-                                {[
-                                  event.organizationId.address.city,
-                                  event.organizationId.address.state,
-                                  event.organizationId.address.zip
-                                ].filter(Boolean).join(', ')}
-                              </p>
-                              {event.organizationId.address.country && (
-                                <p>{event.organizationId.address.country}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Organization Description */}
-                  {event.organizationId.ngoDescription && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">About Us</h3>
-                      <p className="text-gray-600 leading-relaxed">
-                        {event.organizationId.ngoDescription}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Focus Areas */}
-                  {event.organizationId.focusAreas && event.organizationId.focusAreas.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-gray-100">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Focus Areas</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {event.organizationId.focusAreas.map((area: string, index: number) => (
-                          <span 
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize"
-                          >
-                            {area.replace('-', ' ')}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Fallback for basic organization info when NGO details are not populated */}
-              {(!event.organizationId || typeof event.organizationId !== 'object') && event.organization && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-6">About the Organization</h2>
-                  
-                  <div className="flex items-start space-x-3">
-                    <Building className="h-5 w-5 text-[#7DD9A6] mt-1" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Organization Name</p>
-                      <p className="text-sm text-gray-600">{event.organization}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-700">
-                      <strong>Note:</strong> Detailed organization information is not available for this event. Only the organization name is provided.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Participation Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Join This Event</h3>
-                
-                {/* Participants Progress */}
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center justify-between text-gray-600">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2 text-green-600" />
-                      <span className="text-sm">
-                        {currentParticipants} / {maxParticipants === Infinity ? "∞" : maxParticipants} participants
-                      </span>
-                    </div>
-                    {maxParticipants !== Infinity && (
-                      <span className="text-xs font-medium text-gray-500">{progress}%</span>
-                    )}
-                  </div>
-
-                  {/* Progress Bar */}
-                  {maxParticipants !== Infinity && (
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          eventFull ? "bg-red-500" : progress > 75 ? "bg-yellow-500" : "bg-green-500"
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  )}
+            {event.organizationId.organizationType && (
+              <div className="flex items-start space-x-2">
+                <Tag className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Organization Type</p>
+                  <p className="text-xs text-gray-600 capitalize">
+                    {event.organizationId.organizationType.replace('-', ' ')}
+                  </p>
                 </div>
-
-                {/* Action Button */}
-                {isEventCreator ? (
-                  <div className="space-y-3">
-                    <button
-                      disabled
-                      className="w-full bg-gray-100 text-gray-600 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
-                    >
-                      <Building className="h-4 w-4 mr-2" />
-                      You Created This Event
-                    </button>
-                    <p className="text-xs text-center text-gray-500">
-                      Event creators cannot participate in their own events
-                    </p>
-                  </div>
-                ) : (() => {
-                  const hasRequested = hasRequestedParticipation(event?._id || "");
-                  const pendingRequest = getPendingRequestForEvent(event?._id || "");
-                  const rejectedRequest = getRejectedRequestForEvent(event?._id || "");
-                  const isRejected = hasRejectedRequest(event?._id || "");
-                  
-                  if (participated) {
-                    return (
-                      <div className="space-y-3">
-                        <button
-                          disabled
-                          className="w-full bg-green-100 text-green-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Already Participating
-                        </button>
-                      </div>
-                    );
-                  }
-                  
-                  if (isRejected && rejectedRequest) {
-                    return (
-                      <div className="space-y-3">
-                        <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
-                          <DialogTrigger asChild>
-                            <button
-                              className="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-red-200 transition-colors duration-200 flex items-center justify-center"
-                            >
-                              <AlertCircle className="h-4 w-4 mr-2" />
-                              Participation Rejected
-                            </button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>Participation Request Rejected</DialogTitle>
-                              <DialogDescription>
-                                Your participation request for this event was rejected.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <h4 className="font-medium text-gray-900 mb-2">Rejection Reason:</h4>
-                                <div className="bg-gray-50 p-3 rounded-lg">
-                                  <p className="text-gray-700 text-sm">
-                                    {rejectedRequest.rejectionReason || "No specific reason provided."}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex justify-end">
-                                <DialogClose asChild>
-                                  <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
-                                    Close
-                                  </button>
-                                </DialogClose>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        <button
-                          disabled
-                          className="w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Not Eligible for This Event
-                        </button>
-                      </div>
-                    );
-                  }
-                  
-                  if (hasRequested && pendingRequest) {
-                    return (
-                      <div className="space-y-3">
-                        <button
-                          disabled
-                          className="w-full bg-yellow-100 text-yellow-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
-                        >
-                          <Clock className="h-4 w-4 mr-2" />
-                          Requested Participation
-                        </button>
-                        <button
-                          onClick={handleCancelRequest}
-                          disabled={leaving}
-                          className="w-full bg-red-100 text-red-700 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium text-sm disabled:bg-red-200 disabled:cursor-not-allowed flex items-center justify-center"
-                        >
-                          {leaving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700 mr-2"></div>
-                              Cancelling...
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Cancel Request
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  }
-                  
-                  if (eventFull) {
-                    return (
-                      <button
-                        disabled
-                        className="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg font-medium text-sm cursor-not-allowed"
-                      >
-                        Event Full
-                      </button>
-                    );
-                  }
-                  
-                  return (
-                    <button
-                      onClick={handleParticipate}
-                      disabled={participating}
-                      className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white py-3 px-4 rounded-lg hover:from-[#6BC794] hover:to-[#5AB583] transition-all duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
-                    >
-                      {participating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Requesting...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Request Participation
-                        </>
-                      )}
-                    </button>
-                  );
-                })()}
               </div>
+            )}
 
-              {/* Event Status */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Event Status</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      event.eventStatus === 'active' ? 'bg-green-100 text-green-700' :
-                      event.eventStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {event.eventStatus || 'Active'}
+            {event.organizationId.yearEstablished && (
+              <div className="flex items-start space-x-2">
+                <Calendar className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Established</p>
+                  <p className="text-xs text-gray-600">
+                    {event.organizationId.yearEstablished}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {event.organizationId.email && (
+              <div className="flex items-start space-x-2">
+                <Mail className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Email</p>
+                  <a 
+                    href={`mailto:${event.organizationId.email}`}
+                    className="text-xs text-[#7DD9A6] hover:text-[#6BC794] hover:underline break-all"
+                  >
+                    {event.organizationId.email}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {event.organizationId.contactNumber && (
+              <div className="flex items-start space-x-2">
+                <Phone className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Phone</p>
+                  <a 
+                    href={`tel:${event.organizationId.contactNumber}`}
+                    className="text-xs text-[#7DD9A6] hover:text-[#6BC794] hover:underline"
+                  >
+                    {event.organizationId.contactNumber}
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {event.organizationId.websiteUrl && (
+              <div className="flex items-start space-x-2">
+                <Globe className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Website</p>
+                  <a 
+                    href={event.organizationId.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-[#7DD9A6] hover:text-[#6BC794] hover:underline break-all"
+                  >
+                    Visit Website
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {event.organizationId.focusAreas && event.organizationId.focusAreas.length > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs font-medium text-gray-900 mb-2">Focus Areas</p>
+                <div className="flex flex-wrap gap-1">
+                  {event.organizationId.focusAreas.slice(0, 3).map((area: string, index: number) => (
+                    <span 
+                      key={index}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#E8F5A5]/50 text-gray-700 capitalize"
+                    >
+                      {area.replace('-', ' ')}
                     </span>
-                  </div>
-                  
-                  {event.sponsorshipRequired && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Sponsorship</span>
-                      <span className="text-sm font-medium text-gray-900">
-                        ${event.sponsorshipAmount || 0}
-                      </span>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
+            )}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Fallback for basic organization info */}
+      {(!event.organizationId || typeof event.organizationId !== 'object') && event.organization && (
+        <DetailSection title="About the Organization" icon="🏢">
+          <div className="flex items-start space-x-2">
+            <Building className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-medium text-gray-900">Organization Name</p>
+              <p className="text-xs text-gray-600">{event.organization}</p>
             </div>
           </div>
+        </DetailSection>
+      )}
+
+      {/* Participation Progress */}
+      <DetailSection title="Participation" icon="👥">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-gray-700">
+            <div className="flex items-center">
+              <Users className="h-3 w-3 text-[#7DD9A6] mr-1" />
+              <span className="text-xs font-semibold">
+                {currentParticipants} / {maxParticipants === Infinity ? "∞" : maxParticipants} participants
+              </span>
+            </div>
+            {maxParticipants !== Infinity && (
+              <span className="text-xs font-bold text-[#6BC794]">{progress}%</span>
+            )}
+          </div>
+
+          {/* Progress Bar */}
+          {maxParticipants !== Infinity && (
+            <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  eventFull ? "bg-gradient-to-r from-red-400 to-red-500" : 
+                  progress > 75 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" : 
+                  "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]"
+                }`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+
+          {/* Spots Remaining */}
+          {maxParticipants !== Infinity && !eventFull && (
+            <div className="text-center bg-[#E8F5A5]/30 px-3 py-2 rounded-lg border border-[#D4E7B8]">
+              <p className="text-xs text-gray-700 font-semibold">
+                🎯 <span className="text-[#6BC794]">{maxParticipants - currentParticipants}</span> spots remaining
+              </p>
+            </div>
+          )}
         </div>
+      </DetailSection>
+
+      {/* Participation Actions */}
+      <div className="border-2 border-[#D4E7B8] rounded-lg p-5 space-y-3">
+        {isEventCreator ? (
+          <div className="space-y-2">
+            <button
+              disabled
+              className="w-full bg-gray-100 text-gray-600 py-2.5 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+            >
+              <Building className="h-4 w-4 mr-2" />
+              You Created This Event
+            </button>
+            <p className="text-xs text-center text-gray-500">
+              Event creators cannot participate
+            </p>
+          </div>
+        ) : (() => {
+          const hasRequested = hasRequestedParticipation(event?._id || "");
+          const pendingRequest = getPendingRequestForEvent(event?._id || "");
+          const rejectedRequest = getRejectedRequestForEvent(event?._id || "");
+          const isRejected = hasRejectedRequest(event?._id || "");
+          
+          if (participated) {
+            return (
+              <button
+                disabled
+                className="w-full bg-green-100 text-green-700 py-2.5 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Already Participating
+              </button>
+            );
+          }
+          
+          if (isRejected && rejectedRequest) {
+            return (
+              <div className="space-y-2">
+                <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button
+                      className="w-full bg-red-100 text-red-700 py-2.5 px-4 rounded-lg font-medium text-sm hover:bg-red-200 transition-colors duration-200 flex items-center justify-center"
+                    >
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Participation Rejected
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Participation Request Rejected</DialogTitle>
+                      <DialogDescription>
+                        Your participation request for this event was rejected.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">Rejection Reason:</h4>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <p className="text-gray-700 text-sm">
+                            {rejectedRequest.rejectionReason || "No specific reason provided."}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <DialogClose asChild>
+                          <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                            Close
+                          </button>
+                        </DialogClose>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <button
+                  disabled
+                  className="w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Not Eligible
+                </button>
+              </div>
+            );
+          }
+          
+          if (hasRequested && pendingRequest) {
+            return (
+              <div className="space-y-2">
+                <button
+                  disabled
+                  className="w-full bg-yellow-100 text-yellow-700 py-2.5 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Request Pending
+                </button>
+                <button
+                  onClick={handleCancelRequest}
+                  disabled={leaving}
+                  className="w-full bg-red-100 text-red-700 py-2 px-4 rounded-lg hover:bg-red-200 transition-colors duration-200 font-medium text-sm disabled:bg-red-200 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {leaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700 mr-2"></div>
+                      Cancelling...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Cancel Request
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          }
+          
+          if (eventFull) {
+            return (
+              <button
+                disabled
+                className="w-full bg-red-100 text-red-700 py-2.5 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
+              >
+                Event Full
+              </button>
+            );
+          }
+          
+          return (
+            <button
+              onClick={handleParticipate}
+              disabled={participating}
+              className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white py-2.5 px-4 rounded-lg hover:from-[#6BC794] hover:to-[#5AB583] transition-all duration-200 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md hover:shadow-lg"
+            >
+              {participating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Requesting...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Request Participation
+                </>
+              )}
+            </button>
+          );
+        })()}
       </div>
+
+      {/* Event Status */}
+      <DetailSection title="Event Status" icon="ℹ️">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">Status</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+              event.eventStatus === 'active' ? 'bg-[#E8F5A5] text-gray-700' :
+              event.eventStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {event.eventStatus || 'Active'}
+            </span>
+          </div>
+          
+          {event.sponsorshipRequired && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-600">Sponsorship</span>
+              <span className="text-xs font-medium text-gray-900">
+                ${event.sponsorshipAmount || 0}
+              </span>
+            </div>
+          )}
+        </div>
+      </DetailSection>
     </>
+  );
+
+  return (
+    <DetailPageLayout
+      loading={loading}
+      loadingMessage="Loading event details..."
+      loadingSubtext="Please wait while we fetch the details! 🎉"
+      error={error}
+      errorTitle={error ? "Error" : "Event Not Found"}
+      backButtonText="Back to Events"
+      pageTitle="Volunteer Event"
+      pageSubtitle="Join us and make a difference"
+      coverImage={event.image?.url}
+      coverImageAlt={event.image?.caption || event.title}
+      title={event.title}
+      organizationName={event.organizationId?.name || event.organization || "Organization"}
+      statusBadge={statusBadge}
+      leftColumn={leftColumnContent}
+      rightColumn={rightColumnContent}
+    />
   );
 };
 

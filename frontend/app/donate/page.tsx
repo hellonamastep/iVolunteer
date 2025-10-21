@@ -5,13 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import {
   Share2,
-  DollarSign,
+  IndianRupee,
   Target,
   CheckCircle,
   RefreshCcw,
   TrendingUp,
   Heart,
   Users,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { toast as shadToast } from "@/hooks/use-toast";
 import {
@@ -21,6 +23,10 @@ import {
 import { FundraiserSection } from "@/components/FundraiserSection";
 import Footer from "@/components/Footer";
 import Pagination from "@/components/Pagination";
+import { DonationEventCard } from "@/components/DonationEventCard";
+import StatusBanner from "@/components/StatusBanner";
+import { useAuth } from "@/contexts/auth-context";
+import api from "@/lib/api";
 
 
 // Helper component to highlight matching text
@@ -61,6 +67,7 @@ function DonatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { events, fetchEvents, loading } = useDonationEvent();
+  const { user } = useAuth();
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [highlightedDonationId, setHighlightedDonationId] = useState<
     string | null
@@ -69,12 +76,76 @@ function DonatePageContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFundraiser, setShowFundraiser] = useState(false);
   const [activeSection, setActiveSection] = useState<'campaigns' | 'fundraiser'>('campaigns');
+  const [myDonationEvents, setMyDonationEvents] = useState<any[]>([]);
+  const [loadingMyEvents, setLoadingMyEvents] = useState(false);
+  const campaignsRef = useRef<HTMLDivElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Set to 2 for testing
+  const itemsPerPage = 8;
 
-  const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Banner dismissal state
+  const [dismissedBanners, setDismissedBanners] = useState<{
+    rejectedBanner: boolean;
+    approvedBanner: boolean;
+  }>({
+    rejectedBanner: false,
+    approvedBanner: false,
+  });
+
+  // Load dismissed banners from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('dismissedDonationEventBanners');
+    if (stored) {
+      try {
+        setDismissedBanners(JSON.parse(stored));
+      } catch (e) {
+        console.error('Error parsing dismissed banners:', e);
+      }
+    }
+  }, []);
+
+  // Function to dismiss a banner
+  const dismissBanner = (bannerType: 'rejectedBanner' | 'approvedBanner') => {
+    const newDismissedState = {
+      ...dismissedBanners,
+      [bannerType]: true,
+    };
+    setDismissedBanners(newDismissedState);
+    localStorage.setItem('dismissedDonationEventBanners', JSON.stringify(newDismissedState));
+  };
+
+  // Navigate to home page Ngoeventtable section
+  const navigateToNgoTable = () => {
+    router.push('/?scrollTo=ngoeventtable');
+  };
+
+  // Fetch NGO's own donation events
+  const fetchMyDonationEvents = async () => {
+    if (user?.role !== 'ngo') return;
+    
+    setLoadingMyEvents(true);
+    try {
+      const token = localStorage.getItem("auth-token");
+      if (!token) return;
+
+      const res = await api.get("/v1/donation-event/organization/events", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      setMyDonationEvents(res.data.events || []);
+    } catch (err) {
+      console.error("Failed to fetch my donation events:", err);
+    } finally {
+      setLoadingMyEvents(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === 'ngo') {
+      fetchMyDonationEvents();
+    }
+  }, [user]);  const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetchEvents();
@@ -189,6 +260,33 @@ function DonatePageContent() {
     setCurrentPage(1);
   }, [filter, searchQuery]);
 
+  // Calculate banner stats for NGO's own events
+  const myEventStats = useMemo(() => {
+    if (user?.role !== 'ngo' || !myDonationEvents.length) {
+      return { pending: [], rejected: [], approved: [], openCount: 0, ongoingCount: 0, fullCount: 0 };
+    }
+
+    const pending = myDonationEvents.filter((e: any) => e.approvalStatus === "pending");
+    const rejected = myDonationEvents.filter((e: any) => e.approvalStatus === "rejected");
+    const approved = myDonationEvents.filter((e: any) => e.approvalStatus === "approved");
+    
+    const openCount = approved.filter((e: any) => {
+      const isGoalAchieved = e.collectedAmount >= e.goalAmount;
+      const isPastEndDate = new Date(e.endDate) < new Date();
+      return !isGoalAchieved && !isPastEndDate;
+    }).length;
+
+    const ongoingCount = approved.filter((e: any) => {
+      const isGoalAchieved = e.collectedAmount >= e.goalAmount;
+      const isPastEndDate = new Date(e.endDate) < new Date();
+      return !isGoalAchieved && isPastEndDate;
+    }).length;
+
+    const fullCount = approved.filter((e: any) => e.collectedAmount >= e.goalAmount).length;
+
+    return { pending, rejected, approved, openCount, ongoingCount, fullCount };
+  }, [myDonationEvents, user]);
+
   const eventCounts = useMemo(() => {
     const completed = events.filter(
       (e) => e.collectedAmount >= e.goalAmount
@@ -297,7 +395,7 @@ function DonatePageContent() {
         `}</style>
 
         {/* Animated Video Mascots - Positioned at edges to avoid content overlap */}
-        <div className="fixed top-24 right-4 lg:right-8 z-[5] pointer-events-none">
+        <div className="fixed top-24 right-4 lg:right-8 z-[5] pointer-events-none hidden md:block">
           <img
             src="/mascots/video_mascots/mascot_holdingmoney_video.gif"
             alt="holding money mascot"
@@ -321,7 +419,7 @@ function DonatePageContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Header */}
-          <div className="mb-6">
+          <div ref={campaignsRef} className="mb-6">
             <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center">
                 <Heart className="w-6 h-6 text-white" />
@@ -333,6 +431,86 @@ function DonatePageContent() {
               </div>
             </div>
           </div>
+
+          {/* Status Banners for NGOs */}
+          {user?.role === 'ngo' && !loadingMyEvents && (
+            <>
+              {myEventStats.pending.length > 0 && (
+                <StatusBanner
+                  type="pending"
+                  icon={AlertCircle}
+                  count={myEventStats.pending.length}
+                  title={`${myEventStats.pending.length} Donation Campaign${myEventStats.pending.length > 1 ? 's' : ''} Awaiting Approval`}
+                  message={
+                    <>
+                      You have {myEventStats.pending.length} donation campaign{myEventStats.pending.length > 1 ? 's' : ''} pending admin approval. 
+                      {myEventStats.pending.length > 1 ? ' They' : ' It'} will appear here once approved.
+                      <span className="font-semibold ml-1 underline">Click for more details.</span>
+                    </>
+                  }
+                  onClick={navigateToNgoTable}
+                />
+              )}
+
+              {myEventStats.rejected.length > 0 && (
+                <StatusBanner
+                  type="rejected"
+                  icon={XCircle}
+                  count={myEventStats.rejected.length}
+                  title={`${myEventStats.rejected.length} Donation Campaign${myEventStats.rejected.length > 1 ? 's' : ''} Rejected`}
+                  message={
+                    <div className="space-y-2">
+                      {myEventStats.rejected.map((event: any, index: number) => (
+                        <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
+                          <p className="font-medium leading-relaxed">
+                            "{event.title}" was rejected by admin
+                            {event.rejectionReason && (
+                              <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                      <p className="font-semibold mt-3 underline">Review your rejected campaigns.</p>
+                    </div>
+                  }
+                  onClick={navigateToNgoTable}
+                  onDismiss={() => dismissBanner('rejectedBanner')}
+                  isDismissed={dismissedBanners.rejectedBanner}
+                />
+              )}
+
+              {myEventStats.approved.length > 0 && (
+                <StatusBanner
+                  type="approved-donation"
+                  icon={Heart}
+                  count={myEventStats.approved.length}
+                  title={`${myEventStats.approved.length} Donation Campaign${myEventStats.approved.length > 1 ? 's' : ''} Active`}
+                  message={
+                    <>
+                      Your donation campaigns status: 
+                      {myEventStats.openCount > 0 && (
+                        <span className="font-semibold ml-1">{myEventStats.openCount} Open</span>
+                      )}
+                      {myEventStats.ongoingCount > 0 && (
+                        <span className="font-semibold ml-1">
+                          {myEventStats.openCount > 0 && ', '}{myEventStats.ongoingCount} Ongoing
+                        </span>
+                      )}
+                      {myEventStats.fullCount > 0 && (
+                        <span className="font-semibold ml-1">
+                          {(myEventStats.openCount > 0 || myEventStats.ongoingCount > 0) && ', '}{myEventStats.fullCount} Goal Achieved
+                        </span>
+                      )}
+                      <span className="font-semibold ml-1 underline">. Click to view.</span>
+                    </>
+                  }
+                  onClick={navigateToNgoTable}
+                  onDismiss={() => dismissBanner('approvedBanner')}
+                  isDismissed={dismissedBanners.approvedBanner}
+                />
+              )}
+            </>
+          )}
 
           {/* Stats Section */}
           <div className="hidden">
@@ -398,7 +576,7 @@ function DonatePageContent() {
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-white" />
+                  <IndianRupee className="w-4 h-4 text-white" />
                   <span className="text-white text-xs font-medium">COL</span>
                 </div>
               </div>
@@ -597,163 +775,30 @@ function DonatePageContent() {
             </div>
           ) : (
             <div>
-              <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3 w-full">
-                {currentEvents.map((event: DonationEvent, index) => {
-                  const progressPercentage = Math.min(
-                    (event.collectedAmount / event.goalAmount) * 100,
-                    100
-                  );
-                  const isCompleted = event.collectedAmount >= event.goalAmount;
-
-                  return (
-                    <div
-                      key={event._id}
-                      ref={(el) => {
-                        if (el && event._id) {
-                          donationRefs.current.set(event._id, el);
-                        } else if (event._id) {
-                          donationRefs.current.delete(event._id);
-                        }
-                      }}
-                      className={`group relative bg-white rounded-3xl border-2 border-teal-100 hover:border-cyan-300 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm overflow-hidden p-5 cursor-pointer ${
-                        highlightedDonationId === event._id
-                          ? "ring-4 ring-teal-500 ring-offset-2 shadow-2xl"
-                          : ""
-                      }`}
-                      onClick={() => router.push(`/donate/${event._id}`)}
-                      style={{
-                        animationDelay: `${index * 0.1}s`,
-                      }}
-                    >
-                      {/* Background Glow Effect */}
-                      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-teal-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                      {/* Status Ribbon */}
-                      {isCompleted && (
-                        <div className="absolute top-4 right-4 bg-gradient-to-r from-green-400 to-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 fill-current" />
-                          Goal Achieved
-                        </div>
-                      )}
-
-                      {/* Content Layout */}
-                      <div className="relative z-10">
-                        {/* Category/NGO Badge */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-3 h-3 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full shadow-md"></div>
-                          <span className="text-xs font-semibold text-teal-600 bg-teal-50/80 px-3 py-1.5 rounded-2xl border border-teal-200/60 backdrop-blur-sm">
-                            <HighlightText
-                              text={event.ngo?.name || "Community NGO"}
-                              highlight={searchQuery}
-                            />
-                          </span>
-                        </div>
-
-                        {/* Title and Description */}
-                        <div className="mb-4">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-500 leading-tight mb-2">
-                            <HighlightText
-                              text={event.title}
-                              highlight={searchQuery}
-                            />
-                          </h3>
-                          <p className="text-gray-600 leading-relaxed text-sm line-clamp-2">
-                            <HighlightText
-                              text={event.description || ""}
-                              highlight={searchQuery}
-                            />
-                          </p>
-                        </div>
-
-                        {/* Stats Grid */}
-                        <div className="grid gap-2.5 mb-4 grid-cols-2">
-                          <div className="flex items-center gap-2.5 p-3 bg-teal-50/80 rounded-xl border border-teal-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-100 shadow-sm">
-                              <Target className="w-5 h-5 text-teal-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Goal
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatCurrency(event.goalAmount)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-cyan-50/80 rounded-xl border border-cyan-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-cyan-100 shadow-sm">
-                              <DollarSign className="w-5 h-5 text-cyan-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Collected
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {formatCurrency(event.collectedAmount)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-emerald-50/80 rounded-xl border border-emerald-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 shadow-sm">
-                              <TrendingUp className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Progress
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {progressPercentage.toFixed(1)}%
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2.5 p-3 bg-orange-50/80 rounded-xl border border-orange-100/80 backdrop-blur-sm hover:shadow-md transition-all duration-300">
-                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-100 shadow-sm">
-                              <Users className="w-5 h-5 text-orange-600" />
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
-                                Status
-                              </p>
-                              <p className="text-xs font-semibold text-gray-900">
-                                {isCompleted ? "Completed" : event.status || "Active"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="pt-4 border-t border-teal-100/80 flex gap-2.5">
-                          {/* View Details Button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/donate/${event._id}`);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 transition-all duration-500 shadow-lg hover:shadow-xl hover:scale-105"
-                          >
-                            <Heart className="w-4 h-4" />
-                            View & Donate
-                          </button>
-                          
-                          {/* Share Button */}
-                          <button
-                            onClick={(e) => handleShare(event, e)}
-                            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
-                            title="Share donation event"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Hover Effect Border */}
-                      <div className="absolute inset-0 rounded-3xl border-3 border-transparent bg-gradient-to-br from-teal-200/50 to-cyan-200/30 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none"></div>
-                    </div>
-                  );
-                })}
+              <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 w-full">
+                {currentEvents.map((event: DonationEvent, index) => (
+                  <div
+                    key={event._id}
+                    className="max-w-sm mx-auto w-full"
+                    ref={(el) => {
+                      if (el && event._id) {
+                        donationRefs.current.set(event._id, el);
+                      } else if (event._id) {
+                        donationRefs.current.delete(event._id);
+                      }
+                    }}
+                  >
+                    <DonationEventCard
+                      event={event}
+                      onCardClick={(id) => router.push(`/donate/${id}`)}
+                      onShare={handleShare}
+                      isHighlighted={highlightedDonationId === event._id}
+                      animationIndex={index}
+                      searchQuery={searchQuery}
+                      HighlightText={HighlightText}
+                    />
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}
