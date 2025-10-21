@@ -78,9 +78,9 @@ const Dailyquote = () => {
             </p>
           </div>
 
-          <p className="text-[#6B7280] mb-5 text-sm">
+          {/* <p className="text-[#6B7280] mb-5 text-sm">
             Collect your daily bonus of 10 coins for motivation! 🌟
-          </p>
+          </p> */}
 
           {/* {!dailyRewardClaimed && user ? (
             <motion.button
@@ -126,8 +126,8 @@ const Dailyquote = () => {
           <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={handleCollect}
-              disabled={isClaimingReward}
+              // onClick={handleCollect}
+              // disabled={isClaimingReward}
               className="bg-[#4FC3DC] text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               <Sparkles className="w-4 h-4" />

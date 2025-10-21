@@ -184,17 +184,36 @@ export function Header() {
         <div className="md:hidden flex items-center gap-2">
           {/* Notification Bell - Only show for logged in users */}
           {user && (
-            <div className="relative">
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="rounded-lg p-2 hover:bg-gray-100 transition-colors duration-200 relative"
-                aria-label="Notifications"
+            <>
+              <div className="relative">
+                <button
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className="rounded-lg p-2 hover:bg-gray-100 transition-colors duration-200 relative"
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5 text-gray-700" />
+                  {/* Notification badge */}
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+              </div>
+
+              {/* Profile Icon */}
+              <Link
+                href="/profile"
+                className="flex-shrink-0 rounded-lg p-1 hover:bg-gray-100 transition-colors duration-200"
+                title="View Profile"
               >
-                <Bell className="h-5 w-5 text-gray-700" />
-                {/* Notification badge */}
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-            </div>
+                <Avatar className="w-8 h-8 shadow-sm ring-2 ring-gray-100">
+                  <AvatarImage
+                    src={(user as any).profilePicture}
+                    alt={user.name}
+                  />
+                  <AvatarFallback className="text-xs font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                    <User className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </>
           )}
 
           {/* Menu button */}
