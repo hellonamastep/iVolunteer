@@ -19,13 +19,13 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logo } from "@/components/logo";
 // import RecentActivities from "@/components/RecentActivities";
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [showStep, setShowStep] = useState(true);
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
@@ -37,14 +37,6 @@ export function Header() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShowStep(prev => !prev);
-    }, 3000); // toggle every 1 second
-
-    return () => clearInterval(interval);
   }, []);
 
   const baseNavItems = [
@@ -69,34 +61,7 @@ export function Header() {
     >
       <div className="mx-auto flex w-full items-center justify-between px-3 sm:px-4 md:px-6 py-2.5 md:py-3">
         {/* Logo */}
-        <div className="flex flex-col">
-          <div className="h-5 flex gap-1 justify-center items-center relative">
-            <img src="/images/NAMAS.png" alt="NAMAS" className="h-4" />
-
-            <div className="relative w-4 h-6">
-            {/* STEP.png */}
-            <img
-              src="/images/STEP.png"
-              alt="STEP"
-              className={`h-8 absolute transition-opacity duration-1000 ${showStep ? "opacity-100" : "opacity-0"
-                }`}
-              style={{ bottom: '0.2px', left: "50%", transform: "translateX(-50%)" }}
-            />
-
-            {/* T.png */}
-            <img
-              src="/images/T.png"
-              alt="T"
-              className={`h-4 absolute transition-opacity duration-1000 ${showStep ? "opacity-0" : "opacity-100"
-                }`}
-              style={{ bottom: '4px', left: "50%", transform: "translateX(-50%)" }}
-            />
-            </div>
-            <img src="/images/EP.png" alt="EP" className="h-3.5" />
-          </div>
-
-          <img src="/images/WAVE.png" alt="WAVE" className="h-4" />
-        </div>
+        <Logo />
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 flex-1 justify-center">
