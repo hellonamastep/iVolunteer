@@ -205,6 +205,10 @@ const eventSchema = new mongoose.Schema(
       enum: ["none", "pending", "accepted", "rejected"],
       default: "none",
     },
+    completionRequestedAt: {
+      type: Date,
+      default: null,
+    },
 
     sponsorshipRequired: {
       type: Boolean,

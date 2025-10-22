@@ -367,6 +367,53 @@ const checkEmail = asyncHandler(async (req, res) => {
   });
 });
 
+// Get nearby users (by railway station for volunteers, by city for NGOs/corporates)
+const getNearbyUsers = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  
+  if (!userId) {
+    throw new ApiError(401, "User not authenticated");
+  }
+
+  const currentUser = await authService.getUser(userId);
+  
+  let nearbyUsers;
+  
+  // For volunteers (role='user'), filter by railway station
+  // For NGOs, corporates, and admins, filter by city
+  if (currentUser.role === 'user') {
+    // Volunteers: filter by railway station
+    if (!currentUser.nearestRailwayStation) {
+      return res.status(200).json(
+        new ApiResponse(200, { users: [] }, "No railway station set for your profile")
+      );
+    }
+    
+    nearbyUsers = await authService.getNearbyUsersByStation(
+      userId,
+      currentUser.nearestRailwayStation
+    );
+  } else {
+    // NGOs, Corporates, Admins: filter by city
+    const userCity = currentUser.city || currentUser.address?.city;
+    
+    if (!userCity) {
+      return res.status(200).json(
+        new ApiResponse(200, { users: [] }, "No city information available")
+      );
+    }
+    
+    nearbyUsers = await authService.getNearbyUsersByCity(
+      userId,
+      userCity
+    );
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, { users: nearbyUsers }, "Nearby users fetched successfully")
+  );
+});
+
 export const authController = {
   register,
   login,
@@ -382,4 +429,5 @@ export const authController = {
   deleteAccount,
   googleLogin,
   checkEmail,
+  getNearbyUsers,
 };

@@ -487,6 +487,39 @@ const checkEmailExists = async (email) => {
   return !!user; // Returns true if user exists, false otherwise
 };
 
+// Get nearby users by railway station (for volunteers)
+const getNearbyUsersByStation = async (userId, railwayStation) => {
+  // Find users with the same railway station (case-insensitive)
+  // Since nearestRailwayStation is stored in lowercase in the schema, we just need to compare
+  const users = await User.find({
+    _id: { $ne: userId }, // Exclude current user
+    role: 'user', // Only volunteers
+    nearestRailwayStation: railwayStation.toLowerCase().trim(),
+  })
+  .select('name email profilePicture city profession nearestRailwayStation createdAt')
+  .sort({ createdAt: -1 }) // Most recent users first
+  .limit(50); // Limit to 50 users
+
+  return users;
+};
+
+// Get nearby users by city (for NGOs, corporates, admins)
+const getNearbyUsersByCity = async (userId, city) => {
+  // Find users in the same city (case-insensitive)
+  const users = await User.find({
+    _id: { $ne: userId }, // Exclude current user
+    $or: [
+      { city: new RegExp(`^${city.trim()}$`, 'i') }, // For volunteers
+      { 'address.city': new RegExp(`^${city.trim()}$`, 'i') } // For NGOs/corporates
+    ]
+  })
+  .select('name email profilePicture city address.city profession organizationType nearestRailwayStation createdAt role')
+  .sort({ createdAt: -1 }) // Most recent users first
+  .limit(50); // Limit to 50 users
+
+  return users;
+};
+
 export const authService = {
   register,
   login,
@@ -499,4 +532,6 @@ export const authService = {
   deleteAccount,
   googleLogin,
   checkEmailExists,
+  getNearbyUsersByStation,
+  getNearbyUsersByCity,
 };

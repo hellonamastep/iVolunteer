@@ -42,6 +42,14 @@ eventRouter.get(
   ngoEventController.getEventsByOrganization
 );
 
+// Get archived events for current NGO
+eventRouter.get(
+  "/archived-events",
+  authMiddleware,
+  authorizeRole("ngo"),
+  ngoEventController.getArchivedEvents
+);
+
 // Participation-related routes
 eventRouter.post(
   "/participate/:eventId",

@@ -34,6 +34,7 @@ import Copeventdash from "@/components/Copeventdash";
 import Managecopeventcta from "@/components/Managecopeventcta";
 import { PendingParticipationRequests } from "@/components/PendingParticipationRequests";
 import RecentActivities from "@/components/RecentActivities";
+import ArchivedEventsCTA from "@/components/ArchivedEventsCTA";
 
 // Dashboard components
 function AdminDashboard() {
@@ -288,6 +289,11 @@ function NGODashboard() {
           <div className="flex md:flex-row flex-col w-full px-4 md:px-8 gap-6 mt-8 max-w-[1200px] mx-auto">
             <Eventbutton />
             <Donationeventbutton />
+          </div>
+
+          {/* Archived Events CTA */}
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-6">
+            <ArchivedEventsCTA />
           </div>
     
       <div ref={ngoEventTableRef}>

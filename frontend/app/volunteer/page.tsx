@@ -208,7 +208,27 @@ const AvailableEventsContent: React.FC = () => {
 
   // Filter events based on active tab, filter type, and search query
   const filteredEvents = useMemo(() => {
+    console.log('[FRONTEND FILTER] Total events:', events.length);
+    
+    // Log events with completion status
+    const completionEvents = events.filter(e => (e as any).completionStatus === 'pending' || (e as any).completionStatus === 'accepted');
+    if (completionEvents.length > 0) {
+      console.log('[FRONTEND FILTER] Events with completion status:', completionEvents.map(e => ({
+        title: e.title,
+        completionStatus: (e as any).completionStatus,
+        completionRequestedAt: (e as any).completionRequestedAt,
+        isEventOver: (e as any).isEventOver,
+        shouldHide: (e as any).shouldHide
+      })));
+    }
+    
     return events.filter(event => {
+      // Hide events that are marked for hiding (30 minutes after completion request)
+      if ((event as any).shouldHide) {
+        console.log(`[FRONTEND FILTER] ✓ Hiding event: "${event.title}" (shouldHide: true)`);
+        return false;
+      }
+      
       const eventType = event.eventType?.toLowerCase() || 'community';
       
       // For joined filter, show all joined events regardless of tab
@@ -467,6 +487,16 @@ const AvailableEventsContent: React.FC = () => {
         ))
     );
   };
+
+  // Log to check if any event has shouldHide: true
+  useEffect(() => {
+    if (events && events.length > 0) {
+      const hiddenEvents = events.filter((e: any) => e.shouldHide);
+      if (hiddenEvents.length > 0) {
+        console.log('Events with shouldHide:', hiddenEvents.map(e => ({ id: e._id, title: e.title, shouldHide: e.shouldHide, completionRequestedAt: e.completionRequestedAt })));
+      }
+    }
+  }, [events]);
 
   if (loading) {
     return (
@@ -1114,6 +1144,20 @@ const AvailableEventsContent: React.FC = () => {
                 <div className="px-4 pb-4 relative">
                   <div className="flex items-center gap-2">
                     {(() => {
+                      // Check if event is over (completion request sent)
+                      const isEventOver = (event as any).isEventOver;
+                      
+                      if (isEventOver) {
+                        return (
+                          <button
+                            disabled
+                            className="flex-1 bg-orange-500 text-white py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
+                          >
+                            🏁 Event Over
+                          </button>
+                        );
+                      }
+                      
                       const hasRequested = hasRequestedParticipation(event._id || "");
                       const pendingRequest = getPendingRequestForEvent(event._id || "");
                       const isRejected = hasRejectedRequest(event._id || "");
@@ -1199,14 +1243,13 @@ const AvailableEventsContent: React.FC = () => {
                       );
                     })()}
                     
-                    {/* Info Button */}
+                    {/* Share Button */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all flex-shrink-0"
+                      onClick={(e) => handleShare(event, e)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+                      title="Share event"
                     >
-                      <span className="text-gray-600 text-sm">ℹ️</span>
+                      <Share2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

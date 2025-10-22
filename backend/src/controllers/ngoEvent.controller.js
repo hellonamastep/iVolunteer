@@ -484,6 +484,19 @@ const approveEventWithScoring = asyncHandler(async (req, res) => {
   });
 });
 
+// Get archived events for current NGO
+const getArchivedEvents = asyncHandler(async (req, res) => {
+  const organizationId = req.user._id;
+
+  const events = await ngoEventService.getArchivedEvents(organizationId);
+
+  res.status(200).json({
+    success: true,
+    events,
+    count: events.length,
+  });
+});
+
 
 
 
@@ -510,4 +523,5 @@ export const ngoEventController = {
     getCompletionRequestHistory,
   getCompletedEventsByNgo,
   approveEventWithScoring,
+  getArchivedEvents,
 };

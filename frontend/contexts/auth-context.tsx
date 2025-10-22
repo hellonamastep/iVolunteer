@@ -349,7 +349,7 @@ const mapUser = (u: any): User => ({
   createdAt: new Date().toISOString(),
   profilePicture: u.profilePicture ?? undefined,
   cloudinaryPublicId: u.cloudinaryPublicId ?? undefined,
-  city: u.city ?? undefined,
+  city: u.city ?? u.address?.city ?? undefined,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

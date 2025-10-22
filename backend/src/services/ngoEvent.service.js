@@ -93,7 +93,6 @@ const getAllPublishedEvents = async (locationFilter = null) => {
     location: e.location,
     date: e.date 
   })));
-  console.log('[SERVICE] ====================================\n');
   
   if (eventsToMigrate.length > 0) {
     console.log(
@@ -112,13 +111,82 @@ const getAllPublishedEvents = async (locationFilter = null) => {
     }
     
     // Return fresh data after migration with populated participants and NGO details
-    return await Event.find(query)
+    const migratedEvents = await Event.find(query)
       .populate('participants', '_id name email')
       .populate('organizationId', 'name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize')
       .sort({ date: 1 });
+    
+    return filterEventsForDisplay(migratedEvents);
   }
   
-  return events;
+  console.log('[SERVICE] ====================================\n');
+  
+  return filterEventsForDisplay(events);
+};
+
+// Helper function to filter out events that should be hidden after completion request
+const filterEventsForDisplay = (events) => {
+  const now = new Date();
+  const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+  
+  
+  console.log('[FILTER] Starting filterEventsForDisplay');
+  console.log('[FILTER] Current time:', now);
+  console.log('[FILTER] Time threshold (ms):', THIRTY_MINUTES_MS);
+  
+  return events.map(event => {
+    // Check if event has completion request pending or accepted
+    if (event.completionStatus === 'pending' || event.completionStatus === 'accepted') {
+      const eventObj = event.toObject();
+      eventObj.isEventOver = true; // Mark as event over
+      
+      console.log(`[FILTER] Event "${event.title}" has completionStatus: ${event.completionStatus}`);
+      console.log(`[FILTER] completionRequestedAt:`, event.completionRequestedAt);
+      
+      // Check if 30 minutes have passed since completion request
+      if (event.completionRequestedAt) {
+        const completionTime = new Date(event.completionRequestedAt);
+        const timeSinceCompletion = now - completionTime;
+        
+        console.log(`[FILTER] Completion time: ${completionTime}`);
+        console.log(`[FILTER] Time since completion (ms): ${timeSinceCompletion}`);
+        console.log(`[FILTER] Should hide? ${timeSinceCompletion >= THIRTY_MINUTES_MS}`);
+        
+        if (timeSinceCompletion >= THIRTY_MINUTES_MS) {
+          eventObj.shouldHide = true; // Mark for frontend to hide
+          console.log(`[FILTER] ✓ Event "${event.title}" marked as shouldHide: true`);
+        } else {
+          console.log(`[FILTER] Event "${event.title}" NOT hiding yet, ${THIRTY_MINUTES_MS - timeSinceCompletion}ms remaining`);
+        }
+      } else {
+        // Fallback: If completionRequestedAt is missing (for events accepted before this field was added),
+        // use updatedAt as an approximation
+        console.log(`[FILTER] ⚠️ Event "${event.title}" has no completionRequestedAt timestamp!`);
+        
+        if (event.updatedAt) {
+          const updateTime = new Date(event.updatedAt);
+          const timeSinceUpdate = now - updateTime;
+          
+          console.log(`[FILTER] Using updatedAt as fallback: ${updateTime}`);
+          console.log(`[FILTER] Time since update (ms): ${timeSinceUpdate}`);
+          console.log(`[FILTER] Should hide? ${timeSinceUpdate >= THIRTY_MINUTES_MS}`);
+          
+          if (timeSinceUpdate >= THIRTY_MINUTES_MS) {
+            eventObj.shouldHide = true;
+            console.log(`[FILTER] ✓ Event "${event.title}" marked as shouldHide: true (using updatedAt fallback)`);
+          } else {
+            console.log(`[FILTER] Event "${event.title}" NOT hiding yet (fallback), ${THIRTY_MINUTES_MS - timeSinceUpdate}ms remaining`);
+          }
+        } else {
+          console.log(`[FILTER] ⚠️ Event "${event.title}" has no updatedAt either, hiding immediately`);
+          eventObj.shouldHide = true; // Hide immediately if no timestamp available
+        }
+      }
+      
+      return eventObj;
+    }
+    return event;
+  });
 };
 
 // Get approved events that require sponsorship (use a real field)
@@ -396,6 +464,7 @@ const requestEventCompletion = async (eventId, organizationId, proofImage) => {
   // Only save proof and mark as pending
   event.completionProof = proofImage; // { url, caption }
   event.completionStatus = "pending"; // pending admin approval
+  event.completionRequestedAt = new Date(); // Track when completion was requested
 
   await event.save();
   return event;
@@ -530,6 +599,40 @@ const approveEventWithScoring = async (
   return event;
 };
 
+// Get archived events for an organization (events that should be hidden from main list)
+const getArchivedEvents = async (organizationId) => {
+  const now = new Date();
+  const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+  // Find events that are completed/accepted and past the 30-minute threshold
+  const events = await Event.find({
+    organizationId,
+    status: "approved",
+    $or: [
+      { completionStatus: "pending" },
+      { completionStatus: "accepted" }
+    ]
+  })
+    .populate("organizationId", "name email organizationType")
+    .populate("participants", "_id name email")
+    .sort({ completionRequestedAt: -1, updatedAt: -1 });
+
+  // Filter events that should be archived (30+ minutes since completion request)
+  const archivedEvents = events.filter(event => {
+    if (event.completionRequestedAt) {
+      const timeSinceCompletion = now - new Date(event.completionRequestedAt);
+      return timeSinceCompletion >= THIRTY_MINUTES_MS;
+    } else if (event.updatedAt) {
+      // Fallback to updatedAt for events without completionRequestedAt
+      const timeSinceUpdate = now - new Date(event.updatedAt);
+      return timeSinceUpdate >= THIRTY_MINUTES_MS;
+    }
+    return true; // Archive events with no timestamp
+  });
+
+  return archivedEvents;
+};
+
 
 
 export const ngoEventService = {
@@ -554,4 +657,5 @@ export const ngoEventService = {
   getCompletedEventsByNgo,
 
   approveEventWithScoring,
+  getArchivedEvents,
 };
