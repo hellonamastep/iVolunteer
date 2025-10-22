@@ -45,7 +45,7 @@ app.use(
 );
 
 
-const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app","https://namastep-dlv8fosc4-namasteps-projects.vercel.app","https://namastep-g7cstmtg8-namasteps-projects.vercel.app"];
+const allowedOrigins = ["http://localhost:3000","https://namastep.vercel.app","https://namastep-dlv8fosc4-namasteps-projects.vercel.app","https://namastep-g7cstmtg8-namasteps-projects.vercel.app","https://www.namastep.com/","https://www.namastep.com"];
 
 const corsOptions = {
   origin: (origin, callback) => {
