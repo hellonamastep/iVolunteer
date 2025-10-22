@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./auth-context";
 import api from "@/lib/api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.127.114.186:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.namastep.com/api';
 
 interface Message {
   _id: string;
