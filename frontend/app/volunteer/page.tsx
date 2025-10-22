@@ -168,8 +168,8 @@ const AvailableEventsContent: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    console.log('[Volunteer Page] showAllEvents:', showAllEvents);
-    console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
+    // console.log('[Volunteer Page] showAllEvents:', showAllEvents);
+    // console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
     fetchAvailableEvents(showAllEvents);
   }, [showAllEvents]);
 

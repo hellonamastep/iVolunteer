@@ -241,7 +241,7 @@ const AdminCorporateEventsPage = () => {
                 <div className="h-48 bg-gradient-to-br from-emerald-500 to-green-600 relative overflow-hidden">
                   {event.image ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://namastep-irod.onrender.com'}/${event.image}`}
+                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'http://13.127.114.186:5000'}/${event.image}`}
                       alt={event.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://namastep-irod.onrender.com/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://13.127.114.186:5000/api';
 const API_HOST = API_BASE.replace(/\/api$/, '');
 
 const api = axios.create({
