@@ -1,13 +1,14 @@
 import React from 'react';
-import { Calendar, MapPin, Users, CheckCircle, UserPlus } from 'lucide-react';
+import { Calendar, MapPin, Users, CheckCircle, UserPlus, Info } from 'lucide-react';
 
-interface VolunteerEvent {
-  _id: string;
+ interface VolunteerEvent {
+  _id?: string;
   title: string;
   description: string;
   date?: string;
   location?: string;
-  eventType?: 'virtual' | 'in-person' | 'community';
+  // allow string to accept values from API without strict union
+  eventType?: string;
   participants?: any[];
   maxParticipants?: number;
   image?: {
@@ -27,6 +28,8 @@ interface VolunteerEventCardProps {
   animationIndex?: number;
   searchQuery?: string;
   HighlightText?: React.FC<{ text: string; highlight: string }>;
+  onParticipate?: (id: string) => void;
+  onShare?: (event: any, e: React.MouseEvent) => void;
 }
 
 export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
@@ -38,6 +41,8 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
   animationIndex = 0,
   searchQuery = '',
   HighlightText,
+  onParticipate,
+  onShare,
 }) => {
   const currentParticipants = Array.isArray(event.participants)
     ? event.participants.length
@@ -66,7 +71,7 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
 
   return (
     <div
-      onClick={() => onCardClick(event._id)}
+      onClick={() => onCardClick(event._id!)}
       className={`group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 ${
         isUserParticipating ? "ring-2 ring-teal-400" : ""
       } ${
@@ -103,7 +108,7 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
         )}
         
         {/* Points Badge */}
-        <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+        <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1 z-10">
           ⚡ 100
         </div>
         
@@ -112,24 +117,27 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
           onClick={(e) => {
             e.stopPropagation();
           }}
-          className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+          className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-10"
         >
           <span className="text-gray-600">☆</span>
         </button>
         
         {/* Event Type Badge on Image */}
         {event.eventType && (
-          <div className="absolute bottom-3 left-3">
+          <div className="absolute bottom-3 left-3 z-10">
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-lg ${
               event.eventType === 'virtual' 
                 ? 'bg-cyan-500 text-white' 
                 : event.eventType === 'in-person'
                 ? 'bg-emerald-500 text-white'
+                : event.eventType === 'special'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
                 : 'bg-purple-500 text-white'
             }`}>
               {event.eventType === 'virtual' && '💻 Virtual'}
               {event.eventType === 'in-person' && '📍 In-Person'}
               {event.eventType === 'community' && '🌍 Community'}
+              {event.eventType === 'special' && '✨ Special'}
             </span>
           </div>
         )}
@@ -137,10 +145,22 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
 
       {/* Event Content */}
       <div className="p-4">
-        {/* Event Title */}
-        <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-teal-600 transition-colors">
-          {renderText(event.title)}
-        </h3>
+        {/* Event Title with Info Icon */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <h3 className="flex-1 text-base font-bold text-gray-900 line-clamp-2 group-hover:text-teal-600 transition-colors">
+            {renderText(event.title)}
+          </h3>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCardClick(event._id!);
+            }}
+            className="flex-shrink-0 bg-teal-50 hover:bg-teal-100 text-teal-600 p-1.5 rounded-full transition-all hover:scale-110"
+            title="View Event Details"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+        </div>
         
         {/* Event Description */}
         <p className="text-xs text-gray-600 mb-3 line-clamp-2">
@@ -170,16 +190,7 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
               {currentParticipants}/{maxParticipants === Infinity ? '∞' : maxParticipants}
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-            <div
-              className={`h-full transition-all duration-500 ${
-                isEventFull ? 'bg-red-500' : 'bg-gradient-to-r from-teal-400 to-cyan-500'
-              }`}
-              style={{
-                width: `${Math.min((currentParticipants / (maxParticipants === Infinity ? currentParticipants + 10 : maxParticipants)) * 100, 100)}%`,
-              }}
-            />
-          </div>
+          
         </div>
 
         {/* Join/Status Button */}
@@ -194,8 +205,31 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
               <UserPlus className="h-3.5 w-3.5" />
               Event Full
             </div>
+          ) : onParticipate ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onParticipate(event._id!); }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 transition-all shadow-md hover:shadow-lg"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Join
+              </button>
+              {onShare && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onShare(event, e); }}
+                  className="p-2 rounded-lg bg-teal-50 text-teal-600"
+                  title="Share event"
+                >
+                  {/* lightweight share icon */}
+                  <span>🔗</span>
+                </button>
+              )}
+            </div>
           ) : (
-            <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 transition-all shadow-md hover:shadow-lg">
+            <button
+              onClick={(e) => { e.stopPropagation(); onCardClick(event._id!); }}
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-teal-500 to-cyan-600 text-white hover:from-teal-600 hover:to-cyan-700 transition-all shadow-md hover:shadow-lg"
+            >
               <UserPlus className="h-3.5 w-3.5" />
               View Details
             </button>

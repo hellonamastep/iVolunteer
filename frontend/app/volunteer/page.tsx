@@ -26,6 +26,7 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
+import { VolunteerEventCard } from "@/components/VolunteerEventCard";
 import { toast } from "@/hooks/use-toast";
 import Pagination from "@/components/Pagination";
 import StatusBanner from "@/components/StatusBanner";
@@ -80,6 +81,9 @@ const AvailableEventsContent: React.FC = () => {
   const [showAllEvents, setShowAllEvents] = useState(true); // Changed from: !user
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSpecialEvents, setShowSpecialEvents] = useState(false);
   
@@ -100,6 +104,34 @@ const AvailableEventsContent: React.FC = () => {
     rejectedBanner: false,
     approvedBanner: false,
   });
+
+  // Close mobile menu on scroll and click-outside
+  useEffect(() => {
+    const onScroll = () => {
+      if (mobileMenuOpen) setMobileMenuOpen(false);
+    };
+
+    const onClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        mobileMenuOpen &&
+        mobileMenuRef.current &&
+        mobileToggleRef.current &&
+        !mobileMenuRef.current.contains(target) &&
+        !mobileToggleRef.current.contains(target)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('click', onClickOutside);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('click', onClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   // Load dismissed banners from localStorage on mount
   useEffect(() => {
@@ -770,21 +802,26 @@ const AvailableEventsContent: React.FC = () => {
           </section>
           </div>
 
+        {/* Container for Search Bar and Navigation with responsive ordering */}
+        <div className="flex flex-col">
           {/* Event Type Navigation - Compact Row Design */}
-          <div className="mb-6 flex gap-2 flex-wrap">
+          <div className="mb-6 flex gap-2 flex-wrap items-center justify-between order-2 sm:order-1">
+            {/* Desktop buttons (hidden on small screens) */}
+            <div className="hidden sm:flex sm:flex-wrap gap-2">
             {/* Virtual Events */}
             <button
               onClick={() => {
                 setActiveTab('virtual');
                 setFilterType('all');
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeTab === 'virtual' && filterType === 'all'
                   ? 'bg-white text-teal-600 border-teal-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              💻 Virtual ({eventCounts.virtual})
+              <span className="hidden sm:inline">💻 Virtual ({eventCounts.virtual})</span>
+              <span className="sm:hidden">💻 ({eventCounts.virtual})</span>
             </button>
 
             {/* In-Person Events */}
@@ -793,13 +830,14 @@ const AvailableEventsContent: React.FC = () => {
                 setActiveTab('in-person');
                 setFilterType('all');
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeTab === 'in-person' && filterType === 'all'
                   ? 'bg-white text-emerald-600 border-emerald-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              📍 In-Person ({eventCounts['in-person']})
+              <span className="hidden sm:inline">📍 In-Person ({eventCounts['in-person']})</span>
+              <span className="sm:hidden">📍 ({eventCounts['in-person']})</span>
             </button>
 
             {/* Community Events */}
@@ -808,13 +846,14 @@ const AvailableEventsContent: React.FC = () => {
                 setActiveTab('community');
                 setFilterType('all');
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeTab === 'community' && filterType === 'all'
                   ? 'bg-white text-purple-600 border-purple-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              🌍 Community ({eventCounts.community})
+              <span className="hidden sm:inline">🌍 Community ({eventCounts.community})</span>
+              <span className="sm:hidden">🌍 ({eventCounts.community})</span>
             </button>
 
             {/* Special Events */}
@@ -823,14 +862,67 @@ const AvailableEventsContent: React.FC = () => {
                 setActiveTab('special');
                 setFilterType('all');
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeTab === 'special' && filterType === 'all'
                   ? 'bg-white text-amber-600 border-amber-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              ✨ Special ({eventCounts.special})
+              <span className="hidden sm:inline">✨ Special ({eventCounts.special})</span>
+              <span className="sm:hidden">✨ ({eventCounts.special})</span>
             </button>
+            </div>
+
+            {/* Mobile hamburger toggle */}
+            <div className="relative sm:hidden ml-auto">
+              <button
+                ref={mobileToggleRef}
+                onClick={() => setMobileMenuOpen((s) => !s)}
+                aria-expanded={mobileMenuOpen}
+                aria-label="Open sections menu"
+                className="px-3 py-2 rounded-lg bg-white/90 border shadow-sm text-gray-700"
+              >
+                ☰ Sections
+              </button>
+
+              {/* Dropdown menu for mobile */}
+              {mobileMenuOpen && (
+                <div
+                  ref={mobileMenuRef}
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-50"
+                >
+                  <div className="flex flex-col p-2">
+                    <button
+                      onClick={() => { setActiveTab('virtual'); setFilterType('all'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'virtual' && filterType === 'all' ? 'font-semibold text-teal-600' : 'text-gray-700'}`}
+                    >
+                      💻 Virtual ({eventCounts.virtual})
+                    </button>
+
+                    <button
+                      onClick={() => { setActiveTab('in-person'); setFilterType('all'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'in-person' && filterType === 'all' ? 'font-semibold text-emerald-600' : 'text-gray-700'}`}
+                    >
+                      📍 In-Person ({eventCounts['in-person']})
+                    </button>
+
+                    <button
+                      onClick={() => { setActiveTab('community'); setFilterType('all'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'community' && filterType === 'all' ? 'font-semibold text-purple-600' : 'text-gray-700'}`}
+                    >
+                      🌍 Community ({eventCounts.community})
+                    </button>
+
+                    <button
+                      onClick={() => { setActiveTab('special'); setFilterType('all'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'special' && filterType === 'all' ? 'font-semibold text-amber-600' : 'text-gray-700'}`}
+                    >
+                      ✨ Special ({eventCounts.special})
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Special Events Section */}
@@ -839,8 +931,8 @@ const AvailableEventsContent: React.FC = () => {
             onClose={() => setShowSpecialEvents(false)} 
           />
 
-        {/* Search Bar */}
-        <div className="mb-6">
+          {/* Search Bar */}
+          <div className="mb-6 order-1 sm:order-2">
           <div className="relative">
             <input
               type="text"
@@ -875,63 +967,68 @@ const AvailableEventsContent: React.FC = () => {
               </button>
             </div>
           </div>
+          </div>
         </div>
 
           {/* Filters and Actions */}
-          <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 mb-6 flex-wrap">
             <button
               onClick={() => setFilterType('all')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filterType === 'all' 
                   ? 'bg-teal-500 text-white border-teal-500' 
                   : 'bg-white text-gray-700 border-gray-200'
               }`}
             >
-              <CheckCircle className="w-4 h-4" />
-              All Events ({events.length})
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">All Events ({events.length})</span>
+              <span className="sm:hidden">All ({events.length})</span>
             </button>
             
             <button
               onClick={() => setFilterType('joined')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filterType === 'joined' 
                   ? 'bg-teal-500 text-white border-teal-500' 
                   : 'bg-white text-gray-700 border-gray-200'
               }`}
             >
-              <UserPlus className="w-4 h-4" />
-              Joined ({eventCounts.joined})
+              <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Joined ({eventCounts.joined})</span>
+              <span className="sm:hidden">({eventCounts.joined})</span>
             </button>
             
             <button
               onClick={() => setFilterType('shortlisted')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filterType === 'shortlisted' 
                   ? 'bg-teal-500 text-white border-teal-500' 
                   : 'bg-white text-gray-700 border-gray-200'
               }`}
             >
-              ★ Shortlisted (0)
+              <span className="hidden sm:inline">★ Shortlisted (0)</span>
+              <span className="sm:hidden">★ (0)</span>
             </button>
 
             <button
               onClick={() => setShowSpecialEvents(!showSpecialEvents)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 showSpecialEvents 
                   ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-teal-500' 
                   : 'bg-white text-gray-700 border-gray-200'
               }`}
             >
-              ✨ Special Event
+              <span className="hidden sm:inline">✨ Special Event</span>
+              <span className="sm:hidden">✨</span>
             </button>
             
             <button
               onClick={handleRefresh}
               disabled={loading || isRefreshing}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm text-gray-700 sm:ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCcw className={`w-3 h-3 sm:w-4 sm:h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
 
@@ -976,14 +1073,9 @@ const AvailableEventsContent: React.FC = () => {
 
         {/* Events Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {currentEvents.map((event) => {
-            const progress = getProgressPercentage(event);
+          {currentEvents.map((event, index) => {
             const eventFull = isEventFull(event);
             const userParticipating = isUserParticipating(event);
-            const currentParticipants = Array.isArray(event.participants)
-              ? event.participants.length
-              : 0;
-            const maxParticipants = event.maxParticipants || Infinity;
 
             return (
               <div
@@ -995,264 +1087,19 @@ const AvailableEventsContent: React.FC = () => {
                     eventRefs.current.delete(event._id);
                   }
                 }}
-                onClick={() => event._id && handleCardClick(event._id)}
-                className={`group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-1 ${
-                  userParticipating ? "ring-2 ring-teal-400" : ""
-                } ${
-                  highlightedEventId === event._id 
-                    ? 'ring-4 ring-teal-500 ring-offset-2 shadow-2xl scale-105' 
-                    : ''
-                }`}
               >
-                {/* Event Image */}
-                <div className="relative h-40 w-full overflow-hidden">
-                  {event.image?.url ? (
-                    <>
-                      <img
-                        src={event.image.url}
-                        alt={event.image.caption || event.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    </>
-                  ) : (
-                    <>
-                      {/* Placeholder with gradient background */}
-                      <div className="w-full h-full bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 flex items-center justify-center">
-                        <div className="text-center">
-                          <Users className="w-12 h-12 text-purple-300 mx-auto mb-1" />
-                          <p className="text-purple-600 text-xs font-semibold">Volunteer Event</p>
-                        </div>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    </>
-                  )}
-                  
-                  {/* Points Badge */}
-                  <div className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
-                    ⚡ 100
-                  </div>
-                  
-                  {/* Bookmark Icon */}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                  >
-                    <span className="text-gray-600">☆</span>
-                  </button>
-                  
-                  {/* Event Type Badge on Image */}
-                  {event.eventType && (
-                    <div className="absolute bottom-3 left-3">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-lg ${
-                        event.eventType === 'virtual' 
-                          ? 'bg-cyan-500 text-white' 
-                          : event.eventType === 'in-person'
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-purple-500 text-white'
-                      }`}>
-                        {event.eventType === 'virtual' && '💻 Virtual'}
-                        {event.eventType === 'in-person' && '📍 In-Person'}
-                        {event.eventType === 'community' && '🌍 Community'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Event Content */}
-                <div className="p-4">
-                  {/* Event Title */}
-                  <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-teal-600 transition-colors">
-                    <HighlightText text={event.title} highlight={searchQuery} />
-                  </h3>
-                  
-                  {/* Event Description */}
-                  <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                    <HighlightText text={event.description} highlight={searchQuery} />
-                  </p>
-
-                  {/* Date */}
-                  <div className="flex items-center text-gray-600 mb-2 text-xs">
-                    <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
-                    <span>
-                      {event.date ? (
-                        new Date(event.date).toLocaleDateString('en-US', { 
-                          day: 'numeric',
-                          month: 'short'
-                        })
-                      ) : (
-                        "Date TBD"
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center text-gray-600 mb-3 text-xs">
-                    <MapPin className="h-3.5 w-3.5 mr-1.5 text-pink-500" />
-                    <span className="line-clamp-1">
-                      <HighlightText text={event.location || "Virtual"} highlight={searchQuery} />
-                    </span>
-                  </div>
-
-                  {/* Participants Progress */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center text-xs text-gray-600">
-                        <Users className="h-3.5 w-3.5 mr-1.5 text-teal-500" />
-                        <span className="font-medium">
-                          {currentParticipants}/{maxParticipants === Infinity ? "∞" : maxParticipants}
-                        </span>
-                      </div>
-                      {maxParticipants !== Infinity && (
-                        <span className="text-xs font-semibold text-teal-600">
-                          {progress}%
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Points Awarded */}
-                    {event.pointsOffered && (
-                      <div className="flex items-center text-gray-600 mt-2">
-                        <IndianRupee className="h-4 w-4 mr-3 text-yellow-600" />
-                        <span className="text-sm">
-                          Points: {event.pointsOffered}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Progress Bar */}
-                    {maxParticipants !== Infinity && (
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            eventFull
-                              ? "bg-red-500"
-                              : progress > 75
-                              ? "bg-orange-500"
-                              : "bg-teal-500"
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <div className="px-4 pb-4 relative">
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      // Check if event is over (completion request sent)
-                      const isEventOver = (event as any).isEventOver;
-                      
-                      if (isEventOver) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-orange-500 text-white py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            🏁 Event Over
-                          </button>
-                        );
-                      }
-                      
-                      const hasRequested = hasRequestedParticipation(event._id || "");
-                      const pendingRequest = getPendingRequestForEvent(event._id || "");
-                      const isRejected = hasRejectedRequest(event._id || "");
-                      
-                      // Check if current user is the event creator
-                      const isEventCreator = user && event.organizationId && (
-                        (typeof event.organizationId === 'object' ? event.organizationId._id : event.organizationId) === user._id
-                      );
-                      
-                      if (isEventCreator) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-gray-200 text-gray-600 py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            Created by You
-                          </button>
-                        );
-                      }
-                      
-                      if (userParticipating) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-green-500 text-white py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            ✓ Joined
-                          </button>
-                        );
-                      }
-                      
-                      if (isRejected) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-gray-200 text-gray-600 py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            Not Eligible
-                          </button>
-                        );
-                      }
-                      
-                      if (hasRequested && pendingRequest) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-yellow-400 text-yellow-900 py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            ⏳ Pending
-                          </button>
-                        );
-                      }
-                      
-                      if (eventFull) {
-                        return (
-                          <button
-                            disabled
-                            className="flex-1 bg-red-500 text-white py-2.5 px-4 rounded-xl font-semibold text-xs cursor-not-allowed flex items-center justify-center"
-                          >
-                            Event Full
-                          </button>
-                        );
-                      }
-                      
-                      return (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            event._id && handleParticipate(event._id);
-                          }}
-                          disabled={!event._id || participating[event._id]}
-                          className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2.5 px-4 rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 font-bold text-xs disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center shadow-md hover:shadow-lg"
-                        >
-                          {event._id && participating[event._id] ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Joining...
-                            </>
-                          ) : (
-                            "Join"
-                          )}
-                        </button>
-                      );
-                    })()}
-                    
-                    {/* Share Button */}
-                    <button
-                      onClick={(e) => handleShare(event, e)}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-xl text-teal-600 bg-teal-50 hover:bg-teal-100 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
-                      title="Share event"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                <VolunteerEventCard
+                  event={event}
+                  onCardClick={handleCardClick}
+                  isHighlighted={highlightedEventId === event._id}
+                  isUserParticipating={userParticipating}
+                  isEventFull={eventFull}
+                  animationIndex={index}
+                  searchQuery={searchQuery}
+                  HighlightText={HighlightText}
+                  onParticipate={(id) => { handleParticipate(id); }}
+                  onShare={(ev, e) => handleShare(ev, e)}
+                />
               </div>
             );
           })}

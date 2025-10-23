@@ -77,6 +77,9 @@ function DonatePageContent() {
   const [myDonationEvents, setMyDonationEvents] = useState<any[]>([]);
   const [loadingMyEvents, setLoadingMyEvents] = useState(false);
   const campaignsRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,7 +146,38 @@ function DonatePageContent() {
     if (user?.role === 'ngo') {
       fetchMyDonationEvents();
     }
-  }, [user]);  const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  }, [user]);
+
+  // Auto-close mobile menu on scroll or click outside
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mobileMenuOpen &&
+        mobileMenuRef.current &&
+        mobileToggleRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        !mobileToggleRef.current.contains(event.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
+
+  const donationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   useEffect(() => {
     fetchEvents();
@@ -603,116 +637,173 @@ function DonatePageContent() {
           </section>
         </div>
 
-          {/* Tab Navigation */}
-          <div className="mb-6 flex gap-2">
+        {/* Container for Search Bar and Section Navigation with responsive ordering */}
+        <div className="flex flex-col">
+          {/* Section Navigation - Compact Row Design */}
+          <div className="mb-6 flex gap-2 flex-wrap items-center justify-between order-2 sm:order-1">
+            {/* Desktop buttons (hidden on small screens) */}
+            <div className="hidden sm:flex sm:flex-wrap gap-2">
             <button 
               onClick={() => {
                 setActiveSection('campaigns');
                 setShowFundraiser(false);
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeSection === 'campaigns'
                   ? 'bg-white text-teal-600 border-teal-500'
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              💝 Donation Campaigns
+              <span className="hidden sm:inline">💝 Donation Campaigns</span>
+              <span className="sm:hidden">💝 Campaigns</span>
             </button>
             <button
               onClick={() => {
                 setActiveSection('fundraiser');
                 setShowFundraiser(true);
               }}
-              className={`px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all ${
+              className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
                 activeSection === 'fundraiser'
                   ? 'bg-white text-teal-600 border-teal-500'
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
             >
-              🚀 Start a Fundraiser
+              <span className="hidden sm:inline">🚀 Start a Fundraiser</span>
+              <span className="sm:hidden">🚀 Fundraiser</span>
             </button>
-          </div>
-          
-          {/* Search Bar - Available for both sections */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search campaigns by title, description, or NGO name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-5 py-3 pl-12 pr-32 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-gray-700"
-              />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                🔍
-              </div>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                {searchQuery && (
-                  <>
-                    <div className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold">
-                      {filteredEvents.length} match
-                      {filteredEvents.length !== 1 ? "es" : ""}
-                    </div>
+            </div>
+
+            {/* Mobile hamburger toggle */}
+            <div className="relative sm:hidden ml-auto">
+              <button
+                ref={mobileToggleRef}
+                onClick={() => setMobileMenuOpen((s) => !s)}
+                aria-expanded={mobileMenuOpen}
+                aria-label="Open sections menu"
+                className="px-3 py-2 rounded-lg bg-white/90 border shadow-sm text-gray-700"
+              >
+                ☰ Sections
+              </button>
+
+              {/* Dropdown menu for mobile */}
+              {mobileMenuOpen && (
+                <div
+                  ref={mobileMenuRef}
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-50"
+                >
+                  <div className="flex flex-col p-2">
                     <button
-                      onClick={() => setSearchQuery("")}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
-                      title="Clear search"
+                      onClick={() => { 
+                        setActiveSection('campaigns'); 
+                        setShowFundraiser(false); 
+                        setMobileMenuOpen(false); 
+                      }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeSection === 'campaigns' ? 'font-semibold text-teal-600' : 'text-gray-700'}`}
                     >
-                      ✕
+                      💝 Donation Campaigns
                     </button>
-                  </>
-                )}
-              </div>
+
+                    <button
+                      onClick={() => { 
+                        setActiveSection('fundraiser'); 
+                        setShowFundraiser(true); 
+                        setMobileMenuOpen(false); 
+                      }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeSection === 'fundraiser' ? 'font-semibold text-teal-600' : 'text-gray-700'}`}
+                    >
+                      🚀 Start a Fundraiser
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Search Bar - Available for both sections */}
+          <div className="mb-6 order-1 sm:order-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search campaigns by title, description, or NGO name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-5 py-3 pl-12 pr-32 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent text-gray-700"
+            />
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+              🔍
+            </div>
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              {searchQuery && (
+                <>
+                  <div className="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold">
+                    {filteredEvents.length} match
+                    {filteredEvents.length !== 1 ? "es" : ""}
+                  </div>
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          </div>
+        </div>
+
           {/* Filters - Available for both sections */}
-          <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 mb-6 flex-wrap">
             <button
               onClick={() => setFilter("all")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center justify-center gap-1 sm:gap-2 p-2 sm:px-5 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filter === "all"
                   ? "bg-teal-500 text-white border-teal-500"
                   : "bg-white text-gray-700 border-gray-200"
               }`}
+              title="All Campaigns"
             >
               <Heart className="w-4 h-4" />
-              All Campaigns ({eventCounts.all})
+              <span className="hidden sm:inline">All Campaigns ({eventCounts.all})</span>
             </button>
 
             <button
               onClick={() => setFilter("active")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center justify-center gap-1 sm:gap-2 p-2 sm:px-5 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filter === "active"
                   ? "bg-teal-500 text-white border-teal-500"
                   : "bg-white text-gray-700 border-gray-200"
               }`}
+              title="Active Campaigns"
             >
               <TrendingUp className="w-4 h-4" />
-              Active ({eventCounts.active})
+              <span className="hidden sm:inline">Active ({eventCounts.active})</span>
             </button>
 
             <button
               onClick={() => setFilter("completed")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm ${
+              className={`flex items-center justify-center gap-1 sm:gap-2 p-2 sm:px-5 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
                 filter === "completed"
                   ? "bg-teal-500 text-white border-teal-500"
                   : "bg-white text-gray-700 border-gray-200"
               }`}
+              title="Completed Campaigns"
             >
               <CheckCircle className="w-4 h-4" />
-              Completed ({eventCounts.completed})
+              <span className="hidden sm:inline">Completed ({eventCounts.completed})</span>
             </button>
 
             <button
               onClick={handleRefresh}
               disabled={loading || isRefreshing}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center gap-1 sm:gap-2 p-2 sm:px-5 sm:py-2.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm text-gray-700 ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh"
             >
               <RefreshCcw
                 className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
 
