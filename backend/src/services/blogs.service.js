@@ -25,11 +25,24 @@ const deleteBlog = async (id) => {
   return await Blogs.findByIdAndDelete(id);
 };
 
+// New function to handle content image upload
+const addContentImage = async (blogId, imageData) => {
+  const blog = await Blogs.findById(blogId);
+  if (!blog) throw new Error("Blog not found");
+  
+  // Add position based on current number of images
+  imageData.position = blog.contentImages.length;
+  blog.contentImages.push(imageData);
+  
+  return await blog.save();
+};
+
 export const blogService = {
   createBlog,
   getAllBlogs,
   getBlogById,
   updateBlog,
   deleteBlog,
-   getBlogBySlug,
+  getBlogBySlug,
+  addContentImage,
 };
