@@ -240,7 +240,8 @@ const getUpcomingEvents = async () => {
 // Get single event by ID
 const getEventById = async (eventId) => {
   const event = await Event.findById(eventId)
-    .populate("participants", "_id name email")
+    .populate("participants", "_id name email contactNumber location")
+    .populate("attendedParticipants", "_id name email contactNumber location")
     .populate(
       "organizationId",
       "name email organizationType websiteUrl yearEstablished contactNumber address ngoDescription focusAreas organizationSize"
@@ -417,6 +418,10 @@ const leaveEvent = async (eventId, userId) => {
       throw new Error("Cannot leave an event that has already started");
     }
 
+    // Log the participant leave action
+    const { EventParticipantLog } = await import("../models/EventParticipantLog.js");
+    await EventParticipantLog.logLeave(eventId, userId, userId);
+
     // Remove user from participants using $pull
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
@@ -476,12 +481,15 @@ const getAllCompletionRequests = async () => {
     completionStatus: "pending", // ✅ correct condition
   })
     .populate("organizationId", "name email")
-    .populate("participants", "_id name email")
+    .populate("participants", "_id name email contactNumber location")
+    .populate("attendedParticipants", "_id name email contactNumber location")
     .sort({ updatedAt: -1 });
 };
 
-const reviewEventCompletion = async (eventId, decision) => {
-  const event = await Event.findById(eventId).populate("participants");
+const reviewEventCompletion = async (eventId, decision, adminId) => {
+  const event = await Event.findById(eventId)
+    .populate("participants")
+    .populate("attendedParticipants");
   if (!event) throw new ApiError(404, "Event not found");
 
   if (event.completionStatus !== "pending") {
@@ -491,17 +499,23 @@ const reviewEventCompletion = async (eventId, decision) => {
   if (decision === "accepted") {
     event.completionStatus = "accepted"; // admin approved
     event.eventStatus = "completed"; // lifecycle field
+    event.approvedBy = adminId; // Track who approved
+    event.completionApprovedAt = new Date(); // Track when approved
 
-     const totalPoints = event.scoringRule?.totalPoints || 0;
+    const totalPoints = event.scoringRule?.totalPoints || event.pointsOffered || 0;
 
-    // Award points to participants
-   for (const userId of event.participants) {
-    const user = await mongoose.model("User").findById(userId);
-    if (user) {
-      user.points += totalPoints;
-      await user.save();
+    // Award points ONLY to attended participants (those checked by NGO)
+    const participantsToReward = event.attendedParticipants && event.attendedParticipants.length > 0
+      ? event.attendedParticipants
+      : event.participants; // Fallback to all participants if no attendance was marked
+
+    for (const userId of participantsToReward) {
+      const user = await mongoose.model("User").findById(userId);
+      if (user) {
+        user.points += totalPoints;
+        await user.save();
+      }
     }
-  }
   } else if (decision === "rejected") {
     event.completionStatus = "rejected"; // admin rejected
     event.eventStatus = "ongoing"; // back to ongoing

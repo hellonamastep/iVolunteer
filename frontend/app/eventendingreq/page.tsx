@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import api from "@/lib/api";
 import Endeventarchivebutton from "@/components/Endeventarchivebutton";
+import EventAttendanceDetails from "@/components/event-attendance-details";
 
 type EventStatus = "pending" | "approved" | "rejected";
 
@@ -20,6 +21,9 @@ const EndEventRequestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEventTitle, setSelectedEventTitle] = useState<string>("");
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
 
   // Fetch requests
   const fetchRequests = async () => {
@@ -84,6 +88,12 @@ const EndEventRequestsPage = () => {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const handleViewParticipants = (eventId: string, eventTitle: string) => {
+    setSelectedEventId(eventId);
+    setSelectedEventTitle(eventTitle);
+    setAttendanceModalOpen(true);
+  };
 
   const filteredRequests = requests.filter(req => 
     filter === "all" || req.status === filter
@@ -303,6 +313,19 @@ const EndEventRequestsPage = () => {
                     </div>
                   </div>
 
+                  {/* View Participants Button */}
+                  <div className="mb-4">
+                    <button
+                      onClick={() => handleViewParticipants(req._id, req.title)}
+                      className="w-full py-2.5 px-4 rounded-xl font-medium transition-all duration-200 bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white shadow-sm hover:shadow-md flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      View Participants
+                    </button>
+                  </div>
+
                   {/* Action Buttons - Only show for pending requests */}
                   <div className="pt-4 border-t border-gray-100">
                     {req.status === "pending" ? (
@@ -353,6 +376,20 @@ const EndEventRequestsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Attendance Details Modal */}
+      {selectedEventId && (
+        <EventAttendanceDetails
+          eventId={selectedEventId}
+          eventTitle={selectedEventTitle}
+          isOpen={attendanceModalOpen}
+          onClose={() => {
+            setAttendanceModalOpen(false);
+            setSelectedEventId(null);
+            setSelectedEventTitle("");
+          }}
+        />
+      )}
     </div>
   );
 };

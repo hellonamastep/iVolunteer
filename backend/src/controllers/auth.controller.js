@@ -414,6 +414,17 @@ const getNearbyUsers = asyncHandler(async (req, res) => {
   );
 });
 
+// Get user certificates
+const getCertificates = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const certificates = await authService.getUserCertificates(userId);
+  
+  return res.status(200).json({
+    success: true,
+    certificates,
+  });
+});
+
 export const authController = {
   register,
   login,
@@ -430,4 +441,5 @@ export const authController = {
   googleLogin,
   checkEmail,
   getNearbyUsers,
+  getCertificates,
 };

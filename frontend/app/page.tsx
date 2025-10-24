@@ -35,6 +35,7 @@ import Managecopeventcta from "@/components/Managecopeventcta";
 import { PendingParticipationRequests } from "@/components/PendingParticipationRequests";
 import RecentActivities from "@/components/RecentActivities";
 import ArchivedEventsCTA from "@/components/ArchivedEventsCTA";
+import VolunteerCertificates from "@/components/volunteer-certificates";
 
 // Dashboard components
 function AdminDashboard() {
@@ -530,6 +531,7 @@ function VolunteerDashboard() {
           <PointsDisplay />
           <Useranalytics />
           <Dailyquote />
+          <VolunteerCertificates />
           <Useractivity />
           <Userrewardstoredash />
         </div>
