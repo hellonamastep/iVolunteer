@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import Image from "next/image";
+import { Logo } from "@/components/logo";
 import {
   Eye,
   EyeOff,
@@ -282,20 +282,10 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-gradient-to-br from-[#E9FDF1] via-[#F0FDF4] to-[#E9FDF1] font-['Manrope']">
       {/* Header - Responsive */}
-      <div className="flex flex-col items-center mb-4 sm:mb-6 lg:mb-8">
-        <div className="relative">
-          <Image
-            src="/images/auth.png"
-            alt="Namastep Logo"
-            width={80}
-            height={80}
-            className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
-            priority
-          />
+      <div className="flex flex-col items-center mb-4 sm:mb-6 lg:mb-8 mt-6">
+        <div className="scale-150 sm:scale-[1.75] md:scale-[2] mb-2">
+          <Logo />
         </div>
-        <h1 className="text-[#50C878] font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-wide">
-          NAMASTEP
-        </h1>
         <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1 text-center max-w-xs sm:max-w-sm">
           Make Doing Good Fun, Rewarding & Impactful
         </p>
