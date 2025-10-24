@@ -14,9 +14,16 @@ import { otpController } from "../controllers/otp.controller.js";
 // IMPORTANT: import the configured passport instance
 import passport from "../config/passport.js"; // <-- not "passport"
 
+import mongoose from "mongoose";
+import { User } from "../models/User.js";
+
 const router = Router();
 
+
 router.post("/register", validate(authValidator.registerSchema), authController.register);
+
+router.post("/verify-email", validate(authValidator.verifyEmailSchema), authController.verifyEmail);
+router.post("/resend-otp", validate(authValidator.resendOtpSchema), authController.resendOtp);
 router.post("/check-email", authController.checkEmail);
 router.post("/login", validate(authValidator.loginSchema), authController.login);
 router.post("/logout", authentication, authController.logout);

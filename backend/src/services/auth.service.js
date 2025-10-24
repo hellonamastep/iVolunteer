@@ -23,89 +23,92 @@ import { Donation } from "../models/Donation.js";
 import { DonationEvent } from "../models/DonationEvent.js";
 import jwt from 'jsonwebtoken'
 
-const register = async (data) => {
-  const email = data.email.toLowerCase().trim();
-  const userExist = await User.findOne({ email });
 
-  if (userExist) {
-    throw new ApiError(400, "An account with this email already exists");
+export const register = async (data) => {
+  const email = data.email.toLowerCase().trim();
+  const role = (data.role || "user").trim();
+if (data.username == null || data.username === "") delete data.username;
+
+  const exists = await User.findOne({ email });
+  if (exists) throw new ApiError(400, "An account with this email already exists");
+
+  // quick per-role guards (keeps Joi and Mongoose in sync)
+  if (role === "user") {
+    for (const f of ["age","city","profession","contactNumber","nearestRailwayStation"])
+      if (!data[f]) throw new ApiError(400, `Missing required field: ${f}`);
   }
 
-  const hashedPassword = await hashPassword(data.password);
+  const password = await hashPassword(data.password);
 
-  // Create the user with initial 50 coins and additional fields for NGOs/Corporates
   const userData = {
     email,
     name: data.name,
-    password: hashedPassword,
-    role: data.role,
-    coins: 50, // Give 50 coins for registration
+    password,
+    role,
+    coins: 50,
+    emailVerified: false,            // <- required for OTP flow
   };
 
-  // Add Volunteer-specific fields if role is 'user'
-  if (data.role === "user") {
-    userData.age = data.age;
-    userData.city = data.city;
-    userData.profession = data.profession;
-    userData.contactNumber = data.contactNumber;
-    userData.nearestRailwayStation = data.nearestRailwayStation;
-  }
+  if (role === "user") Object.assign(userData, {
+    age: data.age,
+    city: data.city,
+    profession: data.profession,
+    contactNumber: data.contactNumber,
+    nearestRailwayStation: data.nearestRailwayStation,
+  });
 
-  // Add NGO-specific fields if role is 'ngo'
-  if (data.role === "ngo") {
-    userData.organizationType = data.organizationType;
-    userData.websiteUrl = data.websiteUrl;
-    userData.yearEstablished = data.yearEstablished;
-    userData.contactNumber = data.contactNumber;
-    userData.address = {
+  if (role === "ngo") Object.assign(userData, {
+    organizationType: data.organizationType,
+    websiteUrl: data.websiteUrl,
+    yearEstablished: data.yearEstablished,
+    contactNumber: data.contactNumber,
+    address: {
       street: data.address?.street,
       city: data.address?.city,
       state: data.address?.state,
       zip: data.address?.zip,
       country: data.address?.country || "India",
-    };
-    userData.ngoDescription = data.ngoDescription;
-    userData.focusAreas = data.focusAreas || [];
-    userData.organizationSize = data.organizationSize;
-  }
+    },
+    ngoDescription: data.ngoDescription,
+    focusAreas: data.focusAreas || [],
+    organizationSize: data.organizationSize,
+  });
 
-  // Add Corporate-specific fields if role is 'corporate'
-  if (data.role === "corporate") {
-    userData.companyType = data.companyType;
-    userData.industrySector = data.industrySector;
-    userData.companySize = data.companySize;
-    userData.websiteUrl = data.websiteUrl;
-    userData.yearEstablished = data.yearEstablished;
-    userData.contactNumber = data.contactNumber;
-    userData.address = {
+  if (role === "corporate") Object.assign(userData, {
+    companyType: data.companyType,
+    industrySector: data.industrySector,
+    companySize: data.companySize,
+    websiteUrl: data.websiteUrl,
+    yearEstablished: data.yearEstablished,
+    contactNumber: data.contactNumber,
+    address: {
       street: data.address?.street,
       city: data.address?.city,
       state: data.address?.state,
       zip: data.address?.zip,
       country: data.address?.country || "India",
-    };
-    userData.companyDescription = data.companyDescription;
-    userData.csrFocusAreas = data.csrFocusAreas || [];
-  }
-
-  // Save user
-  const user = await User.create(userData);
-
-  // Save registration reward separately
-  await RegistrationReward.create({
-    userId: user._id,
-    coins: 50,
-    type: "registration_bonus",
+    },
+    companyDescription: data.companyDescription,
+    csrFocusAreas: data.csrFocusAreas || [],
   });
 
-  logger.info("New user registered with welcome bonus", {
-    userId: user._id,
-    email: user.email,
-    coins: 50,
+  // optional: atomic create + reward
+  const session = await User.startSession();
+  let user;
+  await session.withTransaction(async () => {
+    user = await User.create([userData], { session }).then(r => r[0]);
+    await RegistrationReward.create([{
+      userId: user._id,
+      coins: 50,
+      type: "registration_bonus",
+    }], { session });
   });
+  session.endSession();
 
-  return user;
+  logger.info("New user registered with welcome bonus", { userId: user._id, email: user.email, coins: 50 });
+  return user; // controller will send OTP and handle cookies after verify
 };
+
 
 
 // const login = async (data) => {
@@ -175,6 +178,10 @@ const login = async (data) => {
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
+
+  if (!user.emailVerified) throw new ApiError(403, "Verify email first");
+  
+
 
   const isValidPass = await comparePassword(data.password, user.password);
   if (!isValidPass) {

@@ -211,73 +211,62 @@ export default function SignupPage() {
     return true;
   };
 
-  const onSubmit = async (data: SignupFormValues) => {
-    try {
-      const signupData: any = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role as any,
+ const onSubmit = async (data: SignupFormValues) => {
+  try {
+    const payload: any = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: data.role,
+    };
+
+    if (data.role === "ngo") {
+      payload.organizationType = data.organizationType;
+      payload.websiteUrl = data.websiteUrl;
+      payload.yearEstablished = data.yearEstablished ? Number(data.yearEstablished) : undefined;
+      payload.contactNumber = data.contactNumber;
+      payload.address = {
+        street: data.address?.street || "",
+        city: data.address?.city || "",
+        state: data.address?.state || "",
+        zip: data.address?.zip || "",
+        country: data.address?.country || "India",
       };
-
-      if (data.role === "ngo") {
-        signupData.organizationType = data.organizationType;
-        signupData.websiteUrl = data.websiteUrl;
-        signupData.yearEstablished = data.yearEstablished
-          ? Number(data.yearEstablished)
-          : undefined;
-        signupData.contactNumber = data.contactNumber;
-        signupData.address = {
-          street: data.address?.street || "",
-          city: data.address?.city || "",
-          state: data.address?.state || "",
-          zip: data.address?.zip || "",
-          country: data.address?.country || "",
-        };
-        signupData.ngoDescription = data.ngoDescription;
-        signupData.focusAreas = data.focusAreas || [];
-        signupData.organizationSize = data.organizationSize;
-      } else if (data.role === "user") {
-        // volunteer required fields
-        signupData.age = data.age ? Number(data.age) : undefined;
-        signupData.city = data.city || "";
-        // If profession is "other", use the professionOther value, otherwise use profession
-        signupData.profession = data.profession === "other" ? data.professionOther : data.profession;
-        signupData.contactNumber = data.contactNumber || "";
-        signupData.nearestRailwayStation = data.nearestRailwayStation || "";
-      }
-
-      console.log("Submitting signup data:", JSON.stringify(signupData, null, 2));
-
-      const success = await signup(signupData);
-      if (success) {
-        toast.success("Account created successfully!");
-        router.push("/");
-      } else {
-        toast.error("Signup failed. Please check your details and try again.");
-      }
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      
-      // Check if user already exists - handle different error formats
-      const errorMessage = error?.message?.toLowerCase() || 
-                          error?.response?.data?.message?.toLowerCase() || 
-                          error?.toString().toLowerCase();
-      
-      if (errorMessage.includes("already exists") || 
-          errorMessage.includes("user exists") || 
-          errorMessage.includes("email already") ||
-          errorMessage.includes("account exists")) {
-        toast.error("Account already exists. Please login instead.");
-        // Redirect to login page after a short delay
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
-      } else {
-        toast.error("An unexpected error occurred. Please try again.");
-      }
+      payload.ngoDescription = data.ngoDescription;
+      payload.focusAreas = data.focusAreas || [];
+      payload.organizationSize = data.organizationSize;
+    } else if (data.role === "user") {
+      payload.age = data.age ? Number(data.age) : undefined;
+      payload.city = data.city || "";
+      payload.profession = data.profession === "other" ? data.professionOther : data.profession;
+      payload.contactNumber = data.contactNumber || "";
+      payload.nearestRailwayStation = data.nearestRailwayStation || "";
     }
-  };
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // receive cookies if your BE sets any
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.message || "Signup failed");
+
+    // Backend returns message: "Registered. Check email for verification code."
+    // Go to OTP screen with email in query
+    toast.success("Account created. Check your email for the code.");
+    router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+  } catch (err: any) {
+    const msg = err?.message?.toLowerCase?.() || "";
+    if (msg.includes("already")) {
+      toast.error("Account already exists. Please login.");
+      setTimeout(() => router.push("/login"), 1200);
+    } else {
+      toast.error(err?.message || "Signup failed");
+    }
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-gradient-to-br from-[#E9FDF1] via-[#F0FDF4] to-[#E9FDF1] font-['Manrope']">

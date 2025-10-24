@@ -1,6 +1,6 @@
 
 
-
+import { User } from "../models/User.js";
 import { authService } from "../services/auth.service.js";
 import { createSession } from "../services/session.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -8,47 +8,108 @@ import { setCookies, clearCookies } from "../utils/jwt.utils.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { cloudinary } from "../config/cloudinary.js";
-import { otpService } from "../services/otp.service.js";
+import { otpService } from "../services/otp/index.js";
+
 
 // new
 import { sendPasswordResetEmail, sendPasswResetSuccessEmail } from "../services/email.service.js";
 
-const register = asyncHandler(async (req, res) => {
-  console.log("Registration request received:", req.body);
-  const user = await authService.register(req.body);
-  console.log("User created with coins:", user.coins);
 
-  let tokens;
-  try {
-    tokens = await createSession(user);
-  } catch (err) {
-    console.error("Session creation failed:", err);
-    throw new ApiError(500, "Error while creating session");
+const LEGACY = process.env.LEGACY_AUTO_LOGIN === "1";
+export const register = asyncHandler(async (req, res) => {
+  // If your validate middleware uses req.validated/bodyData, swap in that object
+  const body = req.body;
+
+  // 1) create user using your existing service (keeps all defaults like coins)
+  const user =await authService.register({
+    ...body,
+    email: body.email.toLowerCase(),
+    emailVerified: false, // ensure false at creation
+  });
+
+  // 2) send OTP
+  const r = await otpService.sendOtp(user.email);
+  if (!r.ok) {
+    // optional rollback to keep old behavior
+    await User.findByIdAndDelete(user._id);
+    throw new ApiError(429, r.message || "Failed to send OTP");
   }
 
-  setCookies(res, tokens.accessToken, tokens.refreshToken);
+  // 3) LEGACY optional: auto-login + cookies (not recommended). Default off.
+  if (LEGACY) {
+    const tokens = await createSession(user);
+    setCookies(res, tokens.accessToken, tokens.refreshToken);
+    return res.status(201).json({
+      user: {
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        coins: user.coins,
+        emailVerified: user.emailVerified,
+      },
+      tokens,
+      message: "Registered. OTP sent for verification. You are temporarily logged in (legacy).",
+    });
+  }
 
-  const userResponse = {
-    userId: user._id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    coins: user.coins,
-  };
-
-  console.log("Registration response:", userResponse);
-
+  // 4) New default: no tokens until verified
   return res.status(201).json({
-    user: userResponse,
-    tokens: {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+    success: true,
+    message: "Registered. Check email for verification code.",
+    user: {
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      coins: user.coins,
+      emailVerified: false,
     },
-    message:
-      "User registered successfully! You've been awarded 50 coins as a welcome bonus!",
   });
 });
 
+// —— VERIFY EMAIL: check OTP, mark verified, then issue tokens like before —— //
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) throw new ApiError(404, "User not found");
+
+  const r = await otpService.verifyOtp(user.email, otp);
+  if (!r.ok) throw new ApiError(400, r.message || "Verification failed");
+
+  user.emailVerified = true;
+  await user.save();
+
+  const tokens = await createSession(user);
+  setCookies(res, tokens.accessToken, tokens.refreshToken);
+
+  return res.json({
+    success: true,
+    message: "Email verified",
+    user: {
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      coins: user.coins,
+      emailVerified: true,
+    },
+    tokens,
+  });
+});
+
+// —— RESEND OTP —— //
+export const resendOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) throw new ApiError(404, "User not found");
+  if (user.emailVerified) return res.json({ success: true, message: "Already verified" });
+
+  const r = await otpService.sendOtp(user.email);
+  if (!r.ok) throw new ApiError(429, r.message || "Failed to send OTP");
+
+  return res.json({ success: true, message: "OTP sent" });
+});
 
 const googleLogin = asyncHandler(async (req, res) => {
   const { email, name, profilePicture } = req.body;
@@ -84,6 +145,8 @@ const googleLogin = asyncHandler(async (req, res) => {
  const login = asyncHandler(async (req, res) => {
   // 1) validate creds
   const user = await authService.login(req.body);
+  if (!user.emailVerified) return res.status(403).json({message:"Verify email first"});
+
 
   // 2) mint tokens  (payload must include { id: user._id } to match middleware)
   const { accessToken, refreshToken } = await createSession(user);
@@ -369,6 +432,8 @@ const checkEmail = asyncHandler(async (req, res) => {
 
 export const authController = {
   register,
+  resendOtp,
+  verifyEmail,
   login,
   verifyLoginOtp,
   logout,
