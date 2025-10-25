@@ -192,7 +192,7 @@ function LoginForm() {
 
           {/* Google Sign-in Button */}
           <div className="flex justify-center mt-4">
-            <a
+            <Link
               href={googleHref}
               className="group inline-flex items-center justify-center gap-3 rounded-full px-6 py-3
                        bg-white border border-gray-200 shadow-md hover:shadow-lg
@@ -206,7 +206,7 @@ function LoginForm() {
               <span className="text-sm sm:text-base font-semibold text-gray-800">
                 Continue with Google
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* Submit Button */}
