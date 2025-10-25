@@ -32,6 +32,7 @@ import blogRouter from "./routes/blog.route.js";
 import corporateEventRouter from "./routes/corporateEvent.routes.js";
 import corporateBidRouter from "./routes/corporateBid.routes.js";
 import participationRequestRouter from "./routes/participationRequest.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -162,6 +163,9 @@ app.use("/api/v1/corporate-bids", globalRateLimiting,corporateBidRouter);
 
 // Participation request routes
 app.use("/api/v1/participation-requests", globalRateLimiting, participationRequestRouter);
+
+// Notification routes
+app.use("/api/v1/notifications", globalRateLimiting, notificationRouter);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

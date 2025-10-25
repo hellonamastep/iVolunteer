@@ -1,6 +1,7 @@
 import { Event } from "../models/Event.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
+import { notificationService } from "../controllers/notification.controller.js";
 
 const createEvent = async (data, organizationId, organizationName) => {
   const {
@@ -49,7 +50,17 @@ const createEvent = async (data, organizationId, organizationName) => {
   });
 
   try {
-    return await event.save();
+    const savedEvent = await event.save();
+    
+    // Notify admins about new event approval request
+    await notificationService.notifyAdminEventApproval(
+      savedEvent._id,
+      savedEvent.title,
+      organizationName,
+      organizationId
+    );
+    
+    return savedEvent;
   } catch (error) {
     throw new ApiError(
       error.status || 500,
@@ -281,6 +292,22 @@ const updateEventStatus = async (eventId, status, rejectionReason = null) => {
 
   if (!event) {
     throw new ApiError(404, "Event not found");
+  }
+
+  // Notify NGO about event approval/rejection
+  if (status === "approved") {
+    await notificationService.notifyNGOEventApproved(
+      event.organizationId,
+      event._id,
+      event.title
+    );
+  } else if (status === "rejected") {
+    await notificationService.notifyNGOEventRejected(
+      event.organizationId,
+      event._id,
+      event.title,
+      rejectionReason || "No reason provided"
+    );
   }
 
   return event;
