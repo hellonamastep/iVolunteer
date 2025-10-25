@@ -553,6 +553,69 @@ const checkEmailExists = async (email) => {
   return !!user; // Returns true if user exists, false otherwise
 };
 
+// Get nearby users by railway station (for volunteers)
+const getNearbyUsersByStation = async (userId, railwayStation) => {
+  // Find users with the same railway station (case-insensitive)
+  // Since nearestRailwayStation is stored in lowercase in the schema, we just need to compare
+  const users = await User.find({
+    _id: { $ne: userId }, // Exclude current user
+    role: 'user', // Only volunteers
+    nearestRailwayStation: railwayStation.toLowerCase().trim(),
+  })
+  .select('name email profilePicture city profession nearestRailwayStation createdAt')
+  .sort({ createdAt: -1 }) // Most recent users first
+  .limit(50); // Limit to 50 users
+
+  return users;
+};
+
+// Get nearby users by city (for NGOs, corporates, admins)
+const getNearbyUsersByCity = async (userId, city) => {
+  // Find users in the same city (case-insensitive)
+  const users = await User.find({
+    _id: { $ne: userId }, // Exclude current user
+    $or: [
+      { city: new RegExp(`^${city.trim()}$`, 'i') }, // For volunteers
+      { 'address.city': new RegExp(`^${city.trim()}$`, 'i') } // For NGOs/corporates
+    ]
+  })
+  .select('name email profilePicture city address.city profession organizationType nearestRailwayStation createdAt role')
+  .sort({ createdAt: -1 }) // Most recent users first
+  .limit(50); // Limit to 50 users
+
+  return users;
+};
+
+// Get certificates for a user
+const getUserCertificates = async (userId) => {
+  // Find all approved/accepted events where the user attended
+  const completedEvents = await Event.find({
+    completionStatus: { $in: ["approved", "accepted"] },
+    attendedParticipants: userId,
+  })
+    .populate("organizationId", "name")
+    .populate("approvedBy", "name")
+    .select("title date organizationId approvedBy pointsOffered completionApprovedAt")
+    .sort({ completionApprovedAt: -1 });
+
+  // Get user details
+  const user = await User.findById(userId).select("name");
+
+  // Format certificates
+  const certificates = completedEvents.map((event) => ({
+    _id: event._id,
+    eventTitle: event.title,
+    eventDate: event.date,
+    organizationName: event.organizationId?.name || "Unknown Organization",
+    volunteerName: user?.name || "Volunteer",
+    adminName: event.approvedBy?.name || "Admin",
+    completedAt: event.completionApprovedAt || event.updatedAt,
+    pointsEarned: event.pointsOffered || 0,
+  }));
+
+  return certificates;
+};
+
 export const authService = {
   register,
   login,
@@ -566,4 +629,9 @@ export const authService = {
   googleLogin,
   checkEmailExists,
   verifyEmailOTP,
+
+  getNearbyUsersByStation,
+  getNearbyUsersByCity,
+  getUserCertificates,
+
 };

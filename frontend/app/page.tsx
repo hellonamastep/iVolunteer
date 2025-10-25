@@ -34,6 +34,8 @@ import Copeventdash from "@/components/Copeventdash";
 import Managecopeventcta from "@/components/Managecopeventcta";
 import { PendingParticipationRequests } from "@/components/PendingParticipationRequests";
 import RecentActivities from "@/components/RecentActivities";
+import ArchivedEventsCTA from "@/components/ArchivedEventsCTA";
+import VolunteerCertificates from "@/components/volunteer-certificates";
 
 // Dashboard components
 function AdminDashboard() {
@@ -97,83 +99,72 @@ function NGODashboard() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] relative overflow-hidden">
-      {/* Decorative background pattern circles */}
-      <div className="absolute w-32 h-32 bg-[#5BCCC4] opacity-[0.05] rounded-full top-16 left-16"></div>
-      <div className="absolute w-40 h-40 bg-[#8CE27A] opacity-[0.06] rounded-full top-[432px] right-64"></div>
-      <div className="absolute w-24 h-24 bg-[#FFC857] opacity-[0.06] rounded-full top-[519px] left-48"></div>
-      <div className="absolute w-36 h-36 bg-[#5BCCC4] opacity-[0.04] rounded-full top-56 right-[452px]"></div>
-      <div className="absolute w-28 h-28 bg-[#8CE27A] opacity-[0.05] rounded-full top-80 left-[627px]"></div>
-      <div className="absolute w-20 h-20 bg-[#FFC857] opacity-[0.04] rounded-full top-[325px] left-[431px]"></div>
-      <div className="absolute w-32 h-32 bg-[#EC4899] opacity-[0.03] rounded-full top-[417px] left-[554px]"></div>
-      <div className="absolute w-24 h-24 bg-[#4FC3DC] opacity-[0.04] rounded-full top-36 right-72"></div>
-      
-      {/* Animated Video Mascots - Positioned at edges to avoid content overlap */}
-      <motion.img
-        src="/mascots/video_mascots/mascot_joyDance_video.gif"
-        alt="joy dance mascot"
-        className="absolute top-20 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-8 pointer-events-none z-[5] hidden md:block"
-        animate={{
-          y: [0, -15, 0],
-          rotate: [0, 5, -5, 0],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/video_mascots/mascot_holdingmoney_video.gif"
-        alt="holding money mascot"
-        className="absolute top-24 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-8 pointer-events-none z-[5] hidden md:block"
-        animate={{
-          y: [0, 12, 0],
-          rotate: [0, -5, 5, 0],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5,
-        }}
-      />
-      
-      <motion.img
-        src="/mascots/video_mascots/mascot_jumping_video.gif"
-        alt="jumping mascot"
-        className="absolute bottom-32 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-12 pointer-events-none z-[5] hidden md:block"
-        animate={{
-          y: [0, 18, 0],
-          rotate: [0, -8, 8, 0],
-        }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1,
-        }}
-      />
-      
-      {/* <motion.img
-        src="/mascots/video_mascots/mascot_planting_video.gif"
-        alt="planting mascot"
-        className="absolute bottom-40 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-10 pointer-events-none z-[5] hidden lg:block"
-        animate={{
-          scale: [1, 1.1, 1],
-          y: [0, -10, 0],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1.5,
-        }}
-      /> */}
-      
-      <div className="relative z-10">
+    <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] relative">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-50">
         <Header />
+      </div>
+
+      {/* Main Content - with padding top to account for fixed header */}
+      <div className="pt-16">
+        {/* Decorative background pattern circles */}
+        <div className="absolute w-32 h-32 bg-[#5BCCC4] opacity-[0.05] rounded-full top-16 left-16"></div>
+        <div className="absolute w-40 h-40 bg-[#8CE27A] opacity-[0.06] rounded-full top-[432px] right-64"></div>
+        <div className="absolute w-24 h-24 bg-[#FFC857] opacity-[0.06] rounded-full top-[519px] left-48"></div>
+        <div className="absolute w-36 h-36 bg-[#5BCCC4] opacity-[0.04] rounded-full top-56 right-[452px]"></div>
+        <div className="absolute w-28 h-28 bg-[#8CE27A] opacity-[0.05] rounded-full top-80 left-[627px]"></div>
+        <div className="absolute w-20 h-20 bg-[#FFC857] opacity-[0.04] rounded-full top-[325px] left-[431px]"></div>
+        <div className="absolute w-32 h-32 bg-[#EC4899] opacity-[0.03] rounded-full top-[417px] left-[554px]"></div>
+        <div className="absolute w-24 h-24 bg-[#4FC3DC] opacity-[0.04] rounded-full top-36 right-72"></div>
+        
+        {/* Animated Video Mascots - Positioned at edges to avoid content overlap */}
+        <motion.img
+          src="/mascots/video_mascots/mascot_joyDance_video.gif"
+          alt="joy dance mascot"
+          className="absolute top-20 left-4 w-24 h-24 md:w-32 md:h-32 lg:left-8 pointer-events-none z-[5] hidden md:block"
+          animate={{
+            y: [0, -15, 0],
+            rotate: [0, 5, -5, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        
+        <motion.img
+          src="/mascots/video_mascots/mascot_holdingmoney_video.gif"
+          alt="holding money mascot"
+          className="absolute top-24 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-8 pointer-events-none z-[5] hidden md:block"
+          animate={{
+            y: [0, 12, 0],
+            rotate: [0, -5, 5, 0],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
+        />
+        
+        <motion.img
+          src="/mascots/video_mascots/mascot_jumping_video.gif"
+          alt="jumping mascot"
+          className="absolute bottom-32 right-4 w-24 h-24 md:w-32 md:h-32 lg:right-12 pointer-events-none z-[5] hidden md:block"
+          animate={{
+            y: [0, 18, 0],
+            rotate: [0, -8, 8, 0],
+          }}
+          transition={{
+            duration: 5.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
+        
         <div className="pb-8">
           <Ngoanalytics />
           
@@ -288,6 +279,11 @@ function NGODashboard() {
           <div className="flex md:flex-row flex-col w-full px-4 md:px-8 gap-6 mt-8 max-w-[1200px] mx-auto">
             <Eventbutton />
             <Donationeventbutton />
+          </div>
+
+          {/* Archived Events CTA */}
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 mt-6">
+            <ArchivedEventsCTA />
           </div>
     
       <div ref={ngoEventTableRef}>
@@ -535,6 +531,7 @@ function VolunteerDashboard() {
           <PointsDisplay />
           <Useranalytics />
           <Dailyquote />
+          <VolunteerCertificates />
           <Useractivity />
           <Userrewardstoredash />
         </div>

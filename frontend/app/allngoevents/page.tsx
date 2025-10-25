@@ -5,6 +5,7 @@ import { CheckCircle, Clock, Users, AlertCircle, XCircle, Heart } from "lucide-r
 import api from "@/lib/api";
 import Pagination from "@/components/Pagination";
 import StatusBanner from "@/components/StatusBanner";
+import EventAttendanceVerification from "@/components/event-attendance-verification";
 
 interface EventItem {
   _id: string;
@@ -19,15 +20,14 @@ interface EventItem {
   participants?: any[];
   rejectionReason?: string;
   approvalStatus?: "pending" | "approved" | "rejected";
+  pointsOffered?: number;
 }
 
 const Allngopublisheventcta = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [proofFile, setProofFile] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const eventsRef = useRef<HTMLDivElement>(null);
   
   // Pagination states
@@ -121,6 +121,7 @@ const Allngopublisheventcta = () => {
             participants: e.participants,
             rejectionReason: e.rejectionReason,
             approvalStatus: e.status,
+            pointsOffered: e.pointsOffered || 0,
           };
         });
 
@@ -132,46 +133,18 @@ const Allngopublisheventcta = () => {
     }
   };
 
-  const openEndEventModal = (eventId: string) => {
-    setSelectedEventId(eventId);
-    setProofFile(null);
-    setShowModal(true);
+  const openEndEventModal = (event: EventItem) => {
+    setSelectedEvent(event);
+    setShowAttendanceModal(true);
   };
 
-  const submitEndEvent = async () => {
-    if (!proofFile) {
-      alert("Please upload a proof image before ending the event");
-      return;
-    }
+  const handleCloseAttendanceModal = () => {
+    setShowAttendanceModal(false);
+    setSelectedEvent(null);
+  };
 
-    try {
-      setSubmitting(true); // disable button
-      const token = localStorage.getItem("auth-token");
-      if (!token) return;
-
-      const formData = new FormData();
-      formData.append("completionProof", proofFile);
-
-      await api.post(
-        `/v1/event/end/${selectedEventId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      alert("Event ended successfully ✅");
-      setShowModal(false);
-      fetchEvents();
-    } catch (err: any) {
-      console.error("Failed to end event", err);
-      alert(err.response?.data?.message || "Failed to end event ❌");
-    } finally {
-      setSubmitting(false); // enable button again
-    }
+  const handleAttendanceSubmitSuccess = () => {
+    fetchEvents();
   };
 
   useEffect(() => {
@@ -343,10 +316,10 @@ const Allngopublisheventcta = () => {
                       className={`px-4 py-1.5 rounded-lg text-sm font-medium transition shadow-sm ${
                         event.status === "ended"
                           ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : "bg-red-600 text-white hover:bg-red-700"
+                          : "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white hover:from-[#6BC794] hover:to-[#5AB583]"
                       }`}
                       disabled={event.status === "ended"}
-                      onClick={() => openEndEventModal(event._id)}
+                      onClick={() => openEndEventModal(event)}
                     >
                       {event.status === "ended" ? "Event Ended" : "End Event"}
                     </button>
@@ -371,39 +344,15 @@ const Allngopublisheventcta = () => {
         totalItems={events.length}
       />
 
-      {/* Proof Modal */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">End Event Confirmation</h3>
-            <p className="text-gray-600 mb-3">Upload a proof image before ending this event.</p>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-              className="w-full border rounded-lg p-2 mb-4"
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitEndEvent}
-                disabled={submitting}
-                className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 ${
-                  submitting ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {submitting ? "Submitting..." : "Request event completion"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Event Attendance Verification Modal */}
+      {showAttendanceModal && selectedEvent && (
+        <EventAttendanceVerification
+          eventId={selectedEvent._id}
+          eventTitle={selectedEvent.title}
+          pointsOffered={selectedEvent.pointsOffered || 0}
+          onClose={handleCloseAttendanceModal}
+          onSubmitSuccess={handleAttendanceSubmitSuccess}
+        />
       )}
     </section>
   );

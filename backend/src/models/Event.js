@@ -202,8 +202,25 @@ const eventSchema = new mongoose.Schema(
     },
     completionStatus: {
       type: String,
-      enum: ["none", "pending", "accepted", "rejected"],
+      enum: ["none", "pending", "accepted", "rejected", "approved"],
       default: "none",
+    },
+    completionRequestedAt: {
+      type: Date,
+      default: null,
+    },
+    completionApprovedAt: {
+      type: Date,
+      default: null,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    attendedParticipants: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
     },
 
     sponsorshipRequired: {

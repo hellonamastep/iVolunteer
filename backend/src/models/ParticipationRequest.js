@@ -82,6 +82,9 @@ participationRequestSchema.virtual('eventCreator', {
 // Instance methods
 participationRequestSchema.methods.accept = async function () {
   const Event = mongoose.model('Event');
+  const User = mongoose.model('User');
+  const { EventParticipantLog } = await import('./EventParticipantLog.js');
+  
   const event = await Event.findById(this.eventId);
   
   if (!event) {
@@ -96,10 +99,23 @@ participationRequestSchema.methods.accept = async function () {
     throw new Error('Event is full');
   }
 
+  // Get participant data for logging
+  const participant = await User.findById(this.userId);
+  if (!participant) {
+    throw new Error('User not found');
+  }
+
   // Add user to event participants
   await Event.findByIdAndUpdate(
     this.eventId,
     { $addToSet: { participants: this.userId } }
+  );
+
+  // Log the participant join action
+  await EventParticipantLog.logJoin(
+    this.eventId,
+    participant,
+    this.eventCreatorId // Performed by the event creator who accepted the request
   );
 
   this.status = 'accepted';

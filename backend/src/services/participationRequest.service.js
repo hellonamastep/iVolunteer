@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { ParticipationRequest } from "../models/ParticipationRequest.js";
 import { Event } from "../models/Event.js";
 import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/User.js";
+import { notificationService } from "../controllers/notification.controller.js";
 
 // Create a participation request
 const createParticipationRequest = async (eventId, userId, message = null) => {
@@ -101,6 +103,18 @@ const createParticipationRequest = async (eventId, userId, message = null) => {
       { path: 'userId', select: 'name email' }
     ]);
 
+    // Notify NGO about new participation request
+    const volunteer = await User.findById(userId);
+    if (volunteer) {
+      await notificationService.notifyNGOParticipationRequest(
+        event.organizationId,
+        userId,
+        volunteer.name,
+        eventId,
+        event.title
+      );
+    }
+
     return participationRequest;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -164,8 +178,28 @@ const updateParticipationRequestStatus = async (requestId, status, rejectionReas
 
     if (status === "accepted") {
       await request.accept();
+      
+      // Notify volunteer about acceptance
+      const event = await Event.findById(request.eventId);
+      if (event) {
+        await notificationService.notifyVolunteerParticipationAccepted(
+          request.userId,
+          request.eventId,
+          event.title
+        );
+      }
     } else if (status === "rejected") {
       await request.reject(rejectionReason);
+      
+      // Notify volunteer about rejection
+      const event = await Event.findById(request.eventId);
+      if (event) {
+        await notificationService.notifyVolunteerParticipationRejected(
+          request.userId,
+          request.eventId,
+          event.title
+        );
+      }
     }
 
     // Populate the updated request before returning

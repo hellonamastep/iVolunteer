@@ -56,6 +56,7 @@ export interface EventCardProps {
   
   // Additional content
   headerBadge?: ReactNode;
+  titleIcon?: ReactNode;
   
   // Custom className
   className?: string;
@@ -73,6 +74,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   stats,
   actions,
   headerBadge,
+  titleIcon,
   className = '',
 }) => {
   return (
@@ -116,22 +118,22 @@ export const EventCard: React.FC<EventCardProps> = ({
         
         {/* Image Badges */}
         {imageBadges?.topLeft && (
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 z-10">
             {imageBadges.topLeft}
           </div>
         )}
         {imageBadges?.topRight && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-10">
             {imageBadges.topRight}
           </div>
         )}
         {imageBadges?.bottomLeft && (
-          <div className="absolute bottom-3 left-3">
+          <div className="absolute bottom-3 left-3 z-10">
             {imageBadges.bottomLeft}
           </div>
         )}
         {imageBadges?.bottomRight && (
-          <div className="absolute bottom-3 right-3">
+          <div className="absolute bottom-3 right-3 z-10">
             {imageBadges.bottomRight}
           </div>
         )}
@@ -148,9 +150,16 @@ export const EventCard: React.FC<EventCardProps> = ({
 
         {/* Title and Description */}
         <div className="mb-3">
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-500 leading-tight mb-1.5">
-            {title}
-          </h3>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="flex-1 text-lg font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-500 leading-tight mb-1.5">
+              {title}
+            </h3>
+            {titleIcon && (
+              <div className="flex-shrink-0 mt-0.5">
+                {titleIcon}
+              </div>
+            )}
+          </div>
           <div className="text-gray-600 leading-snug text-xs line-clamp-2">
             {description}
           </div>

@@ -377,9 +377,36 @@ const requestCompletion = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Completion request already submitted");
   }
 
-  // Save proof
+  // Get attended participants from request body
+  let attendedParticipants = [];
+  if (req.body.attendedParticipants) {
+    try {
+      attendedParticipants = JSON.parse(req.body.attendedParticipants);
+    } catch (err) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid attendedParticipants format" 
+      });
+    }
+  }
+
+  // Validate that attended participants are actually participants of the event
+  const invalidParticipants = attendedParticipants.filter(
+    id => !event.participants.some(p => p.toString() === id.toString())
+  );
+  
+  if (invalidParticipants.length > 0) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Some attended participants are not registered for this event" 
+    });
+  }
+
+  // Save proof and attended participants
   event.completionProof = { url: req.file.path };
   event.completionStatus = "pending"; // mark request as pending
+  event.attendedParticipants = attendedParticipants;
+  event.completionRequestedAt = new Date();
   await event.save();
 
   res.status(200).json({
@@ -400,7 +427,7 @@ export const reviewCompletion = asyncHandler(async (req, res) => {
   const { eventId } = req.params;
   const { decision } = req.body; // "accepted" | "rejected"
 
-  const event = await ngoEventService.reviewEventCompletion(eventId, decision);
+  const event = await ngoEventService.reviewEventCompletion(eventId, decision, req.user._id);
 
   res.status(200).json({
     success: true,
@@ -484,6 +511,75 @@ const approveEventWithScoring = asyncHandler(async (req, res) => {
   });
 });
 
+// Get archived events for current NGO
+const getArchivedEvents = asyncHandler(async (req, res) => {
+  const organizationId = req.user._id;
+
+  const events = await ngoEventService.getArchivedEvents(organizationId);
+
+  res.status(200).json({
+    success: true,
+    events,
+    count: events.length,
+  });
+});
+
+// Get event participants data (for event creator only)
+const getEventParticipants = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+  const userId = req.user._id;
+
+  // Validate eventId
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid event ID",
+    });
+  }
+
+  // Find the event and populate participants
+  const event = await Event.findById(eventId)
+    .populate({
+      path: 'participants',
+      select: 'name email contactNumber location city userType points createdAt',
+    })
+    .lean();
+
+  if (!event) {
+    return res.status(404).json({
+      success: false,
+      message: "Event not found",
+    });
+  }
+
+  // Check if the user is the event creator
+  const organizationId = event.organizationId?.toString() || event.organizationId;
+  if (organizationId !== userId.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized. Only event creator can view participants data.",
+    });
+  }
+
+  // Format participants data
+  const participantsData = event.participants.map((participant) => ({
+    _id: participant._id,
+    name: participant.name,
+    email: participant.email,
+    contactNumber: participant.contactNumber,
+    location: participant.location || participant.city,
+    userType: participant.userType,
+    points: participant.points || 0,
+    joinedAt: participant.createdAt,
+  }));
+
+  res.status(200).json({
+    success: true,
+    participants: participantsData,
+    count: participantsData.length,
+  });
+});
+
 
 
 
@@ -510,4 +606,6 @@ export const ngoEventController = {
     getCompletionRequestHistory,
   getCompletedEventsByNgo,
   approveEventWithScoring,
+  getArchivedEvents,
+  getEventParticipants,
 };

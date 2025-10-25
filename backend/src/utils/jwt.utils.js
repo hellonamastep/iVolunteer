@@ -70,7 +70,7 @@ export const generateJwtToken = (user) => {
   const accessToken = jwt.sign(
     { id: user._id || user.userId, role: user.role },   // use "id" for consistency
     process.env.JWT_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" } // align with cookie
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "30d" } // 30 days for long sessions
   );
   const refreshToken = generateToken(); // persist this server-side if you validate it
   return { accessToken, refreshToken };
@@ -89,7 +89,7 @@ const COOKIE_OPTS = {
 export const setCookies = (res, accessToken, refreshToken) => {
   res.cookie("access_token", accessToken, {
     ...COOKIE_OPTS,
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   res.cookie("refresh_token", refreshToken, {
     ...COOKIE_OPTS,

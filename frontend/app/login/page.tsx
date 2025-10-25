@@ -8,7 +8,7 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
+import { Logo } from "@/components/logo";
 
 type FormValues = { email: string; password: string; otp?: string };
 
@@ -48,6 +48,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#E9FDF1] to-[#E9FDF1]/80 font-['Manrope'] px-4 sm:px-6 lg:px-8 py-8">
       {/* Logo Section */}
       <div className="flex flex-col items-center mb-4 w-full max-w-xs sm:max-w-sm">
+<<<<<<< HEAD
         <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36 mb-2">
           <Image
             src="/images/loginmascot.gif"
@@ -64,6 +65,12 @@ function LoginForm() {
         <p className="text-gray-600 text-sm sm:text-md mt-1 text-center px-2">
           Make Doing Good Fun, Rewarding & Impactful
         </p>
+=======
+        <div className="mb-4 scale-150 sm:scale-[1.75] md:scale-[2]">
+          <Logo />
+        </div>
+        <p className="text-gray-600 text-sm sm:text-md mt-6 text-center px-2">Make Doing Good Fun, Rewarding & Impactful</p>
+>>>>>>> imageDisplay
       </div>
 
       {/* Login Card */}

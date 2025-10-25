@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Heart,
   Users,
+  Info,
 } from 'lucide-react';
 import { DonationEvent } from '@/contexts/donationevents-context';
 
@@ -79,6 +80,18 @@ export const DonationEventCard: React.FC<DonationEventCardProps> = ({
         ) : undefined,
       }}
       title={renderText(event.title)}
+      titleIcon={(
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCardClick(event._id);
+          }}
+          className="bg-teal-50 hover:bg-teal-100 text-teal-600 p-1.5 rounded-full transition-all hover:scale-110"
+          title="View Campaign Details"
+        >
+          <Info className="w-4 h-4" />
+        </button>
+      )}
       description={renderText(event.description || "")}
       stats={[
         {

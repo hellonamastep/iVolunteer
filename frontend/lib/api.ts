@@ -113,7 +113,7 @@ api.interceptors.response.use(
             localStorage.removeItem("auth-token");
             localStorage.removeItem("refresh-token");
             window.dispatchEvent(new CustomEvent("token-expired"));
-            window.location.href = "/auth";
+            window.location.href = "/login";
           }
           return Promise.reject(refreshError);
         } finally {

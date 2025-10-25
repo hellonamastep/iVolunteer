@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { DetailPageLayout } from "@/components/DetailPageLayout";
 import { DetailSection, DetailInfoRow, DetailColumnHeader, DetailDescription } from "@/components/DetailSection";
+import EventParticipantsManager from "@/components/event-participants-manager";
 
 const EventDetailsPage: React.FC = () => {
   const params = useParams();
@@ -251,7 +252,12 @@ const EventDetailsPage: React.FC = () => {
   );
 
   // Status badge component
-  const statusBadge = participated ? (
+  const statusBadge = isEventCreator ? (
+    <div className="inline-flex items-center bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm md:text-base font-semibold shadow-md">
+      <Building className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1 sm:mr-1.5 md:mr-2 flex-shrink-0" />
+      <span className="truncate">Event Creator</span>
+    </div>
+  ) : participated ? (
     <div className="inline-flex items-center bg-green-500 text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm md:text-base font-semibold">
       <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1 sm:mr-1.5 md:mr-2 flex-shrink-0" />
       <span className="truncate">You're participating in this event</span>
@@ -542,17 +548,18 @@ const EventDetailsPage: React.FC = () => {
       {/* Participation Actions */}
       <div className="border-2 border-[#D4E7B8] rounded-lg p-5 space-y-3">
         {isEventCreator ? (
-          <div className="space-y-2">
-            <button
-              disabled
-              className="w-full bg-gray-100 text-gray-600 py-2.5 px-4 rounded-lg font-medium text-sm cursor-not-allowed flex items-center justify-center"
-            >
-              <Building className="h-4 w-4 mr-2" />
-              You Created This Event
-            </button>
-            <p className="text-xs text-center text-gray-500">
-              Event creators cannot participate
-            </p>
+          <div className="space-y-3">
+            <div className="bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] rounded-lg p-4">
+              <div className="flex items-center justify-center space-x-2 text-white">
+                <Building className="h-5 w-5" />
+                <span className="font-bold text-base">You Created This Event</span>
+              </div>
+            </div>
+            <div className="bg-[#E8F5A5]/30 border border-[#D4E7B8] rounded-lg p-3">
+              <p className="text-xs text-center text-gray-700 font-medium">
+                ℹ️ As the event creator, you can manage participants below
+              </p>
+            </div>
           </div>
         ) : (() => {
           const hasRequested = hasRequestedParticipation(event?._id || "");
@@ -713,23 +720,37 @@ const EventDetailsPage: React.FC = () => {
   );
 
   return (
-    <DetailPageLayout
-      loading={loading}
-      loadingMessage="Loading event details..."
-      loadingSubtext="Please wait while we fetch the details! 🎉"
-      error={error}
-      errorTitle={error ? "Error" : "Event Not Found"}
-      backButtonText="Back to Events"
-      pageTitle="Volunteer Event"
-      pageSubtitle="Join us and make a difference"
-      coverImage={event.image?.url}
-      coverImageAlt={event.image?.caption || event.title}
-      title={event.title}
-      organizationName={event.organizationId?.name || event.organization || "Organization"}
-      statusBadge={statusBadge}
-      leftColumn={leftColumnContent}
-      rightColumn={rightColumnContent}
-    />
+    <>
+      <DetailPageLayout
+        loading={loading}
+        loadingMessage="Loading event details..."
+        loadingSubtext="Please wait while we fetch the details! 🎉"
+        error={error}
+        errorTitle={error ? "Error" : "Event Not Found"}
+        backButtonText="Back to Events"
+        pageTitle="Volunteer Event"
+        pageSubtitle="Join us and make a difference"
+        coverImage={event.image?.url}
+        coverImageAlt={event.image?.caption || event.title}
+        title={event.title}
+        organizationName={event.organizationId?.name || event.organization || "Organization"}
+        statusBadge={statusBadge}
+        leftColumn={leftColumnContent}
+        rightColumn={rightColumnContent}
+      />
+      
+      {/* Event Participants Manager - Only visible to creator */}
+      {!loading && !error && event && isEventCreator && (
+        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <EventParticipantsManager 
+              eventId={eventId} 
+              isCreator={isEventCreator}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

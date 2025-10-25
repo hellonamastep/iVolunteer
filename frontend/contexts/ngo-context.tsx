@@ -43,6 +43,10 @@ export type EventData = {
     focusAreas?: string[];
     organizationSize?: string;
   };
+  shouldHide?: boolean;
+  completionRequestedAt?: string;
+  completionStatus?: string;
+  isEventOver?: boolean;
 };
 
 export type NGOContextType = {
