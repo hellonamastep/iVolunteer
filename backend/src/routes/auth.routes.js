@@ -17,6 +17,7 @@ import passport from "../config/passport.js"; // <-- not "passport"
 const router = Router();
 
 router.post("/register", validate(authValidator.registerSchema), authController.register);
+
 router.post("/check-email", authController.checkEmail);
 router.post("/login", validate(authValidator.loginSchema), authController.login);
 router.post("/logout", authentication, authController.logout);
@@ -29,8 +30,12 @@ router.post("/upload-profile-picture", authentication, upload.single("profilePic
 router.delete("/profile-picture", authentication, authController.removeProfilePicture);
 router.delete("/account", authentication, authController.deleteAccount);
 router.post("/refresh-access-token", refreshAccessTokenController);
-router.post("/send-otp", otpController.sendOtp);
+  router.post("/send-otp", otpController.sendOtp);
 router.post("/verify-otp", otpController.verifyOtp);
+router.post("/resend-otp", otpController.resendOtp);
+
+// Add this route
+router.post("/check-email", authController.checkEmail);
 
 // OAuth
 router.get(

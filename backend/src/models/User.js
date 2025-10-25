@@ -47,7 +47,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    // Volunteer (user) specific fields
+    // In your User model
+isEmailVerified: {
+  type: Boolean,
+  default: false
+},
     age: {
       type: Number,
       required: function () {

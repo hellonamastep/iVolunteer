@@ -9,47 +9,149 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { cloudinary } from "../config/cloudinary.js";
 import { otpService } from "../services/otp.service.js";
+import { User } from "../models/User.js";
+import { OTP } from "../models/Otp.js";
 
 // new
 import { sendPasswordResetEmail, sendPasswResetSuccessEmail } from "../services/email.service.js";
 
-const register = asyncHandler(async (req, res) => {
-  console.log("Registration request received:", req.body);
-  const user = await authService.register(req.body);
-  console.log("User created with coins:", user.coins);
+// const register = asyncHandler(async (req, res) => {
+//   console.log("Registration request received:", req.body);
+//   const user = await authService.register(req.body);
+//   console.log("User created with coins:", user.coins);
 
-  let tokens;
-  try {
-    tokens = await createSession(user);
-  } catch (err) {
-    console.error("Session creation failed:", err);
-    throw new ApiError(500, "Error while creating session");
+//   let tokens;
+//   try {
+//     tokens = await createSession(user);
+//   } catch (err) {
+//     console.error("Session creation failed:", err);
+//     throw new ApiError(500, "Error while creating session");
+//   }
+
+//   setCookies(res, tokens.accessToken, tokens.refreshToken);
+
+//   const userResponse = {
+//     userId: user._id,
+//     email: user.email,
+//     name: user.name,
+//     role: user.role,
+//     coins: user.coins,
+//   };
+
+//   console.log("Registration response:", userResponse);
+
+//   return res.status(201).json({
+//     user: userResponse,
+//     tokens: {
+//       accessToken: tokens.accessToken,
+//       refreshToken: tokens.refreshToken,
+//     },
+//     message:
+//       "User registered successfully! You've been awarded 50 coins as a welcome bonus!",
+//   });
+// });
+const register = asyncHandler(async (req, res) => {
+  console.log("📨 Registration request received");
+  console.log("📋 Request body:", JSON.stringify(req.body, null, 2));
+
+  const { email, otp, ...userData } = req.body;
+
+  const normalizedEmail = email?.toLowerCase().trim();
+
+  // Validate email
+  if (!email) {
+    console.error("❌ Email is missing");
+    throw new ApiError(400, "Email is required");
   }
 
-  setCookies(res, tokens.accessToken, tokens.refreshToken);
+  console.log("🔍 Checking for verified OTP in database...");
 
-  const userResponse = {
-    userId: user._id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    coins: user.coins,
-  };
+  try {
+    // ✅ NEW APPROACH: Look for ANY verified OTP for this email
+    const verifiedOtpRecord = await OTP.findOne({ 
+      email: normalizedEmail,
+      isVerified: true
+    }).sort({ verifiedAt: -1 }); // Get the most recently verified OTP
 
-  console.log("Registration response:", userResponse);
+    if (!verifiedOtpRecord) {
+      console.error("❌ No verified OTP found for this email");
+      throw new ApiError(400, "Please verify your email with OTP first");
+    }
 
-  return res.status(201).json({
-    user: userResponse,
-    tokens: {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    },
-    message:
-      "User registered successfully! You've been awarded 50 coins as a welcome bonus!",
-  });
+    // Check expiration
+    if (verifiedOtpRecord.expiresAt < new Date()) {
+      console.error("❌ OTP expired");
+      await OTP.deleteOne({ _id: verifiedOtpRecord._id });
+      throw new ApiError(400, "OTP has expired. Please request a new one.");
+    }
+
+    console.log("✅ Found verified OTP for registration");
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      console.error("❌ User already exists");
+      throw new ApiError(400, "User already exists with this email");
+    }
+
+    // Create registration data with the verified OTP
+    const registrationData = {
+      email: normalizedEmail,
+      otp: verifiedOtpRecord.otp, // ✅ Use the OTP from database
+      ...userData
+    };
+
+    console.log("👤 Creating user with verified OTP:", {
+      email: registrationData.email,
+      hasOTP: !!registrationData.otp,
+      role: registrationData.role,
+      name: registrationData.name
+    });
+    
+    const user = await authService.register(registrationData);
+    
+    console.log("✅ User created successfully");
+
+    // Delete the used OTP
+    await OTP.deleteOne({ _id: verifiedOtpRecord._id });
+    console.log("🗑️ OTP deleted after successful registration");
+
+    // Generate tokens
+    const tokens = await createSession(user);
+    setCookies(res, tokens.accessToken, tokens.refreshToken);
+
+    // Prepare response
+    const userResponse = {
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      coins: user.coins,
+      points: user.points,
+      profilePicture: user.profilePicture,
+      city: user.city,
+    };
+
+    return res.status(201).json({
+      success: true,
+      user: userResponse,
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
+      message: "User registered successfully! You've been awarded 50 coins as a welcome bonus!",
+    });
+
+  } catch (error) {
+    console.error("💥 Registration error:", error);
+    
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    throw new ApiError(500, "Registration failed due to server error");
+  }
 });
-
-
 const googleLogin = asyncHandler(async (req, res) => {
   const { email, name, profilePicture } = req.body;
 

@@ -1,21 +1,32 @@
-// models/Otp.js
 import mongoose from "mongoose";
 
 const otpSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    email: {
+      type: String,
       required: true,
-      unique: true, // ✅ unique per user
+      lowercase: true,
+      trim: true,
     },
-    otpHash: { type: String, required: true },
-    expiresAt: { type: Date, required: true }, // ✅ no index here
+    otp: {
+      type: String,
+      required: true,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// ✅ Only ONE TTL index — correct way
+// Auto-delete expired OTPs
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const Otp = mongoose.model("Otp", otpSchema);
+export const OTP = mongoose.model("OTP", otpSchema);

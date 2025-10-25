@@ -1,30 +1,55 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { otpService } from "../services/otp.service.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { createSession } from "../services/session.service.js";
-import { setCookies } from "../utils/jwt.utils.js";
+import { ApiError } from "../utils/ApiError.js";
+import { otpService } from "../services/otp.service.js";
 
-// Send OTP after successful credential validation
+// Send OTP for registration
 const sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
-  const result = await otpService.sendOtp(email);
-  return res.status(200).json(new ApiResponse(200, result, "OTP sent successfully"));
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const result = await otpService.sendOTP(email);
+
+  return res.status(200).json(
+    new ApiResponse(200, result, "OTP sent successfully")
+  );
 });
 
-// Verify OTP and login user
+// Verify OTP for registration
 const verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-  const { user } = await otpService.verifyOtp(email, otp);
 
-  const { accessToken, refreshToken } = await createSession(user);
-  setCookies(res, accessToken, refreshToken);
+  if (!email || !otp) {
+    throw new ApiError(400, "Email and OTP are required");
+  }
 
-  return res.status(200).json({
-    user,
-    tokens: { accessToken, refreshToken },
-    message: "OTP verified successfully — logged in!",
-  });
+  const result = await otpService.verifyOTP(email, otp);
+
+  return res.status(200).json(
+    new ApiResponse(200, result, "Email verified successfully")
+  );
 });
 
+// Resend OTP
+const resendOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
 
-export const otpController = { sendOtp, verifyOtp };
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const result = await otpService.resendOTP(email);
+
+  return res.status(200).json(
+    new ApiResponse(200, result, "OTP resent successfully")
+  );
+});
+
+export const otpController = {
+  sendOtp,
+  verifyOtp,
+  resendOtp
+};
