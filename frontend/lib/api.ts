@@ -2,7 +2,7 @@
 
 import axios from "axios";
 
-const apiHost = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.namastep.com/api").replace(/\/api$/, "");
+const apiHost = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api").replace(/\/api$/, "");
 const api = axios.create({
   baseURL: `${apiHost}/api`, // frontend "/v1/*" -> backend "/api/v1/*"
   withCredentials: true,
@@ -37,6 +37,7 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
   failedQueue = [];
 };
+
 
 // REQUEST: attach token and add cache-buster for GET
 api.interceptors.request.use(
