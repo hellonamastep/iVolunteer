@@ -33,16 +33,16 @@ const Faq = () => {
   };
 
   return (
-    <section className="relative py-16 px-6 md:px-12 bg-white">
-      <div className="max-w-4xl mx-auto text-center mb-12 relative z-10">
+    <section className="relative py-12 sm:py-14 md:py-16 px-4 sm:px-6 md:px-8 lg:px-12 bg-white">
+      <div className="max-w-4xl mx-auto text-center mb-8 sm:mb-10 md:mb-12 relative z-10">
         <h2
-          className="w-full max-w-[480px] mx-auto h-[120px] flex items-center justify-center text-center text-[55px] leading-[60px] font-normal text-[#0F1729]"
+          className="w-full max-w-[90%] sm:max-w-[480px] mx-auto min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[48px] lg:text-[55px] leading-tight font-normal text-[#0F1729] px-2"
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
           Frequently Asked Questions ❓
         </h2>
         <p
-          className="text-[#65758B] mt-5 text-[18.7px] leading-7 font-normal"
+          className="text-[#65758B] mt-4 sm:mt-5 text-[15px] sm:text-[16px] md:text-[17px] lg:text-[18.7px] leading-relaxed font-normal px-4 sm:px-2"
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
           Got questions? We've got answers. Here's everything you need to know
@@ -50,18 +50,18 @@ const Faq = () => {
         </p>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-4 relative z-10">
+      <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4 relative z-10">
         {faqs.map((faq, index) => (
           <div
             key={index}
-            className="bg-white border-2 border-[#E1E7EF] border-opacity-60 shadow-[0px_6px_0px_#E1E7EF] rounded-[50px] hover:shadow-[0px_8px_0px_#E1E7EF] transition-all"
+            className="bg-white border-2 border-[#E1E7EF] border-opacity-60 shadow-[0px_4px_0px_#E1E7EF] sm:shadow-[0px_5px_0px_#E1E7EF] md:shadow-[0px_6px_0px_#E1E7EF] rounded-[32px] sm:rounded-[40px] md:rounded-[50px] hover:shadow-[0px_6px_0px_#E1E7EF] sm:hover:shadow-[0px_7px_0px_#E1E7EF] md:hover:shadow-[0px_8px_0px_#E1E7EF] transition-all"
           >
             <button
               onClick={() => toggleFAQ(index)}
-              className="flex justify-between items-center w-full px-9 py-6 text-left"
+              className="flex justify-between items-center w-full px-5 sm:px-7 md:px-9 py-4 sm:py-5 md:py-6 text-left gap-3"
             >
               <span
-                className="font-normal text-[20px] leading-7 text-[#0F1729]"
+                className="font-normal text-[16px] sm:text-[18px] md:text-[20px] leading-tight text-[#0F1729] flex-1"
                 style={{ fontFamily: "Satoshi, sans-serif" }}
               >
                 {faq.question}
@@ -69,8 +69,9 @@ const Faq = () => {
               <motion.span
                 animate={{ rotate: activeIndex === index ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
+                className="flex-shrink-0"
               >
-                <ChevronDown className="w-4 h-4 text-[#0F1729]" />
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#0F1729]" />
               </motion.span>
             </button>
 
@@ -109,7 +110,7 @@ const Faq = () => {
                   className="overflow-hidden"
                 >
                   <div
-                    className="px-9 pb-6 text-[#65758B] text-[17.7px] leading-[29px]"
+                    className="px-5 sm:px-7 md:px-9 pb-4 sm:pb-5 md:pb-6 text-[#65758B] text-[14px] sm:text-[16px] md:text-[17.7px] leading-relaxed"
                     style={{ fontFamily: "Satoshi, sans-serif" }}
                   >
                     {faq.answer}

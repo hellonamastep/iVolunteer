@@ -5,11 +5,11 @@ import Link from "next/link";
 
 const Hero = () => {
   return (
-    <section className="relative bg-white font-inter isolate overflow-hidden">
+    <section className="relative bg-white font-inter isolate pb-[40px] overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero rows */}
-        <div className="relative mt-8 sm:mt-12 md:mt-16 min-h-[60vh] sm:min-h-[65vh] md:min-h-[70vh] flex items-center justify-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-center justify-items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20 2xl:gap-24 max-w-7xl w-full py-8 sm:py-10 md:py-12">
+        <div className="relative mt-4 sm:mt-8 md:mt-12 lg:mt-16 min-h-[60vh] sm:min-h-[65vh] md:min-h-[70vh] flex items-center justify-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center justify-items-center gap-4 sm:gap-8 md:gap-10 lg:gap-16 xl:gap-20 2xl:gap-24 max-w-7xl w-full py-4 sm:py-8 md:py-10 lg:py-12">
             {/* Left: Mascot with the bg yellow blob */}
             <motion.div
               className="relative flex justify-center items-center order-1 lg:order-1"
@@ -18,22 +18,22 @@ const Hero = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               {/* Yellow Ellipse - Large with 50% opacity */}
-              <div className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[550px] md:h-[550px] lg:w-[615px] lg:h-[615px] rounded-full bg-[#EFF396] opacity-50 z-0"></div>
+              {/* <div className="absolute w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[480px] md:h-[480px] lg:w-[615px] lg:h-[615px] rounded-full bg-[#EFF396] opacity-50 z-0"></div> */}
 
               {/* Yellow Ellipse - Smaller with 100% opacity */}
-              <div className="absolute w-[310px] h-[310px] sm:w-[420px] sm:h-[420px] md:w-[480px] md:h-[480px] lg:w-[540px] lg:h-[540px] rounded-full bg-[#EFF396] z-[2]"></div>
+              {/* <div className="absolute w-[240px] h-[240px] sm:w-[330px] sm:h-[330px] md:w-[420px] md:h-[420px] lg:w-[540px] lg:h-[540px] rounded-full bg-[#EFF396] z-[2]"></div> */}
 
               {/* Mascot */}
               <motion.img
-                src="/mascott 1.svg"
+                src="/mascots/video_mascots/mascot_planting_video.gif"
                 alt="Hero Mascot"
-                className="relative z-10 w-[280px] h-[357px] sm:w-[330px] sm:h-[421px] md:w-[380px] md:h-[485px] lg:w-[430px] lg:h-[548px] max-w-full"
+                className="relative z-10 w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] md:w-[420px] md:h-[420px] lg:w-[500px] lg:h-[500px] max-w-full object-contain"
               />
             </motion.div>
 
             {/* Right: Headlines and btns */}
             <motion.div
-              className="flex flex-col items-center justify-center text-center w-full max-w-xl gap-6 sm:gap-7 md:gap-8 order-2 lg:order-2"
+              className="flex flex-col items-center justify-center text-center w-full max-w-xl gap-4 sm:gap-6 md:gap-7 lg:gap-8 order-2 lg:order-2"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
@@ -47,7 +47,7 @@ const Hero = () => {
               </h1>
 
               <div className="flex flex-col items-center justify-center w-full gap-3 sm:gap-4 mt-2 px-4 sm:px-6 md:px-0">
-                <Link href="/auth" className="w-full max-w-[496px]">
+                <Link href="/login" className="w-full max-w-[496px]">
                   <motion.button
                     className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-[#59B4C3] text-white font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#499373] sm:shadow-[0px_8px_0px_#499373] transition-colors"
                     style={{ fontFamily: "Satoshi, sans-serif" }}
@@ -66,7 +66,7 @@ const Hero = () => {
                   </motion.button>
                 </Link>
 
-                <Link href="/auth" className="w-full max-w-[496px]">
+                <Link href="/signup" className="w-full max-w-[496px]">
                   <motion.button
                     className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-white text-[#59B4C3] font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#E5E5E5] sm:shadow-[0px_8px_0px_#E5E5E5] transition-colors"
                     style={{ fontFamily: "Satoshi, sans-serif" }}
@@ -93,7 +93,7 @@ const Hero = () => {
         <div className="h-12 sm:h-16 md:h-20 lg:h-24"></div>
       </div>
 
-      {/* Wave SVG  */}
+      {/* Wave SVG */}
       <div className="absolute bottom-[-2px] left-0 right-0 w-full overflow-hidden leading-[0]">
         <img
           src="/wave.svg"
