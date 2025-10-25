@@ -1,139 +1,299 @@
-import React from "react";
-import { FaFacebookF, FaInstagram, FaLinkedinIn, FaHeart, FaGlobeAmericas } from "react-icons/fa";
+"use client"
+import React, { useState } from "react";
 import Link from "next/link";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 
 const Footer = () => {
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  const toggleSection = (section: string) => {
+    if (openSection === section) {
+      setOpenSection(null);
+    } else {
+      setOpenSection(section);
+    }
+  };
+
+  const sitemapSections = [
+    {
+      title: "Public Pages",
+      key: "public",
+      links: [
+        { name: "Home", href: "/" },
+        { name: "About Us", href: "/aboutus" },
+        { 
+          name: "Activities", 
+          href: "/activities",
+          sublinks: [
+            { name: "All NGO Events", href: "/allngoevents" },
+            { name: "All Corporate Events", href: "/allcorporateevents" },
+            { name: "All Sponsorship Events", href: "/allsponsorshipevents" }
+          ]
+        },
+        { 
+          name: "Volunteer", 
+          href: "/volunteer",
+          sublinks: [
+            { name: "Event Detail", href: "/volunteer" }
+          ]
+        },
+        { 
+          name: "Donate", 
+          href: "/donate",
+          sublinks: [
+            { name: "Donation Detail", href: "/donate" }
+          ]
+        },
+        { 
+          name: "Blogs", 
+          href: "/blogs",
+          sublinks: [
+            { name: "Blog Post", href: "/blogs" }
+          ]
+        },
+        { name: "Contact Us", href: "/contactus" },
+        { name: "Privacy Policy", href: "/privacypolicy" },
+        { name: "Terms of Service", href: "/termsofservice" }
+      ]
+    },
+    {
+      title: "Authentication",
+      key: "auth",
+      links: [
+        { name: "Login", href: "/login" },
+        { name: "Sign Up", href: "/signup" },
+        { name: "Corporate Sign Up", href: "/corporatesignup" },
+        // { name: "Admin Sign Up", href: "/adminsignup" },
+        { 
+          name: "Forgot Password", 
+          href: "/forgot-password",
+          sublinks: [
+            { name: "Reset Password", href: "/forgot-password" }
+          ]
+        },
+        // { name: "Verify Email", href: "/verify-email" },
+        // { name: "Callback", href: "/callback" }
+      ]
+    },
+    {
+      title: "User Dashboard",
+      key: "user",
+      links: [
+        { name: "Dashboard", href: "/dashboard" },
+        { name: "Profile", href: "/profile" },
+        { name: "Badges", href: "/badges" },
+        { name: "Rewards", href: "/rewards" },
+        { name: "Posts", href: "/posts" },
+        { name: "My Events", href: "/volunteer/my-events" }
+      ]
+    },
+    {
+      title: "NGO Dashboard",
+      key: "ngo",
+      links: [
+        { name: "NGO Dashboard", href: "/ngo-dashboard" },
+        { name: "Add Event", href: "/add-event" },
+        { name: "Donation Event Form", href: "/donationevent-form" }
+      ]
+    },
+    {
+      title: "Corporate Dashboard",
+      key: "corporate",
+      links: [
+        { name: "Corporate", href: "/corporate" },
+        { name: "Corporate Signup", href: "/corporatesignup" }
+      ]
+    },
+    {
+      title: "Admin Dashboard",
+      key: "admin",
+      links: [
+        { name: "Admin Dashboard", href: "/admin" },
+        { name: "Donation Pending Requests", href: "/donationpendingreq" },
+        { name: "Event Archive", href: "/endeventarchive" },
+        { name: "Event Ending Requests", href: "/eventendingreq" },
+        { name: "Manage Blogs", href: "/manageblogs" },
+        { 
+          name: "Manage Corporate Events", 
+          href: "/managecopertaeevent",
+          sublinks: [
+            { name: "Manage Corporate Event", href: "/managecopertaeevent" }
+          ]
+        },
+        { name: "Pending Group Requests", href: "/pendinggrouprequest" },
+        { name: "Pending Requests", href: "/pendingrequest" }
+      ]
+    }
+  ];
+
+  // Helper function to ensure hrefs are safe
+  const getSafeHref = (href: string) => {
+    if (href.includes('[') || href.includes(']')) {
+      return href.split('/[')[0].split('/[id]')[0].split('/[eventId]')[0].split('/[donationId]')[0].split('/[token]')[0];
+    }
+    return href;
+  };
+
   return (
     <footer className="bg-gradient-to-br from-gray-50 to-blue-50/30 border-t border-blue-200/60 text-gray-700 mt-16">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-        {/* Main Layout */}
-        <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start gap-8 lg:gap-6 mb-6">
-          
-          {/* Brand Section */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#4FC3DC] to-[#357ABD] rounded-xl flex items-center justify-center shrink-0 shadow-lg">
-                <span className="text-white font-semibold text-xl">N</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Namastep</h3>
-                <p className="text-xs text-blue-600 font-medium">Building Better Tomorrows</p>
-              </div>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        {/* Sitemap Header */}
+        <h2 className="text-xl font-semibold text-gray-800 mb-8 text-center lg:text-left">
+          🌐 Site Map
+        </h2>
+
+        {/* Dropdown Sitemap */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+          {sitemapSections.map((section) => (
+            <div 
+              key={section.key} 
+              className="border border-gray-200/80 rounded-xl bg-white/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleSection(section.key)}
+                className={`w-full px-5 py-4 text-left rounded-xl flex justify-between items-center transition-all duration-300 ${
+                  openSection === section.key 
+                    ? "bg-gradient-to-r from-blue-50 to-indigo-50/30 border-b border-blue-100/50" 
+                    : "bg-white hover:bg-gray-50/80"
+                }`}
+              >
+                <span className="font-semibold text-gray-900 text-base">{section.title}</span>
+                <div className={`transition-transform duration-300 ${openSection === section.key ? 'transform scale-110' : ''}`}>
+                  {openSection === section.key ? (
+                    <ChevronUpIcon className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                  )}
+                </div>
+              </button>
+              
+              {openSection === section.key && (
+                <div className="animate-in fade-in-50 slide-in-from-top-2 duration-300">
+                  <div className="px-5 py-4 bg-gradient-to-b from-white/80 to-blue-50/20">
+                    <ul className="space-y-3">
+                      {section.links.map((link, index) => (
+                        <li key={index} className="group">
+                          <Link 
+                            href={getSafeHref(link.href)} 
+                            className="block py-2 px-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/60 transition-all duration-200 text-gray-700 hover:text-[#4FC3DC] font-medium"
+                          >
+                            <div className="flex items-center">
+                              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                              {link.name}
+                            </div>
+                          </Link>
+                          {link.sublinks && (
+                            <ul className="ml-6 mt-2 space-y-2 border-l-2 border-blue-100/50 pl-4">
+                              {link.sublinks.map((sublink, subIndex) => (
+                                <li key={subIndex} className="group">
+                                  <Link 
+                                    href={getSafeHref(sublink.href)} 
+                                    className="block py-1.5 px-3 rounded-md text-sm hover:bg-blue-50/50 border border-transparent hover:border-blue-100 transition-all duration-200 text-gray-600 hover:text-[#4FC3DC]"
+                                  >
+                                    <div className="flex items-center">
+                                      <div className="w-1 h-1 bg-blue-300 rounded-full mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                                      {sublink.name}
+                                    </div>
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Creating sustainable solutions and empowering communities through innovation and collaboration.
-            </p>
+          ))}
+        </div>
+
+        {/* Quick Links & Contact */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+          {/* Quick Links */}
+          <div className="bg-white/40 rounded-2xl p-6 backdrop-blur-sm border border-gray-200/60">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-[#4FC3DC] rounded-full mr-3"></span>
+              Quick Links
+            </h3>
+            <ul className="space-y-3">
+              {["Home", "Activities", "Volunteer", "Donate", "Blogs"].map((item) => (
+                <li key={item}>
+                  <Link 
+                    href={`/${item === 'Home' ? '' : item.toLowerCase()}`} 
+                    className="block py-2 px-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/60 transition-all duration-200 text-gray-700 hover:text-[#4FC3DC] font-medium"
+                  >
+                    {item}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Links and Social Section */}
-          <div className="flex flex-col items-center lg:items-end gap-6 w-full lg:w-auto">
-            
-            {/* Navigation Links */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:flex gap-4 lg:gap-8 justify-center">
-              <div className="flex flex-col items-center lg:items-start gap-3">
-                <Link 
-                  href="/aboutus" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  About Us
-                </Link>
-                <Link 
-                  href="/corporate" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  Corporate
-                </Link>
-              </div>
-              
-              <div className="flex flex-col items-center lg:items-start gap-3">
-                <Link 
-                  href="/contactus" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  Contact Us
-                </Link>
-                <Link 
-                  href="/termsofservice" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  Terms
-                </Link>
-              </div>
-              
-              <div className="flex flex-col items-center lg:items-start gap-3">
-                <Link 
-                  href="/privacypolicy" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  Privacy
-                </Link>
-                <Link 
-                  href="/sustainability" 
-                  className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
-                >
-                  <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  Sustainability
-                </Link>
-              </div>
-            </div>
+          {/* Legal */}
+          <div className="bg-white/40 rounded-2xl p-6 backdrop-blur-sm border border-gray-200/60">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-[#4FC3DC] rounded-full mr-3"></span>
+              Legal
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { name: "Terms of Service", href: "/termsofservice" },
+                { name: "Privacy Policy", href: "/privacypolicy" },
+                { name: "Contact Us", href: "/contactus" }
+              ].map((item) => (
+                <li key={item.name}>
+                  <Link 
+                    href={item.href} 
+                    className="block py-2 px-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/60 transition-all duration-200 text-gray-700 hover:text-[#4FC3DC] font-medium"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            {/* Social Media Icons */}
-            <div className="flex flex-col items-center lg:items-end gap-4">
-              <div className="flex items-center gap-4">
+          {/* Connect */}
+          <div className="bg-white/40 rounded-2xl p-6 backdrop-blur-sm border border-gray-200/60">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <span className="w-2 h-2 bg-[#4FC3DC] rounded-full mr-3"></span>
+              Connect
+            </h3>
+            <ul className="space-y-3">
+              <li>
                 <Link 
-                  href="https://www.facebook.com/profile.php?id=61582529759140" 
-                  className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                  aria-label="Facebook"
+                  href="mailto:hello.namastep@gmail.com" 
+                  className="block py-2 px-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/60 transition-all duration-200 text-gray-700 hover:text-[#4FC3DC] font-medium"
                 >
-                  <FaFacebookF size={16} />
+                  contact@namastep.com
                 </Link>
-                <Link 
-                  href="https://www.instagram.com/namastep1/" 
-                  className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center hover:bg-pink-50 hover:border-pink-300 hover:text-pink-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                  aria-label="Instagram"
-                >
-                  <FaInstagram size={16} />
-                </Link>
-                <Link 
-                  href="https://www.linkedin.com/company/namastep/" 
-                  className="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
-                  aria-label="LinkedIn"
-                >
-                  <FaLinkedinIn size={16} />
-                </Link>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <FaGlobeAmericas className="text-[#4FC3DC]" size={12} />
-                <span>Join our global community</span>
-              </div>
-            </div>
+              </li>
+              {[
+                { name: "Facebook", href: "https://www.facebook.com/profile.php?id=61582529759140" },
+                { name: "Instagram", href: "https://www.instagram.com/namastep1/" },
+                { name: "LinkedIn", href: "https://www.linkedin.com/company/namastep/" }
+              ].map((social) => (
+                <li key={social.name}>
+                  <Link 
+                    href={social.href} 
+                    target="_blank"
+                    className="block py-2 px-3 rounded-lg hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200/60 transition-all duration-200 text-gray-700 hover:text-[#4FC3DC] font-medium"
+                  >
+                    {social.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-blue-200/40">
-          <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-gray-600 order-2 sm:order-1">
-            <span>© {new Date().getFullYear()} Namastep. All rights reserved.</span>
-            <span className="hidden sm:block">•</span>
-            <span className="flex items-center gap-1">
-              <FaHeart className="text-red-400 w-3 h-3" />
-              Building a better tomorrow, together
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3 text-xs text-gray-500 order-1 sm:order-2 mb-2 sm:mb-0">
-            <span className="px-2 py-1 bg-blue-100/50 text-blue-700 rounded-full font-medium">
-              Committed to excellence
-            </span>
-            <span className="px-2 py-1 bg-green-100/50 text-green-700 rounded-full font-medium">
-              Sustainable innovation
-            </span>
-          </div>
+        {/* Divider */}
+        <div className="border-t border-blue-200/40 pt-8 mt-6 text-center">
+          <p className="text-sm text-gray-600 font-medium">© {new Date().getFullYear()} Namastep. All rights reserved.</p>
+          <p className="text-xs text-gray-500 mt-2 font-medium">Empowering communities for a better tomorrow 🌱</p>
         </div>
       </div>
     </footer>
