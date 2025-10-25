@@ -1,9 +1,10 @@
 "use client";
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const sp = useSearchParams();
   const router = useRouter();
   const email = (sp.get("email") || "").toLowerCase();
@@ -28,9 +29,8 @@ export default function VerifyEmailPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || "Verification failed");
 
-      // success: BE also sets cookies; you are logged in
       toast.success("Email verified");
-      router.replace("/"); // or dashboard
+      router.replace("/");
     } catch (e: any) {
       toast.error(e?.message || "Invalid code");
     } finally {
@@ -100,5 +100,23 @@ export default function VerifyEmailPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+        <div className="w-full max-w-md bg-white rounded-xl shadow p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

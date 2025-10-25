@@ -38,7 +38,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-
 // REQUEST: attach token and add cache-buster for GET
 api.interceptors.request.use(
   (config: any) => {
