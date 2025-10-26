@@ -47,7 +47,7 @@ const Hero = () => {
               </h1>
 
               <div className="flex flex-col items-center justify-center w-full gap-3 sm:gap-4 mt-2 px-4 sm:px-6 md:px-0">
-                <Link href="/auth" className="w-full max-w-[496px]">
+                <Link href="/signup" className="w-full max-w-[496px]">
                   <motion.button
                     className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-[#59B4C3] text-white font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#499373] sm:shadow-[0px_8px_0px_#499373] transition-colors"
                     style={{ fontFamily: "Satoshi, sans-serif" }}
@@ -66,7 +66,7 @@ const Hero = () => {
                   </motion.button>
                 </Link>
 
-                <Link href="/auth" className="w-full max-w-[496px]">
+                <Link href="/login" className="w-full max-w-[496px]">
                   <motion.button
                     className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-white text-[#59B4C3] font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#E5E5E5] sm:shadow-[0px_8px_0px_#E5E5E5] transition-colors"
                     style={{ fontFamily: "Satoshi, sans-serif" }}
