@@ -422,7 +422,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem("auth-token", data.tokens.accessToken);
       localStorage.setItem("refresh-token", data.tokens.refreshToken);
       if (earnPoints) await earnPoints("register");
-      setTimeout(() => toast.success("🎉 Welcome to iVolunteer! You've been awarded 50 coins as a welcome bonus!"), 100);
       return true;
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || "Registration failed. Please try again.");
