@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset 
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 
+  http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- Public Pages -->
+  <url><loc>https://www.namastep.com/</loc></url>
+  <url><loc>https://www.namastep.com/aboutus</loc></url>
+  <url><loc>https://www.namastep.com/activities</loc></url>
+  <url><loc>https://www.namastep.com/volunteer</loc></url>
+  <url><loc>https://www.namastep.com/donate</loc></url>
+  <url><loc>https://www.namastep.com/blogs</loc></url>
+  <url><loc>https://www.namastep.com/contactus</loc></url>
+  <url><loc>https://www.namastep.com/privacypolicy</loc></url>
+  <url><loc>https://www.namastep.com/termsofservice</loc></url>
+
+  <!-- Authentication -->
+  <url><loc>https://www.namastep.com/login</loc></url>
+  <url><loc>https://www.namastep.com/signup</loc></url>
+  <url><loc>https://www.namastep.com/corporatesignup</loc></url>
+  <url><loc>https://www.namastep.com/forgot-password</loc></url>
+
+  <!-- User Dashboard -->
+  <url><loc>https://www.namastep.com/dashboard</loc></url>
+  <url><loc>https://www.namastep.com/profile</loc></url>
+  <url><loc>https://www.namastep.com/badges</loc></url>
+  <url><loc>https://www.namastep.com/rewards</loc></url>
+  <url><loc>https://www.namastep.com/posts</loc></url>
+  <url><loc>https://www.namastep.com/volunteer/my-events</loc></url>
+
+  <!-- NGO Dashboard -->
+  <url><loc>https://www.namastep.com/ngo-dashboard</loc></url>
+  <url><loc>https://www.namastep.com/add-event</loc></url>
+  <url><loc>https://www.namastep.com/donationevent-form</loc></url>
+
+  <!-- Corporate Dashboard -->
+  <url><loc>https://www.namastep.com/corporate</loc></url>
+  <url><loc>https://www.namastep.com/corporate/events</loc></url>
+
+  <!-- Admin Dashboard -->
+  <url><loc>https://www.namastep.com/admin</loc></url>
+  <url><loc>https://www.namastep.com/donationpendingreq</loc></url>
+  <url><loc>https://www.namastep.com/endeventarchive</loc></url>
+  <url><loc>https://www.namastep.com/manageblogs</loc></url>
+  <url><loc>https://www.namastep.com/pendingrequest</loc></url>
+
+</urlset>
