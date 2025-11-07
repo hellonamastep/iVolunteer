@@ -96,7 +96,6 @@ const sendOTPEmail = async (email, otp) => {
     }
   }
 };
-
 // Store OTP in database
 const storeOTP = async (email, otp) => {
   try {
