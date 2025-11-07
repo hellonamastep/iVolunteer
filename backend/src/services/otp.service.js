@@ -6,12 +6,26 @@ import { OTP } from '../models/Otp.js';
 
 // Email transporter configuration
 const createTransporter = () => {
+  // Debug: Check if credentials exist
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('❌ EMAIL_USER or EMAIL_PASS not set in environment variables');
+    console.error('EMAIL_USER:', process.env.EMAIL_USER ? '✓ Set' : '✗ Missing');
+    console.error('EMAIL_PASS:', process.env.EMAIL_PASS ? '✓ Set' : '✗ Missing');
+    throw new Error('Email credentials not configured');
+  }
+
+  console.log('✅ Email credentials found');
+  console.log('📧 Using email:', process.env.EMAIL_USER);
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS // Use App Password for Gmail
-    }
+      pass: process.env.EMAIL_PASS
+    },
+    // Add these for better debugging
+    debug: true,
+    logger: true
   });
 };
 
@@ -23,7 +37,13 @@ const generateOTP = () => {
 // Send OTP email
 const sendOTPEmail = async (email, otp) => {
   try {
+    console.log('📨 Attempting to send OTP email to:', email);
+    
     const transporter = createTransporter();
+    
+    // Test connection first
+    await transporter.verify();
+    console.log('✅ Email transporter verified successfully');
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -44,12 +64,36 @@ const sendOTPEmail = async (email, otp) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
-    logger.info('OTP email sent successfully', { email });
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ OTP email sent successfully');
+    console.log('📬 Message ID:', info.messageId);
+    
+    logger.info('OTP email sent successfully', { email, messageId: info.messageId });
     return true;
   } catch (error) {
-    logger.error('Error sending OTP email', { email, error: error.message });
-    throw new ApiError(500, 'Failed to send OTP email');
+    console.error('❌ Error sending OTP email:', {
+      email,
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorCommand: error.command,
+      errorStack: error.stack
+    });
+    
+    logger.error('Error sending OTP email', { 
+      email, 
+      error: error.message,
+      code: error.code,
+      command: error.command
+    });
+    
+    // Provide more specific error messages
+    if (error.code === 'EAUTH') {
+      throw new ApiError(500, 'Email authentication failed. Please check email credentials.');
+    } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNECTION') {
+      throw new ApiError(500, 'Email server connection failed. Please try again later.');
+    } else {
+      throw new ApiError(500, `Failed to send OTP email: ${error.message}`);
+    }
   }
 };
 
