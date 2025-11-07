@@ -44,7 +44,7 @@ router.get(
 );
 
 // at top of file
-const FRONTEND = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND = process.env.FRONTEND_URL || "https://www.namastep.com"
 
 router.get(
   "/google/callback",
