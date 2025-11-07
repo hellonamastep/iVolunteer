@@ -25,8 +25,6 @@ router.post("/change-password", authentication, authController.changePassword);
 router.post("/forget-password", authController.forgetPasswordRequest);
 router.post("/reset-password/:token", authController.resetPassword);
 router.get("/user", authentication, authController.getUser);
-router.get("/nearby-users", authentication, authController.getNearbyUsers);
-router.get("/certificates", authentication, authController.getCertificates);
 router.put("/profile", authentication, authController.updateProfile);
 router.post("/upload-profile-picture", authentication, upload.single("profilePicture"), authController.uploadProfilePicture);
 router.delete("/profile-picture", authentication, authController.removeProfilePicture);
