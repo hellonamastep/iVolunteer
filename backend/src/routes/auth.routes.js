@@ -44,7 +44,7 @@ router.get(
 );
 
 // at top of file
-const FRONTEND ="https://namastep.vercel.app";
+const FRONTEND = process.env.FRONTEND_URL || "http://localhost:3000";
 
 router.get(
   "/google/callback",
