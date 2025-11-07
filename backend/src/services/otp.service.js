@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
 import { OTP } from '../models/Otp.js';
+import mongoose from 'mongoose';
 
 // Email transporter configuration
 const createTransporter = () => {
@@ -124,76 +125,26 @@ const storeOTP = async (email, otp) => {
     console.log('📧 Email:', email);
     console.log('🔢 OTP:', otp);
     
-    // Check if MongoDB is connected
-    const mongoose = await import('mongoose');
     console.log('🔌 MongoDB connection state:', mongoose.connection.readyState);
-    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-    
     if (mongoose.connection.readyState !== 1) {
       console.error('❌ MongoDB is not connected! State:', mongoose.connection.readyState);
       throw new Error('Database connection is not ready');
     }
-    
-    console.log('✅ MongoDB is connected');
-    
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    console.log('⏰ OTP will expire at:', expiresAt);
-    
-    // Delete any existing OTP for this email
-    console.log('🗑️  Deleting old OTPs for this email...');
-    const deleteResult = await OTP.deleteMany({ email: email.toLowerCase().trim() });
-    console.log('🗑️  Deleted', deleteResult.deletedCount, 'old OTP(s)');
-    
-    // Store new OTP with isVerified flag
-    console.log('💾 Creating new OTP record...');
-    const otpData = {
+
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await OTP.deleteMany({ email: email.toLowerCase().trim() });
+
+    const savedOTP = await OTP.create({
       email: email.toLowerCase().trim(),
       otp,
       expiresAt,
       isVerified: false
-    };
-    console.log('📋 OTP data to save:', {
-      email: otpData.email,
-      otp: otpData.otp,
-      expiresAt: otpData.expiresAt,
-      isVerified: otpData.isVerified
     });
-    
-    const savedOTP = await OTP.create(otpData);
-    console.log('✅ OTP saved successfully!');
-    console.log('📝 Saved OTP ID:', savedOTP._id);
-    
+
+    console.log('✅ OTP saved successfully! ID:', savedOTP._id);
     return true;
   } catch (error) {
-    console.error('❌ ERROR in storeOTP:');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    
-    // Check for specific MongoDB errors
-    if (error.name === 'MongooseError' || error.name === 'MongoError') {
-      console.error('🔴 This is a MongoDB error!');
-      console.error('MongoDB error details:', {
-        name: error.name,
-        message: error.message,
-        code: error.code
-      });
-    }
-    
-    // Check for validation errors
-    if (error.name === 'ValidationError') {
-      console.error('🔴 MongoDB Validation Error!');
-      console.error('Validation errors:', error.errors);
-    }
-    
-    logger.error('Error storing OTP', { 
-      email, 
-      error: error.message,
-      errorName: error.name,
-      errorCode: error.code,
-      stack: error.stack
-    });
-    
+    console.error('❌ ERROR in storeOTP:', error.message);
     throw new ApiError(500, `Failed to store OTP: ${error.message}`);
   }
 };
