@@ -262,7 +262,7 @@ export default function SignupPage() {
     {
       number: 2,
       title: "Basic Info",
-      fields: ["name", "email", "age", "state", "city", "nearestRailwayStation", "organizationType", "contactNumber"],
+      fields: ["name", "email", "age", "city"],
     },
     {
       number: 3,
