@@ -9,7 +9,14 @@ const registerSchema = Joi.object({
   }),
   name: Joi.string().trim().min(2).max(50).required(),
   password: Joi.string().min(8).max(16).required(),
+  confirmPassword: Joi.string().valid(Joi.ref('password')).optional().messages({
+    "any.only": "Passwords must match",
+  }),
   role: Joi.string().valid("user", "ngo", "admin", "corporate").default("user"),
+  otp: Joi.string().pattern(/^\d{6}$/).optional().messages({
+    "string.pattern.base": "OTP must be 6 digits",
+  }),
+  state: Joi.string().trim().optional(),
 
   age: Joi.when("role", {
     is: "user",
