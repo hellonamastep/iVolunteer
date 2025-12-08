@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import {
+  indianStatesData,
+  railwayStationsByCity,
+  getAllStates,
+  getCitiesByState,
+  getStationsByCity
+} from "@/lib/locationData";
 
 type SignupFormValues = {
   name: string;
@@ -34,6 +41,7 @@ type SignupFormValues = {
   otp: string;
   // volunteer-specific
   age?: number;
+  state?: string;
   city?: string;
   profession?: string;
   professionOther?: string;
@@ -74,6 +82,10 @@ export default function SignupPage() {
   const [emailExists, setEmailExists] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpResendTimer, setOtpResendTimer] = useState(0);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [selectedNgoState, setSelectedNgoState] = useState<string>("");
+  const [selectedNgoCity, setSelectedNgoCity] = useState<string>("");
 
   const {
     register,
@@ -265,8 +277,6 @@ export default function SignupPage() {
             fields: [
               "password",
               "confirmPassword",
-              "contactNumber",
-              "nearestRailwayStation",
               "profession",
             ],
           },
@@ -280,8 +290,6 @@ export default function SignupPage() {
             fields: [
               "password",
               "confirmPassword",
-              "organizationType",
-              "contactNumber",
               "ngoDescription",
             ],
           },
@@ -427,6 +435,7 @@ export default function SignupPage() {
         signupData.organizationSize = data.organizationSize;
       } else if (data.role === "user") {
         signupData.age = data.age ? Number(data.age) : undefined;
+        signupData.state = data.state || "";
         signupData.city = data.city || "";
         signupData.profession =
           data.profession === "other" ? data.professionOther : data.profession;
@@ -462,8 +471,25 @@ export default function SignupPage() {
         toast.error("Registration failed. Please try again.");
       }
     } catch (error: any) {
-      console.error("💥 Form submission error:", error);
-      toast.error("❌ Registration failed. Please try again.");
+      console.error("Signup error:", error);
+
+      // Check if user already exists - handle different error formats
+      const errorMessage = error?.message?.toLowerCase() ||
+        error?.response?.data?.message?.toLowerCase() ||
+        error?.toString().toLowerCase();
+
+      if (errorMessage.includes("already exists") ||
+        errorMessage.includes("user exists") ||
+        errorMessage.includes("email already") ||
+        errorMessage.includes("account exists")) {
+        toast.error("Account already exists. Please login instead.");
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     }
   };
 
@@ -499,15 +525,13 @@ export default function SignupPage() {
                 <React.Fragment key={step.number}>
                   <div className="flex flex-col items-center min-w-12 sm:min-w-16">
                     <div
-                      className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm transition-all duration-300 ${
-                        activeStep >= step.number
-                          ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
-                          : "bg-gray-200 text-gray-400"
-                      } ${
-                        activeStep === step.number
+                      className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm transition-all duration-300 ${activeStep >= step.number
+                        ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
+                        : "bg-gray-200 text-gray-400"
+                        } ${activeStep === step.number
                           ? "ring-2 sm:ring-4 ring-[#3ABBA5]/20 scale-110"
                           : ""
-                      }`}
+                        }`}
                     >
                       {activeStep > step.number ? "✓" : step.number}
                     </div>
@@ -537,7 +561,7 @@ export default function SignupPage() {
 
           {/* Form Header */}
           <div className="text-center mb-4 sm:mb-6 lg:mb-8">
-            <h2 className="text-lg sm:text-xl lg:text-3xl font-bold text-gray-800 mb-2 bg-gradient-to-r from-[#3ABBA5] to-[#50C878] bg-clip-text text-transparent">
+            <h2 className="text-lg sm:text-xl lg:text-3xl font-bold mb-2 bg-gradient-to-r from-[#3ABBA5] to-[#50C878] bg-clip-text text-transparent">
               Join Our Community
             </h2>
             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
@@ -581,11 +605,10 @@ export default function SignupPage() {
                           className="hidden"
                         />
                         <div
-                          className={`relative p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 transition-all duration-200 group-hover:scale-[1.02] sm:group-hover:scale-105 ${
-                            isSelected
-                              ? "border-[#3ABBA5] bg-[#3ABBA5]/5 shadow-md sm:shadow-lg"
-                              : "border-gray-200 bg-white hover:border-[#3ABBA5]/50"
-                          }`}
+                          className={`relative p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 transition-all duration-200 group-hover:scale-[1.02] sm:group-hover:scale-105 ${isSelected
+                            ? "border-[#3ABBA5] bg-[#3ABBA5]/5 shadow-md sm:shadow-lg"
+                            : "border-gray-200 bg-white hover:border-[#3ABBA5]/50"
+                            }`}
                         >
                           <div className="flex sm:flex-col items-center sm:items-center space-x-3 sm:space-x-0 sm:space-y-2 lg:space-y-3">
                             <div
@@ -650,9 +673,8 @@ export default function SignupPage() {
                         {...register("name", {
                           required: "This field is required",
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.name ? "border-red-400" : "border-gray-200"
-                        }`}
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.name ? "border-red-400" : "border-gray-200"
+                          }`}
                       />
                     </div>
                     {errors.name && (
@@ -755,39 +777,108 @@ export default function SignupPage() {
                         )}
                       </div>
 
+                      {/* State Field */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">State *</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
+                          <select
+                            {...register("state", {
+                              required: "State is required",
+                            })}
+                            onChange={(e) => {
+                              setSelectedState(e.target.value);
+                              setSelectedCity("");
+                              setValue("city", "");
+                            }}
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
+                          >
+                            <option value="">Select State</option>
+                            {Object.keys(indianStatesData).sort().map((state) => (
+                              <option key={state} value={state}>{state}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {errors.state && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.state.message}</p>}
+                      </div>
+
+                      {/* City Field */}
                       <div className="space-y-1 sm:space-y-2">
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                           City *
                         </label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                          <input
-                            type="text"
-                            placeholder="e.g., Mumbai, Delhi, Bangalore"
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
+                          <select
                             {...register("city", {
                               required: "City is required",
-                              minLength: {
-                                value: 2,
-                                message:
-                                  "City name must be at least 2 characters",
-                              },
-                              maxLength: {
-                                value: 50,
-                                message:
-                                  "City name cannot exceed 50 characters",
-                              },
+                            })}
+                            onChange={(e) => setSelectedCity(e.target.value)}
+                            disabled={!selectedState}
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">Select City</option>
+                            {selectedState && indianStatesData[selectedState]?.map((city) => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {errors.city && (
+                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
+                            {errors.city.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Nearest Railway Station Field */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Nearest Railway Station *</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
+                          <select
+                            {...register("nearestRailwayStation", {
+                              required: "Nearest railway station is required",
+                            })}
+                            disabled={!selectedCity}
+                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">Select Railway Station</option>
+                            {selectedCity && railwayStationsByCity[selectedCity]?.map((station) => (
+                              <option key={station} value={station}>{station}</option>
+                            ))}
+                            {selectedCity && !railwayStationsByCity[selectedCity] && (
+                              <option value="Other">Other</option>
+                            )}
+                          </select>
+                        </div>
+                        {errors.nearestRailwayStation && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.nearestRailwayStation.message}</p>}
+                      </div>
+
+                      {/* Contact Number Field */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                          Contact Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                          <input
+                            type="tel"
+                            placeholder="9876543210"
+                            maxLength={10}
+                            {...register("contactNumber", {
+                              required: "Contact number is required",
                               pattern: {
-                                value: /^[a-zA-Z\s\-'.]+$/,
+                                value: /^[6-9]\d{9}$/,
                                 message:
-                                  "Please enter a valid city name (letters, spaces, hyphens, apostrophes only)",
+                                  "Please enter a valid 10-digit mobile number",
                               },
                             })}
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
-                        {errors.city && (
+                        {errors.contactNumber && (
                           <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                            {errors.city.message}
+                            {errors.contactNumber.message}
                           </p>
                         )}
                       </div>
@@ -1020,58 +1111,6 @@ export default function SignupPage() {
                       {errors.confirmPassword && (
                         <p className="text-red-500 text-xs sm:text-sm animate-shake">
                           {errors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Contact Number Field */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Contact Number *
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type="tel"
-                          placeholder="9876543210"
-                          maxLength={10}
-                          {...register("contactNumber", {
-                            required: "Contact number is required",
-                            pattern: {
-                              value: /^[6-9]\d{9}$/,
-                              message:
-                                "Please enter a valid 10-digit mobile number",
-                            },
-                          })}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                        />
-                      </div>
-                      {errors.contactNumber && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.contactNumber.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Nearest Railway Station Field */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Nearest Railway Station *
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type="text"
-                          placeholder="e.g., Mumbai Central"
-                          {...register("nearestRailwayStation", {
-                            required: "Nearest railway station is required",
-                          })}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                        />
-                      </div>
-                      {errors.nearestRailwayStation && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.nearestRailwayStation.message}
                         </p>
                       )}
                     </div>
@@ -1488,58 +1527,71 @@ export default function SignupPage() {
                       Address *
                     </label>
                     <div className="space-y-2 sm:space-y-3">
-                      <div className="space-y-1 sm:space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Street Address"
-                          {...register("address.street", {
-                            required: "Street address is required",
-                          })}
-                          className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                        />
-                        {errors.address?.street && (
-                          <p className="text-red-500 text-xs sm:text-sm">
-                            {errors.address.street.message}
-                          </p>
-                        )}
-                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                         <div className="space-y-1 sm:space-y-2">
                           <input
                             type="text"
-                            placeholder="City"
-                            {...register("address.city", {
-                              required: "City is required",
+                            value="India"
+                            readOnly
+                            {...register("address.country", {
+                              required: "Country is required",
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all bg-gray-50 cursor-not-allowed"
                           />
-                          {errors.address?.city && (
+                          {errors.address?.country && (
                             <p className="text-red-500 text-xs">
-                              {errors.address.city.message}
+                              {errors.address.country.message}
                             </p>
                           )}
                         </div>
+
                         <div className="space-y-1 sm:space-y-2">
-                          <input
-                            type="text"
-                            placeholder="State"
+                          <select
                             {...register("address.state", {
                               required: "State is required",
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                          />
-                          {errors.address?.state && (
-                            <p className="text-red-500 text-xs">
-                              {errors.address.state.message}
-                            </p>
-                          )}
+                            onChange={(e) => {
+                              setSelectedNgoState(e.target.value);
+                              setSelectedNgoCity("");
+                              setValue("address.city", "");
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
+                          >
+                            <option value="">Select State</option>
+                            {Object.keys(indianStatesData).sort().map((state) => (
+                              <option key={state} value={state}>{state}</option>
+                            ))}
+                          </select>
+                          {errors.address?.state && <p className="text-red-500 text-xs">{errors.address.state.message}</p>}
+                        </div>
+                        <div className="space-y-1 sm:space-y-2">
+                          <select
+                            {...register("address.city", {
+                              required: "City is required",
+                            })}
+                            onChange={(e) => setSelectedNgoCity(e.target.value)}
+                            disabled={!selectedNgoState}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">Select City</option>
+                            {selectedNgoState && indianStatesData[selectedNgoState]?.map((city) => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </select>
+                          {errors.address?.city && <p className="text-red-500 text-xs">{errors.address.city.message}</p>}
                         </div>
                         <div className="space-y-1 sm:space-y-2">
                           <input
                             type="text"
                             placeholder="ZIP Code"
+                            maxLength={6}
                             {...register("address.zip", {
                               required: "ZIP code is required",
+                              pattern: {
+                                value: /^\d{6}$/,
+                                message: "Invalid ZIP code.",
+                              },
                             })}
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
@@ -1549,21 +1601,89 @@ export default function SignupPage() {
                             </p>
                           )}
                         </div>
-                        <div className="space-y-1 sm:space-y-2">
+                      </div>
+                      <div className="space-y-1 sm:space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Street Address"
+                          {...register("address.street", {
+                            required: "Street address is required",
+                          })}
+                          className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        />
+                        {errors.address?.street && <p className="text-red-500 text-xs sm:text-sm">{errors.address.street.message}</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Password Section */}
+                  <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                    <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">Account Security</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {/* Password Field */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Password *</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                           <input
-                            type="text"
-                            placeholder="Country"
-                            {...register("address.country", {
-                              required: "Country is required",
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...register("password", {
+                              required: "Password is required",
+                              minLength: {
+                                value: 8,
+                                message: "Password must be at least 8 characters",
+                              },
+                              validate: {
+                                hasUpperCase: (value) =>
+                                  /[A-Z]/.test(value || "") || "Password must contain at least 1 uppercase letter",
+                                hasLowerCase: (value) =>
+                                  /[a-z]/.test(value || "") || "Password must contain at least 1 lowercase letter",
+                                hasSpecialChar: (value) =>
+                                  /[!@#$%^&*(),.?":{}|<>]/.test(value || "") || "Password must contain at least 1 special character",
+                              }
                             })}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.password ? "border-red-400" : "border-gray-200"
+                              }`}
                           />
-                          {errors.address?.country && (
-                            <p className="text-red-500 text-xs">
-                              {errors.address.country.message}
-                            </p>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                          </button>
                         </div>
+                        {errors.password && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.password.message}</p>}
+                      </div>
+
+                      {/* Confirm Password */}
+                      <div className="space-y-1 sm:space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Confirm Password *</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...register("confirmPassword", {
+                              required: "Please confirm your password",
+                              validate: (val) => val === watchedFields.password || "Passwords do not match",
+                            })}
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.confirmPassword ? "border-red-400" : "border-gray-200"
+                              }`}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
+                            {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        {errors.confirmPassword && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.confirmPassword.message}</p>}
                       </div>
                     </div>
                   </div>

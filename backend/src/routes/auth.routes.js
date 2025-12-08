@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 
 // controllers/middleware
 import { authController } from "../controllers/auth.controller.js";
+import { getVolunteerCertificates } from "../controllers/certificate.controller.js";
 import { authentication } from "../middlewares/auth.middleware.js";
 import { refreshAccessTokenController } from "../controllers/session.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -30,6 +31,7 @@ router.post("/upload-profile-picture", authentication, upload.single("profilePic
 router.delete("/profile-picture", authentication, authController.removeProfilePicture);
 router.delete("/account", authentication, authController.deleteAccount);
 router.post("/refresh-access-token", refreshAccessTokenController);
+router.get("/certificates", authentication, getVolunteerCertificates);
   router.post("/send-otp", otpController.sendOtp);
 router.post("/verify-otp", otpController.verifyOtp);
 router.post("/resend-otp", otpController.resendOtp);

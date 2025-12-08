@@ -71,6 +71,13 @@ isEmailVerified: {
       minlength: [2, "City name must be at least 2 characters"],
       maxlength: [100, "City name cannot exceed 100 characters"],
     },
+    state: {
+      type: String,
+      required: function () {
+        return this.role === "user";
+      },
+      trim: true,
+    },
     profession: {
       type: String,
       required: function () {

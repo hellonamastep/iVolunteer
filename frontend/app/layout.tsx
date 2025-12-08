@@ -1,13 +1,18 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Providers } from "./provider"; 
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Inter, Roboto_Mono, Great_Vibes } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
 // Optimized fonts
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const robotoMono = Roboto_Mono({ subsets: ["latin"], variable: "--font-roboto-mono" });
+const greatVibes = Great_Vibes({ 
+  subsets: ["latin"], 
+  variable: "--font-great-vibes",
+  weight: "400" 
+});
 
 export const metadata: Metadata = {
   title: "Impact Rewards - Volunteer Platform",
@@ -25,7 +30,7 @@ export function generateViewport() {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${robotoMono.variable} ${greatVibes.variable}`}>
       <head>
         {/* Google Tag Manager */}
         <Script

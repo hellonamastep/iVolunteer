@@ -95,6 +95,7 @@ const register = async (data) => {
   if (data.role === "user") {
     userData.age = data.age;
     userData.city = data.city;
+    userData.state = data.state;
     userData.profession = data.profession;
     userData.contactNumber = data.contactNumber;
     userData.nearestRailwayStation = data.nearestRailwayStation;

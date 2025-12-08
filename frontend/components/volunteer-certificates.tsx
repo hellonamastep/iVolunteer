@@ -22,15 +22,53 @@ const VolunteerCertificates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [isDownloadMode, setIsDownloadMode] = useState(false);
   const certificateRef = useRef<HTMLDivElement>(null);
+  const downloadButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCertificates();
   }, []);
 
+  useEffect(() => {
+    if (selectedCertificate && downloadButtonRef.current) {
+      // Delay to ensure modal animation completes
+      setTimeout(() => {
+        downloadButtonRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest' 
+        });
+      }, 400);
+    }
+  }, [selectedCertificate]);
+
   const fetchCertificates = async () => {
     try {
       setLoading(true);
+      
+      // FOR TESTING: Add a default certificate (bypassing API completely for now)
+      // REMOVE THIS SECTION LATER - START
+      // console.log('🔴 TEST: Loading test certificate...');
+      // const testCertificate: Certificate = {
+      //   _id: 'test-certificate-001',
+      //   eventTitle: 'Beach Cleanup Drive 2024',
+      //   eventDate: '2024-11-15T10:00:00.000Z',
+      //   organizationName: 'Green Earth Foundation',
+      //   volunteerName: 'Test Volunteer',
+      //   adminName: 'Admin Manager',
+      //   completedAt: '2024-11-16T18:00:00.000Z',
+      //   pointsEarned: 50,
+      // };
+      
+      // // Simulate a slight delay like a real API call
+      // await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // setCertificates([testCertificate]);
+      // console.log('TEST: Test certificate loaded successfully!', [testCertificate]);
+      // 🔴 REMOVE THIS SECTION LATER - END
+      
+      // ✅ Original code (uncomment this when removing test certificate):
+      
       const token = localStorage.getItem('auth-token');
       if (!token) {
         toast.error('Authentication required');
@@ -41,9 +79,11 @@ const VolunteerCertificates: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.data.success) {
-        setCertificates(response.data.certificates || []);
+      const data = response.data as any;
+      if (data?.success) {
+        setCertificates(data.certificates || []);
       }
+      
     } catch (error: any) {
       console.error('Error fetching certificates:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch certificates');
@@ -52,49 +92,105 @@ const VolunteerCertificates: React.FC = () => {
     }
   };
 
+  const isMobile = () => {
+    return window.innerWidth < 768;
+  };
+
+  const handleViewCertificate = (certificate: Certificate) => {
+    if (isMobile()) {
+      // On mobile, directly download without showing modal
+      handleDownloadCertificate(certificate);
+    } else {
+      // On desktop, show the modal
+      setSelectedCertificate(certificate);
+    }
+  };
+
   const handleDownloadCertificate = async (certificate: Certificate) => {
     try {
       setDownloading(true);
       
-      // Import html2canvas dynamically
-      const html2canvas = (await import('html2canvas')).default;
-      const { createRoot } = await import('react-dom/client');
-      
-      // Create a hidden container
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      document.body.appendChild(container);
+      // Create a temporary hidden div to render the certificate
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '1086px';
+      tempDiv.style.height = '768px';
+      document.body.appendChild(tempDiv);
 
-      // Render the fixed-size certificate
-      const root = createRoot(container);
-      root.render(<CertificateForDownload certificate={certificate} />);
+      // Create certificate element
+      const certElement = document.createElement('div');
+      certElement.style.width = '1086px';
+      certElement.style.height = '768px';
+      certElement.style.position = 'relative';
+      certElement.style.backgroundImage = 'url(/images/Volunteer_Achievement_Certificate.png)';
+      certElement.style.backgroundSize = 'cover';
+      certElement.style.backgroundPosition = 'center';
+      certElement.style.backgroundRepeat = 'no-repeat';
 
-      // Wait for rendering
+      // Add volunteer name
+      const nameDiv = document.createElement('div');
+      nameDiv.style.position = 'absolute';
+      nameDiv.style.top = '280px';
+      nameDiv.style.left = '50%';
+      nameDiv.style.transform = 'translateX(-50%)';
+      nameDiv.style.width = '60%';
+      nameDiv.style.textAlign = 'center';
+      nameDiv.innerHTML = `<h2 style="font-family: var(--font-great-vibes), 'Great Vibes', cursive; font-size: 64px; color: #1a1a4d; margin: 0; font-weight: 400; letter-spacing: 2px;">${certificate.volunteerName}</h2>`;
+      certElement.appendChild(nameDiv);
+
+      // Add event details
+      const eventDiv = document.createElement('div');
+      eventDiv.style.position = 'absolute';
+      eventDiv.style.top = '380px';
+      eventDiv.style.left = '50%';
+      eventDiv.style.transform = 'translateX(-50%)';
+      eventDiv.style.width = '70%';
+      eventDiv.style.textAlign = 'center';
+      eventDiv.innerHTML = `<p style="font-family: 'Times New Roman', serif; font-size: 18px; color: #1a1a4d; margin: 0; line-height: 1.6;">in recognition of outstanding volunteer service during<br />"${certificate.eventTitle}".<br />Your compassion and dedication have brought hope and<br />happiness to many lives.</p>`;
+      certElement.appendChild(eventDiv);
+
+      // Add organization name
+      const orgDiv = document.createElement('div');
+      orgDiv.style.position = 'absolute';
+      orgDiv.style.bottom = '130px';
+      orgDiv.style.left = '130px';
+      orgDiv.style.textAlign = 'center';
+      orgDiv.innerHTML = `<p style="font-family: 'Times New Roman', serif; font-size: 26px; color: #1a1a4d; margin: 0; font-weight: 600;">${certificate.organizationName}</p>`;
+      certElement.appendChild(orgDiv);
+
+      tempDiv.appendChild(certElement);
+
+      // Wait for fonts and images to load
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      const certElement = container.firstChild as HTMLElement;
+      
+      // Import required libraries
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
 
       const canvas = await html2canvas(certElement, {
         scale: 2,
-        backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: false,
-        width: 1200,
-        height: 900,
+        backgroundColor: null,
+        allowTaint: true,
       });
 
-      // Cleanup
-      root.unmount();
-      document.body.removeChild(container);
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [1086, 768],
+      });
 
-      const link = document.createElement('a');
-      link.download = `Certificate_${certificate.eventTitle.replace(/\s+/g, '_')}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      pdf.addImage(imgData, 'PNG', 0, 0, 1086, 768, '', 'FAST');
+
+      // Download PDF
+      pdf.save(`Certificate_${certificate.eventTitle.replace(/\s+/g, '_')}.pdf`);
+
+      // Clean up
+      document.body.removeChild(tempDiv);
 
       toast.success('Certificate downloaded successfully!');
     } catch (error) {
@@ -105,266 +201,96 @@ const VolunteerCertificates: React.FC = () => {
     }
   };
 
-  const CertificateForDownload: React.FC<{ certificate: Certificate }> = ({ certificate }) => (
-    <div
-      style={{ 
-        width: '1200px',
-        height: '900px',
-        backgroundColor: '#ffffff',
-        color: '#1f2937',
-        padding: '60px',
-        borderRadius: '16px',
-        border: '8px double #7DD9A6',
-        position: 'relative',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Decorative corners */}
-      <div style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        width: '128px', 
-        height: '128px', 
-        borderTop: '8px solid #6BC794', 
-        borderLeft: '8px solid #6BC794',
-        borderTopLeftRadius: '16px'
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        top: 0, 
-        right: 0, 
-        width: '128px', 
-        height: '128px', 
-        borderTop: '8px solid #6BC794', 
-        borderRight: '8px solid #6BC794',
-        borderTopRightRadius: '16px'
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        bottom: 0, 
-        left: 0, 
-        width: '128px', 
-        height: '128px', 
-        borderBottom: '8px solid #6BC794', 
-        borderLeft: '8px solid #6BC794',
-        borderBottomLeftRadius: '16px'
-      }}></div>
-      <div style={{ 
-        position: 'absolute', 
-        bottom: 0, 
-        right: 0, 
-        width: '128px', 
-        height: '128px', 
-        borderBottom: '8px solid #6BC794', 
-        borderRight: '8px solid #6BC794',
-        borderBottomRightRadius: '16px'
-      }}></div>
-
-      {/* Background pattern */}
-      <div style={{ position: 'absolute', inset: 0, opacity: 0.05 }}>
-        <div style={{ position: 'absolute', top: '80px', left: '80px', width: '160px', height: '160px', borderRadius: '50%', backgroundColor: '#7DD9A6' }}></div>
-        <div style={{ position: 'absolute', bottom: '80px', right: '80px', width: '160px', height: '160px', borderRadius: '50%', backgroundColor: '#E8F5A5' }}></div>
-      </div>
-
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 10, 
-        height: '100%', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        paddingTop: '40px',
-        paddingBottom: '40px',
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-            <div style={{ 
-              borderRadius: '50%', 
-              padding: '20px',
-              background: 'linear-gradient(to right, #7DD9A6, #6BC794)',
-              display: 'inline-block'
-            }}>
-              <Award style={{ width: '80px', height: '80px', color: '#ffffff' }} />
-            </div>
-          </div>
-          <h1 style={{ fontSize: '56px', fontWeight: 'bold', marginBottom: '10px', color: '#1f2937', margin: 0 }}>
-            Certificate of Appreciation
-          </h1>
-          <div style={{ 
-            width: '128px', 
-            height: '4px',
-            margin: '0 auto',
-            borderRadius: '9999px',
-            background: 'linear-gradient(to right, #7DD9A6, #6BC794)'
-          }}></div>
-        </div>
-
-        {/* Body */}
-        <div style={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '100%', paddingLeft: '40px', paddingRight: '40px' }}>
-          <p style={{ fontSize: '24px', color: '#4b5563', marginBottom: '30px' }}>This is to certify that</p>
-          
-          <div style={{ 
-            borderRadius: '12px', 
-            padding: '20px',
-            border: '2px solid #7DD9A6',
-            backgroundColor: 'rgba(232, 245, 165, 0.3)',
-            marginBottom: '30px'
-          }}>
-            <h2 style={{ fontSize: '48px', fontWeight: 'bold', color: '#111827', margin: 0 }}>{certificate.volunteerName}</h2>
-          </div>
-
-          <p style={{ fontSize: '24px', color: '#4b5563', marginBottom: '30px' }}>has successfully completed volunteering at</p>
-
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ fontSize: '36px', fontWeight: 'bold', color: '#6BC794', marginBottom: '10px' }}>{certificate.eventTitle}</h3>
-            <p style={{ fontSize: '20px', color: '#4b5563' }}>
-              Organized by <span style={{ fontWeight: 600, color: '#1f2937' }}>{certificate.organizationName}</span>
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', fontSize: '16px', color: '#4b5563', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar style={{ width: '20px', height: '20px', color: '#7DD9A6' }} />
-              <span>{new Date(certificate.eventDate).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Medal style={{ width: '20px', height: '20px', color: '#7DD9A6' }} />
-              <span>{certificate.pointsEarned} Points Earned</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{ width: '100%', paddingLeft: '40px', paddingRight: '40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '30px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '250px', marginBottom: '10px', borderTop: '2px solid #9ca3af' }}></div>
-              <p style={{ fontSize: '16px', fontWeight: 600, color: '#374151', marginBottom: '5px' }}>{certificate.organizationName}</p>
-              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Organization</p>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ width: '250px', marginBottom: '10px', borderTop: '2px solid #9ca3af' }}></div>
-              <p style={{ fontSize: '16px', fontWeight: 600, color: '#374151', marginBottom: '5px' }}>{certificate.adminName}</p>
-              <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Verified by Admin</p>
-            </div>
-          </div>
-          
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
-              Issued on {new Date(certificate.completedAt).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const CertificatePreview: React.FC<{ certificate: Certificate }> = ({ certificate }) => (
     <div
       ref={certificateRef}
       style={{ 
-        maxWidth: '1000px', 
-        minHeight: '500px',
-        backgroundColor: '#ffffff',
-        color: '#1f2937',
+        width: '1086px',
+        maxWidth: '1086px',
+        height: '768px',
+        position: 'relative',
+        backgroundImage: 'url(/images/Volunteer_Achievement_Certificate.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        margin: '0 auto',
       }}
-      className="p-8 md:p-12 rounded-2xl shadow-2xl border-8 border-double border-[#7DD9A6] relative overflow-hidden mx-auto"
+      className="mx-auto"
     >
-      {/* Decorative corners */}
-      <div className="absolute top-0 left-0 w-24 h-24 md:w-32 md:h-32 border-t-8 border-l-8 border-[#6BC794] rounded-tl-2xl"></div>
-      <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 border-t-8 border-r-8 border-[#6BC794] rounded-tr-2xl"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 md:w-32 md:h-32 border-b-8 border-l-8 border-[#6BC794] rounded-bl-2xl"></div>
-      <div className="absolute bottom-0 right-0 w-24 h-24 md:w-32 md:h-32 border-b-8 border-r-8 border-[#6BC794] rounded-br-2xl"></div>
-
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-20 w-40 h-40 rounded-full" style={{ backgroundColor: '#7DD9A6' }}></div>
-        <div className="absolute bottom-20 right-20 w-40 h-40 rounded-full" style={{ backgroundColor: '#E8F5A5' }}></div>
-      </div>
-
-      <div className="relative z-10 h-full flex flex-col items-center justify-between py-4 md:py-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center mb-3 md:mb-4">
-            <div className="rounded-full p-3 md:p-4" style={{ background: 'linear-gradient(to right, #7DD9A6, #6BC794)' }}>
-              <Award className="h-12 w-12 md:h-16 md:w-16" style={{ color: '#ffffff' }} />
-            </div>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-bold mb-2" style={{ color: '#1f2937' }}>Certificate of Appreciation</h1>
-          <div className="w-24 md:w-32 h-1 mx-auto rounded-full" style={{ background: 'linear-gradient(to right, #7DD9A6, #6BC794)' }}></div>
+      {/* Certificate content overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        {/* Volunteer Name - positioned based on sample */}
+        <div style={{
+          position: 'absolute',
+          top: isDownloadMode ? '280px' : '310px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '60%',
+          textAlign: 'center',
+        }}>
+          <h2 
+            style={{ 
+              fontFamily: "var(--font-great-vibes), 'Great Vibes', cursive",
+              fontSize: '64px',
+              color: '#1a1a4d',
+              margin: 0,
+              fontWeight: 400,
+              letterSpacing: '2px',
+            }}
+          >
+            {certificate.volunteerName}
+          </h2>
         </div>
 
-        {/* Body */}
-        <div className="text-center space-y-4 md:space-y-6 flex-1 flex flex-col justify-center w-full px-4">
-          <p className="text-lg md:text-xl" style={{ color: '#4b5563' }}>This is to certify that</p>
-          
-          <div className="rounded-xl p-3 md:p-4 border-2 border-[#7DD9A6]" style={{ backgroundColor: 'rgba(232, 245, 165, 0.3)' }}>
-            <h2 className="text-2xl md:text-4xl font-bold" style={{ color: '#111827' }}>{certificate.volunteerName}</h2>
-          </div>
-
-          <p className="text-lg md:text-xl" style={{ color: '#4b5563' }}>has successfully completed volunteering at</p>
-
-          <div className="space-y-2">
-            <h3 className="text-2xl md:text-3xl font-bold" style={{ color: '#6BC794' }}>{certificate.eventTitle}</h3>
-            <p className="text-base md:text-lg" style={{ color: '#4b5563' }}>
-              Organized by <span className="font-semibold" style={{ color: '#1f2937' }}>{certificate.organizationName}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center justify-center flex-wrap gap-4 md:gap-6 text-sm" style={{ color: '#4b5563' }}>
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" style={{ color: '#7DD9A6' }} />
-              <span>{new Date(certificate.eventDate).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Medal className="h-4 w-4" style={{ color: '#7DD9A6' }} />
-              <span>{certificate.pointsEarned} Points Earned</span>
-            </div>
-          </div>
+        {/* Event details - positioned based on sample */}
+        <div style={{
+          position: 'absolute',
+          top: isDownloadMode ? '380px' : '400px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '70%',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: "'Times New Roman', serif",
+            fontSize: '18px',
+            color: '#1a1a4d',
+            margin: 0,
+            lineHeight: '1.6',
+          }}>
+            in recognition of outstanding volunteer service during<br />
+            "{certificate.eventTitle}".<br />
+            Your compassion and dedication have brought hope and<br />
+            happiness to many lives.
+          </p>
         </div>
 
-        {/* Footer */}
-        <div className="w-full px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-0">
-            <div className="text-center">
-              <div className="w-40 md:w-48 mb-2" style={{ borderTop: '2px solid #9ca3af' }}></div>
-              <p className="text-sm font-semibold" style={{ color: '#374151' }}>{certificate.organizationName}</p>
-              <p className="text-xs" style={{ color: '#6b7280' }}>Organization</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-40 md:w-48 mb-2" style={{ borderTop: '2px solid #9ca3af' }}></div>
-              <p className="text-sm font-semibold" style={{ color: '#374151' }}>{certificate.adminName}</p>
-              <p className="text-xs" style={{ color: '#6b7280' }}>Verified by Admin</p>
-            </div>
-          </div>
-          
-          <div className="text-center mt-4 md:mt-6">
-            <p className="text-xs" style={{ color: '#6b7280' }}>
-              Issued on {new Date(certificate.completedAt).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}
-            </p>
-          </div>
+        {/* Organization Name - bottom left */}
+        <div style={{
+          position: 'absolute',
+          bottom: isDownloadMode ? '130px' : '110px',
+          left: '130px',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: "'Times New Roman', serif",
+            fontSize: '26px',
+            color: '#1a1a4d',
+            margin: 0,
+            fontWeight: 600,
+          }}>
+            {certificate.organizationName}
+          </p>
         </div>
       </div>
     </div>
@@ -449,7 +375,7 @@ const VolunteerCertificates: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border-2 border-gray-200 hover:border-[#7DD9A6] overflow-hidden group cursor-pointer"
-              onClick={() => setSelectedCertificate(certificate)}
+              onClick={() => handleViewCertificate(certificate)}
             >
               {/* Certificate Preview Card */}
               <div className="relative h-48 bg-gradient-to-br from-[#E8F5A5] to-[#7DD9A6] p-6 flex items-center justify-center">
@@ -508,11 +434,12 @@ const VolunteerCertificates: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedCertificate(certificate);
+                      handleViewCertificate(certificate);
                     }}
                     className="w-full bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] hover:from-[#6BC794] hover:to-[#5AB583] text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
                   >
-                    <span>View Certificate</span>
+                    <span className="md:hidden">Download Certificate</span>
+                    <span className="hidden md:inline">View Certificate</span>
                   </button>
                 </div>
               </div>
@@ -528,14 +455,14 @@ const VolunteerCertificates: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
+            className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto pt-24 md:pt-28"
             onClick={() => setSelectedCertificate(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-5xl my-8"
+              className="relative w-full max-w-6xl my-8"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button */}
@@ -549,12 +476,12 @@ const VolunteerCertificates: React.FC = () => {
               </button>
 
               {/* Certificate */}
-              <div className="bg-white rounded-2xl overflow-hidden">
+              <div className="rounded-2xl overflow-hidden">
                 <CertificatePreview certificate={selectedCertificate} />
               </div>
 
               {/* Download button */}
-              <div className="mt-4 flex justify-center">
+              <div ref={downloadButtonRef} className="mt-4 flex justify-center">
                 <button
                   onClick={() => handleDownloadCertificate(selectedCertificate)}
                   disabled={downloading}
