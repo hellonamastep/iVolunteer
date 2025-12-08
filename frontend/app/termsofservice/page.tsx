@@ -35,7 +35,7 @@ const TermsAndConditions = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+    <div className="min-h-screen bg-[#E8F8F7] py-12">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header Section */}
         <div className="text-center mb-16">
@@ -48,7 +48,7 @@ const TermsAndConditions = () => {
             Terms & Conditions
           </h1>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto">
-            Welcome to Vall India. Please read these terms carefully before using our platform.
+            Welcome to Namastep. Please read these terms carefully before using our platform.
           </p>
           <div className="mt-6 text-sm text-gray-500 bg-white rounded-lg p-4 max-w-2xl mx-auto">
             Last updated: {new Date().toLocaleDateString()}
@@ -130,7 +130,7 @@ const TermsAndConditions = () => {
                   <section>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                     <p className="leading-relaxed">
-                      Welcome to vallindia.com. The domain is owned and operated by Vall Impact Ventures Private Limited 
+                      Welcome to Namastep. The domain is owned and operated by Vall Impact Ventures Private Limited 
                       ("Company"), a company incorporated under the provisions of the Companies Act, 2013. 
                       These Terms of Use govern your access and use of our Platform and Services.
                     </p>

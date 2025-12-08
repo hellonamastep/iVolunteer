@@ -19,13 +19,34 @@ export default function BlogDetailsPage() {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Function to process image URLs
+  const processImageUrl = (url: string | undefined): string => {
+    if (!url) return '';
+    
+    // If it's already a full URL, return as is
+    if (url.startsWith('http')) {
+      return url;
+    }
+    
+    // If it's a relative path, construct the full URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://api.namastep.com';
+    return `${baseUrl}/${url.replace(/\\/g, '/')}`;
+  };
+
   useEffect(() => {
     if (id) {
       const fetchBlog = async () => {
         try {
           setLoading(true);
           const res = await api.get<{ blog: Blog }>(`/v1/blogs/${id}`);
-          setBlog(res.data.blog);
+          
+          // Process the blog data to ensure proper image URLs
+          const processedBlog = {
+            ...res.data.blog,
+            imageUrl: processImageUrl(res.data.blog.imageUrl)
+          };
+          
+          setBlog(processedBlog);
         } catch (err) {
           console.error("Error fetching blog:", err);
         } finally {
@@ -35,6 +56,17 @@ export default function BlogDetailsPage() {
       fetchBlog();
     }
   }, [id]);
+
+  // Function to process content images
+  const processContent = (content: string) => {
+    if (!content) return '';
+    
+    // Process image tags in content to ensure proper URLs
+    return content.replace(/<img[^>]+src="([^">]+)"/g, (match, src) => {
+      const processedSrc = processImageUrl(src);
+      return `<img src="${processedSrc}"`;
+    });
+  };
 
   if (loading) {
     return (
@@ -91,27 +123,28 @@ export default function BlogDetailsPage() {
         </p>
       </div>
 
-      {/* Image */}
+      {/* Main Image */}
       {blog.imageUrl && (
         <div className="relative w-full h-[400px] rounded-2xl overflow-hidden mb-10">
           <Image
-            src={
-              blog.imageUrl.startsWith("http")
-                ? blog.imageUrl
-                : `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://namastep-irod.onrender.com'}/${blog.imageUrl}`
-            }
+            src={blog.imageUrl}
             alt={blog.title}
             fill
             className="object-cover"
             priority
+            onError={(e) => {
+              console.error('Failed to load image:', blog.imageUrl);
+              // You can set a fallback image here
+              // e.currentTarget.src = '/fallback-image.jpg';
+            }}
           />
         </div>
       )}
 
-      {/* Content - Fixed to render HTML */}
+      {/* Content */}
       <article 
         className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: blog.content }}
+        dangerouslySetInnerHTML={{ __html: processContent(blog.content) }}
       />
 
       {/* Back to Blogs Link */}

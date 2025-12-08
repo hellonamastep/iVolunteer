@@ -28,9 +28,11 @@ import { ParticipationRequestBanner } from "@/components/ParticipationRequestBan
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { VolunteerEventCard } from "@/components/VolunteerEventCard";
 import { toast } from "@/hooks/use-toast";
+import Footer from "@/components/Footer";
 import Pagination from "@/components/Pagination";
 import StatusBanner from "@/components/StatusBanner";
 import api from "@/lib/api";
+
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({ text, highlight }) => {
@@ -198,8 +200,8 @@ const AvailableEventsContent: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    console.log('[Volunteer Page] showAllEvents:', showAllEvents);
-    console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
+    // console.log('[Volunteer Page] showAllEvents:', showAllEvents);
+    // console.log('[Volunteer Page] user:', user ? { role: user.role, city: user.city } : 'Not logged in');
     fetchAvailableEvents(showAllEvents);
   }, [showAllEvents]);
 
@@ -1129,6 +1131,8 @@ const AvailableEventsContent: React.FC = () => {
           </div>
         )}
       </div>
+
+      <Footer/>
     </div>
   );
 };

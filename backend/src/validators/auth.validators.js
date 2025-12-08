@@ -348,9 +348,23 @@ const verifyOtpSchema = Joi.object({
     "string.pattern.base": "OTP must be 6 digits",
   }),
 });
+const resendOtpSchema = Joi.object({
+  email: Joi.string().email({ tlds: { allow: false } }).trim().lowercase().required(),
+});
+
+// POST /auth/verify-email
+const verifyEmailSchema = Joi.object({
+  email: Joi.string().email({ tlds: { allow: false } }).trim().lowercase().required(),
+  otp: Joi.string().pattern(/^\d{6}$/).required().messages({
+    "string.pattern.base": "OTP must be 6 digits",
+  }),
+});
+
 
 export const authValidator = {
   registerSchema,
   loginSchema,
   verifyOtpSchema, // <-- export it
+      verifyEmailSchema,   // for /verify-email
+  resendOtpSchema,  
 };

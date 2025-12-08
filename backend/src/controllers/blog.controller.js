@@ -1,18 +1,128 @@
 import { blogService } from "../services/blogs.service.js";
+
+// export const createBlog = async (req, res) => {
+//   try {
+//     console.log('Received blog creation request');
+//     console.log('Request body:', req.body);
+//     console.log('Request files:', req.files);
+
+//     let imageUrl = null;
+//     let contentImages = [];
+
+//     // Handle featured image
+//     if (req.files && req.files.image) {
+//       imageUrl = req.files.image[0].path.replace(/\\/g, "/");
+//       console.log('Featured image URL:', imageUrl);
+//     }
+
+//     // Handle content images
+//     if (req.files && req.files.contentImages) {
+//       contentImages = req.files.contentImages.map((file, index) => ({
+//         url: file.path.replace(/\\/g, "/"),
+//         caption: "",
+//         position: index
+//       }));
+//       console.log('Content images:', contentImages);
+//     }
+
+//     // Validate required fields
+//     if (!req.body.title || !req.body.content) {
+//       return res.status(400).json({ 
+//         success: false, 
+//         message: "Title and content are required" 
+//       });
+//     }
+
+//     const blogData = { 
+//       ...req.body, 
+//       imageUrl,
+//       contentImages
+//     };
+
+//     console.log('Creating blog with data:', blogData);
+
+//     const blog = await blogService.createBlog(blogData);
+    
+//     res.status(201).json({ 
+//       success: true, 
+//       message: "Blog created successfully", 
+//       blog 
+//     });
+//   } catch (error) {
+//     console.error('Blog creation error:', error);
+//     res.status(400).json({ 
+//       success: false, 
+//       message: error.message 
+//     });
+//   }
+// };
+
 export const createBlog = async (req, res) => {
   try {
     let imageUrl = null;
-    if (req.file) {
-      // Replace backslashes with forward slashes
-      imageUrl = req.file.path.replace(/\\/g, "/");
+    let contentImages = [];
+
+    if (req.files && req.files.image) {
+      imageUrl = req.files.image[0].path.replace(/\\/g, "/");
     }
 
-    const blogData = { ...req.body, imageUrl };
+    if (req.files && req.files.contentImages) {
+      contentImages = req.files.contentImages.map((file, index) => ({
+        url: file.path.replace(/\\/g, "/"),
+        caption: "",
+        position: index
+      }));
+    }
+
+    // Validate blog metadata length
+    if (req.body.blogMetadata && req.body.blogMetadata.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Blog metadata cannot exceed 50 characters"
+      });
+    }
+
+    const blogData = { 
+      ...req.body, 
+      imageUrl,
+      contentImages
+    };
 
     const blog = await blogService.createBlog(blogData);
-    res.status(201).json({ success: true, message: "Blog created successfully", blog });
+    res.status(201).json({ 
+      success: true, 
+      message: "Blog created successfully", 
+      blog 
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    if (error.message.includes("Blog metadata")) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+    res.status(400).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
+export const uploadContentImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No image file provided" });
+    }
+
+    const imageUrl = req.file.path.replace(/\\/g, "/");
+    
+    res.status(200).json({ 
+      success: true, 
+      imageUrl,
+      message: "Image uploaded successfully" 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

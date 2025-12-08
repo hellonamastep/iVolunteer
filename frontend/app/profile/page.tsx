@@ -83,8 +83,24 @@ export default function ProfilePage() {
       if (authUser) {
         try {
           const token = localStorage.getItem("auth-token");
+          
+          // Check if token exists before making API call
+          if (!token) {
+            console.error("No auth token found in localStorage");
+            toast({
+              title: "Authentication Error",
+              description: "Please log in again",
+              variant: "destructive",
+            });
+            router.push("/login");
+            return;
+          }
+
+          console.log("Fetching user data with token:", token.substring(0, 20) + "...");
+          console.log("API URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+          
           const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/user?t=${Date.now()}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/user`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -94,7 +110,16 @@ export default function ProfilePage() {
             }
           );
 
+          console.log("API Response:", response.data);
+          
           const userData = (response.data as any).data.user;
+          
+          if (!userData) {
+            console.error("User data is missing from response");
+            throw new Error("User data not found in response");
+          }
+          
+          console.log("User data fetched successfully:", userData.email);
           setUser(userData);
           
           // Initialize form data with complete user data
@@ -121,11 +146,29 @@ export default function ProfilePage() {
             addressZip: userData.address?.zip || "",
             addressCountry: userData.address?.country || "India",
           });
-        } catch (error) {
+        } catch (error: any) {
           console.error("Error fetching user data:", error);
+          console.error("Error response:", error.response?.data);
+          console.error("Error status:", error.response?.status);
+          console.error("Error headers:", error.response?.headers);
+          
+          let errorMessage = "Failed to load user data";
+          
+          if (error.response?.status === 401) {
+            errorMessage = "Session expired. Please log in again";
+            // Clear invalid token and redirect to login
+            localStorage.removeItem("auth-token");
+            localStorage.removeItem("auth-user");
+            setTimeout(() => router.push("/login"), 2000);
+          } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
           toast({
             title: "Error",
-            description: "Failed to load user data",
+            description: errorMessage,
             variant: "destructive",
           });
         } finally {

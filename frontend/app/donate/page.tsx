@@ -21,11 +21,13 @@ import {
   DonationEvent,
 } from "@/contexts/donationevents-context";
 import { FundraiserSection } from "@/components/FundraiserSection";
+import Footer from "@/components/Footer";
 import Pagination from "@/components/Pagination";
 import { DonationEventCard } from "@/components/DonationEventCard";
 import StatusBanner from "@/components/StatusBanner";
 import { useAuth } from "@/contexts/auth-context";
 import api from "@/lib/api";
+
 
 // Helper component to highlight matching text
 const HighlightText: React.FC<{ text: string; highlight: string }> = ({
@@ -923,7 +925,9 @@ function DonatePageContent() {
         </>
         )}
         </div>
+         <Footer/>
       </div>
+     
     </>
   );
 }

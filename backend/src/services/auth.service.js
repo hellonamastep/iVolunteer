@@ -1,6 +1,3 @@
-
-
-
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Session } from "../models/Session.js";
@@ -21,14 +18,65 @@ import { Community } from "../models/Community.js";
 import Group from "../models/Group.js";
 import { Donation } from "../models/Donation.js";
 import { DonationEvent } from "../models/DonationEvent.js";
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
+import { OTP } from "../models/Otp.js";
 
-const register = async (data) => {
-  const email = data.email.toLowerCase().trim();
-  const userExist = await User.findOne({ email });
+const verifyEmailOTP = async (email, otp) => {
+  const emailNormalized = email.toLowerCase().trim();
 
+  // Check if user already exists
+  const userExist = await User.findOne({ email: emailNormalized });
   if (userExist) {
     throw new ApiError(400, "An account with this email already exists");
+  }
+
+  // Find the OTP record
+  const otpRecord = await OTP.findOne({
+    email: emailNormalized,
+    otp,
+  });
+
+  if (!otpRecord) {
+    throw new ApiError(400, "Invalid OTP");
+  }
+
+  // Check if OTP has expired
+  if (otpRecord.expiresAt < new Date()) {
+    await OTP.deleteOne({ _id: otpRecord._id });
+    throw new ApiError(400, "OTP has expired");
+  }
+
+  // Delete the used OTP
+  await OTP.deleteOne({ _id: otpRecord._id });
+
+  return {
+    success: true,
+    message: "Email verified successfully",
+  };
+};
+
+const register = async (data) => {
+  console.log("🔧 Auth Service - Register called with data:", {
+    email: data.email,
+    hasOTP: !!data.otp,
+    otpValue: data.otp,
+    role: data.role,
+    name: data.name,
+    dataKeys: Object.keys(data)
+  });
+
+  const email = data.email.toLowerCase().trim();
+
+  // Check if user already exists (additional safety check)
+  const userExist = await User.findOne({ email });
+  if (userExist) {
+    throw new ApiError(400, "An account with this email already exists");
+  }
+
+  // Validate that OTP exists in the data
+  if (!data.otp) {
+    console.error("❌ Auth Service - OTP missing in service layer");
+    throw new ApiError(400, "OTP is required for registration");
   }
 
   const hashedPassword = await hashPassword(data.password);
@@ -40,12 +88,14 @@ const register = async (data) => {
     password: hashedPassword,
     role: data.role,
     coins: 50, // Give 50 coins for registration
+    isEmailVerified: true, // Add this field to track email verification
   };
 
   // Add Volunteer-specific fields if role is 'user'
   if (data.role === "user") {
     userData.age = data.age;
     userData.city = data.city;
+    userData.state = data.state;
     userData.profession = data.profession;
     userData.contactNumber = data.contactNumber;
     userData.nearestRailwayStation = data.nearestRailwayStation;
@@ -88,6 +138,12 @@ const register = async (data) => {
     userData.csrFocusAreas = data.csrFocusAreas || [];
   }
 
+  console.log("👤 Creating user with data:", {
+    email: userData.email,
+    role: userData.role,
+    hasPassword: !!userData.password
+  });
+
   // Save user
   const user = await User.create(userData);
 
@@ -107,31 +163,6 @@ const register = async (data) => {
   return user;
 };
 
-
-// const login = async (data) => {
-//   const email = data.email.toLowerCase().trim();
-
-//   const user = await User.findOne({ email });
-//   if (!user) {
-//     throw new ApiError(404, "User does not exist");
-//   }
-
-//   const isValidPass = await comparePassword(data.password, user.password);
-
-//   if (!isValidPass) {
-//     throw new ApiError(401, "Invalid password");
-//   }
-
-//   return {
-//     userId: user._id,
-//     email: user.email,
-//     name: user.name,
-//     role: user.role,
-//     coins: user.coins,
-//     profilePicture: user.profilePicture,
-//     cloudinaryPublicId: user.cloudinaryPublicId,
-//   };
-// };
 const googleLogin = async (data) => {
   const { email, name, profilePicture } = data;
 
@@ -185,7 +216,6 @@ const login = async (data) => {
   return user;
 };
 
-
 const logout = async (refreshToken) => {
   const hashedToken = hashToken(refreshToken);
   const session = await Session.findOneAndDelete({ refreshToken: hashedToken });
@@ -225,13 +255,12 @@ const changePassword = async (id, data) => {
   return { message: "Password changed successfully" };
 };
 
-
-
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || "12", 10);
 const RESET_TOKEN_BYTES = parseInt(process.env.RESET_TOKEN_BYTES || "32", 10);
-const RESET_TOKEN_TTL_MS = parseInt(process.env.RESET_TOKEN_TTL_MS || String(10 * 60 * 1000), 10); // 10 minutes default
-
-
+const RESET_TOKEN_TTL_MS = parseInt(
+  process.env.RESET_TOKEN_TTL_MS || String(10 * 60 * 1000),
+  10
+); // 10 minutes default
 
 function validatePasswordStrength(password) {
   if (typeof password !== "string") return false;
@@ -273,7 +302,10 @@ const resetPassword = async (token, password) => {
     throw new ApiError(403, "Invalid or expired reset token");
   }
 
-  if (!user.resetPasswordExpiresAt || user.resetPasswordExpiresAt.getTime() < Date.now()) {
+  if (
+    !user.resetPasswordExpiresAt ||
+    user.resetPasswordExpiresAt.getTime() < Date.now()
+  ) {
     throw new ApiError(403, "Invalid or expired reset token");
   }
 
@@ -294,28 +326,54 @@ const updateProfile = async (id, updateData) => {
   if (!user) throw new ApiError(404, "User not found");
 
   // Update allowed fields based on role
-  const allowedFields = ['name', 'profilePicture', 'cloudinaryPublicId'];
-  
-  if (user.role === 'user') {
-    allowedFields.push('age', 'city', 'profession', 'contactNumber', 'nearestRailwayStation');
-  } else if (user.role === 'ngo') {
-    allowedFields.push('organizationType', 'websiteUrl', 'yearEstablished', 'contactNumber', 'ngoDescription', 'focusAreas', 'organizationSize');
-  } else if (user.role === 'corporate') {
-    allowedFields.push('companyType', 'industrySector', 'companySize', 'websiteUrl', 'yearEstablished', 'contactNumber', 'companyDescription', 'csrFocusAreas');
+  const allowedFields = ["name", "profilePicture", "cloudinaryPublicId"];
+
+  if (user.role === "user") {
+    allowedFields.push(
+      "age",
+      "city",
+      "profession",
+      "contactNumber",
+      "nearestRailwayStation"
+    );
+  } else if (user.role === "ngo") {
+    allowedFields.push(
+      "organizationType",
+      "websiteUrl",
+      "yearEstablished",
+      "contactNumber",
+      "ngoDescription",
+      "focusAreas",
+      "organizationSize"
+    );
+  } else if (user.role === "corporate") {
+    allowedFields.push(
+      "companyType",
+      "industrySector",
+      "companySize",
+      "websiteUrl",
+      "yearEstablished",
+      "contactNumber",
+      "companyDescription",
+      "csrFocusAreas"
+    );
   }
 
   // Update only allowed fields
-  allowedFields.forEach(field => {
+  allowedFields.forEach((field) => {
     if (updateData[field] !== undefined) {
       user[field] = updateData[field];
     }
   });
 
   // Handle address update for NGO and Corporate
-  if ((user.role === 'ngo' || user.role === 'corporate') && updateData.address) {
+  if (
+    (user.role === "ngo" || user.role === "corporate") &&
+    updateData.address
+  ) {
     user.address = {
       ...user.address,
-      ...updateData.address
+      ...updateData.address,
     };
   }
 
@@ -334,7 +392,10 @@ const deleteAccount = async (id, password) => {
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) throw new ApiError(401, "Incorrect password");
 
-  logger.info("Starting comprehensive account deletion", { userId: id, email: user.email });
+  logger.info("Starting comprehensive account deletion", {
+    userId: id,
+    email: user.email,
+  });
 
   try {
     // 1. Delete all user sessions
@@ -412,7 +473,10 @@ const deleteAccount = async (id, password) => {
       }
     }
     await Group.deleteMany({ creator: id });
-    logger.info("Deleted groups created by user", { userId: id, count: userGroups.length });
+    logger.info("Deleted groups created by user", {
+      userId: id,
+      count: userGroups.length,
+    });
 
     // 10. Remove user from group members
     await Group.updateMany(
@@ -431,7 +495,10 @@ const deleteAccount = async (id, password) => {
     // 12. Handle communities owned by the user
     const userCommunities = await Community.find({ owner: id });
     await Community.deleteMany({ owner: id });
-    logger.info("Deleted communities owned by user", { userId: id, count: userCommunities.length });
+    logger.info("Deleted communities owned by user", {
+      userId: id,
+      count: userCommunities.length,
+    });
 
     // 13. Remove user from community members
     await Community.updateMany(
@@ -464,9 +531,9 @@ const deleteAccount = async (id, password) => {
     // 17. Finally, delete the user account
     await User.findByIdAndDelete(id);
 
-    logger.info("✅ Account and all associated data deleted successfully", { 
-      userId: id, 
-      email: user.email 
+    logger.info("✅ Account and all associated data deleted successfully", {
+      userId: id,
+      email: user.email,
     });
 
     return { message: "Account deleted successfully" };
@@ -487,69 +554,6 @@ const checkEmailExists = async (email) => {
   return !!user; // Returns true if user exists, false otherwise
 };
 
-// Get nearby users by railway station (for volunteers)
-const getNearbyUsersByStation = async (userId, railwayStation) => {
-  // Find users with the same railway station (case-insensitive)
-  // Since nearestRailwayStation is stored in lowercase in the schema, we just need to compare
-  const users = await User.find({
-    _id: { $ne: userId }, // Exclude current user
-    role: 'user', // Only volunteers
-    nearestRailwayStation: railwayStation.toLowerCase().trim(),
-  })
-  .select('name email profilePicture city profession nearestRailwayStation createdAt')
-  .sort({ createdAt: -1 }) // Most recent users first
-  .limit(50); // Limit to 50 users
-
-  return users;
-};
-
-// Get nearby users by city (for NGOs, corporates, admins)
-const getNearbyUsersByCity = async (userId, city) => {
-  // Find users in the same city (case-insensitive)
-  const users = await User.find({
-    _id: { $ne: userId }, // Exclude current user
-    $or: [
-      { city: new RegExp(`^${city.trim()}$`, 'i') }, // For volunteers
-      { 'address.city': new RegExp(`^${city.trim()}$`, 'i') } // For NGOs/corporates
-    ]
-  })
-  .select('name email profilePicture city address.city profession organizationType nearestRailwayStation createdAt role')
-  .sort({ createdAt: -1 }) // Most recent users first
-  .limit(50); // Limit to 50 users
-
-  return users;
-};
-
-// Get certificates for a user
-const getUserCertificates = async (userId) => {
-  // Find all approved/accepted events where the user attended
-  const completedEvents = await Event.find({
-    completionStatus: { $in: ["approved", "accepted"] },
-    attendedParticipants: userId,
-  })
-    .populate("organizationId", "name")
-    .populate("approvedBy", "name")
-    .select("title date organizationId approvedBy pointsOffered completionApprovedAt")
-    .sort({ completionApprovedAt: -1 });
-
-  // Get user details
-  const user = await User.findById(userId).select("name");
-
-  // Format certificates
-  const certificates = completedEvents.map((event) => ({
-    _id: event._id,
-    eventTitle: event.title,
-    eventDate: event.date,
-    organizationName: event.organizationId?.name || "Unknown Organization",
-    volunteerName: user?.name || "Volunteer",
-    adminName: event.approvedBy?.name || "Admin",
-    completedAt: event.completionApprovedAt || event.updatedAt,
-    pointsEarned: event.pointsOffered || 0,
-  }));
-
-  return certificates;
-};
-
 export const authService = {
   register,
   login,
@@ -562,7 +566,5 @@ export const authService = {
   deleteAccount,
   googleLogin,
   checkEmailExists,
-  getNearbyUsersByStation,
-  getNearbyUsersByCity,
-  getUserCertificates,
+  verifyEmailOTP,
 };
