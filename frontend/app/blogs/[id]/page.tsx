@@ -29,7 +29,7 @@ export default function BlogDetailsPage() {
     }
     
     // If it's a relative path, construct the full URL
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '') || 'https://api.namastep.com';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.namastep.com';
     return `${baseUrl}/${url.replace(/\\/g, '/')}`;
   };
 
