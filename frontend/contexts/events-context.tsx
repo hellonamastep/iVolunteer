@@ -9,7 +9,7 @@ import {
   useCallback,
 } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.namastep.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.namastep.com/api';
 const API_HOST = API_BASE_URL.replace(/\/api$/, '');
 
 export interface Event {

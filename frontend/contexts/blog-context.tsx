@@ -108,7 +108,7 @@ export const BlogProvider = ({ children }: { children: ReactNode }) => {
       // Process image URL for frontend display
       imageUrl = imageUrl.replace(/\\/g, "/");
       if (!imageUrl.startsWith("http")) {
-        const API_HOST = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
+        const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
         imageUrl = `${API_HOST}/${imageUrl}`;
       }
 
@@ -134,7 +134,7 @@ export const BlogProvider = ({ children }: { children: ReactNode }) => {
         if (imageUrl) {
           imageUrl = imageUrl.replace(/\\/g, "/");
           if (!imageUrl.startsWith("http")) {
-            const API_HOST = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
+            const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
             imageUrl = `${API_HOST}/${imageUrl}`;
           }
         }
@@ -143,7 +143,7 @@ export const BlogProvider = ({ children }: { children: ReactNode }) => {
         const contentImages = blog.contentImages?.map(img => {
           let processedUrl = img.url.replace(/\\/g, "/");
           if (!processedUrl.startsWith("http")) {
-            const API_HOST = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
+            const API_HOST = (process.env.NEXT_PUBLIC_API_URL || 'https://api.namastep.com/api').replace(/\/api$/, '');
             processedUrl = `${API_HOST}/${processedUrl}`;
           }
           return {

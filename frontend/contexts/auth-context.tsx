@@ -555,7 +555,7 @@ const signup = async (signupData: SignupData): Promise<boolean> => {
     try {
       if (!credentialResponse?.credential) return false;
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/auth/google-login`,
+        `${process.env.NEXT_PUBLIC_API_URL}/v1/auth/google-login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
