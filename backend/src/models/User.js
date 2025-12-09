@@ -129,30 +129,11 @@ isEmailVerified: {
     websiteUrl: {
       type: String,
       trim: true,
-      validate: {
-        validator: function (v) {
-          return !v || v === "" || /^https?:\/\/.+/.test(v);
-        },
-        message: "Please provide a valid URL or leave empty",
-      },
     },
     yearEstablished: {
       type: Number,
       min: [1800, "Year must be after 1800"],
       max: [new Date().getFullYear(), "Year cannot be in the future"],
-    },
-
-    contactNumber: {
-      type: String,
-      required: function () {
-        return this.role === "ngo" || this.role === "corporate";
-      },
-      validate: {
-        validator: function (v) {
-          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
-        },
-        message: "Please provide a valid contact number",
-      },
     },
 
     address: {
@@ -280,13 +261,6 @@ isEmailVerified: {
         return this.role === "corporate";
       },
       minlength: [10, "Description must be at least 10 characters"],
-      maxlength: [1000, "Description cannot exceed 1000 characters"],
-    },
-    companyDescription: {
-      type: String,
-      required: function () {
-        return this.role === "corporate";
-      },
       maxlength: [1000, "Description cannot exceed 1000 characters"],
     },
     csrFocusAreas: [
