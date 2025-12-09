@@ -446,32 +446,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 const signup = async (signupData: SignupData): Promise<boolean> => {
   setIsLoading(true);
   try {
-    // console.log("📦 Auth Context - Signup data received:", {
-    //   email: signupData.email,
-    //   hasOTP: !!signupData.otp,
-    //   otpValue: signupData.otp,
-    //   otpLength: signupData.otp?.length,
-    //   role: signupData.role,
-    //   allKeys: Object.keys(signupData)
-    // });
+    console.log("🚀 [AUTH-CONTEXT] Starting signup process");
+    console.log("📦 [AUTH-CONTEXT] Signup data received:", {
+      email: signupData.email,
+      role: signupData.role,
+      websiteUrl: signupData.websiteUrl,
+      yearEstablished: signupData.yearEstablished,
+      hasOTP: !!signupData.otp,
+      otpValue: signupData.otp,
+      otpLength: signupData.otp?.length,
+      allKeys: Object.keys(signupData)
+    });
 
     // Validate OTP exists
     if (!signupData.otp) {
-      console.error("❌ OTP is missing in auth context");
+      console.error("❌ [AUTH-CONTEXT] OTP is missing");
       toast.error("❌ OTP is missing from signup data");
       return false;
     }
 
     if (!signupData.email) {
-      console.error("❌ Email is missing in auth context");
+      console.error("❌ [AUTH-CONTEXT] Email is missing");
       toast.error("❌ Email is missing from signup data");
       return false;
     }
 
     // Log what will be sent
-    console.log("🌐 About to send to API:", {
+    console.log("🌐 [AUTH-CONTEXT] Sending request to backend:", {
       url: "/v1/auth/register",
+      method: "POST",
       dataKeys: Object.keys(signupData),
+      websiteUrl: signupData.websiteUrl,
+      yearEstablished: signupData.yearEstablished,
       hasOTP: !!signupData.otp,
       otpValue: signupData.otp
     });
@@ -485,10 +491,12 @@ const signup = async (signupData: SignupData): Promise<boolean> => {
       }
     );
 
-    // console.log("✅ Registration successful:", {
-    //   userId: data.user.userId,
-    //   email: data.user.email,
-    // });
+    console.log("✅ [BACKEND-RESPONSE] Registration successful:", {
+      userId: data.user.userId,
+      email: data.user.email,
+      role: data.user.role,
+      success: true
+    });
 
     const mapped = mapUser(data.user);
     setUser(mapped);
@@ -505,12 +513,21 @@ const signup = async (signupData: SignupData): Promise<boolean> => {
       100
     );
     setIsOTPSent(false);
+    console.log("🏁 [AUTH-CONTEXT] Signup process completed successfully");
     return true;
   } catch (err: any) {
-    console.error("💥 Signup error:", {
+    console.error("❌ [BACKEND-ERROR] Signup failed!");
+    console.error("📡 [BACKEND-ERROR] Response Status:", err?.response?.status);
+    console.error("📡 [BACKEND-ERROR] Response Data:", err?.response?.data);
+    console.error("📡 [BACKEND-ERROR] Error Message:", err?.response?.data?.message);
+    console.error("📡 [BACKEND-ERROR] Full Response:", err?.response);
+    console.error("💥 [BACKEND-ERROR] Complete Error Object:", {
       status: err?.response?.status,
+      statusText: err?.response?.statusText,
       message: err?.response?.data?.message,
       data: err?.response?.data,
+      headers: err?.response?.headers,
+      config: err?.config,
       fullError: err,
     });
 

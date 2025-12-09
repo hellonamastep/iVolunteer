@@ -56,12 +56,15 @@ const verifyEmailOTP = async (email, otp) => {
 };
 
 const register = async (data) => {
-  console.log("🔧 Auth Service - Register called with data:", {
+  console.log("🔧 [AUTH-SERVICE] Register called");
+  console.log("📦 [AUTH-SERVICE] Input data:", {
     email: data.email,
-    hasOTP: !!data.otp,
-    otpValue: data.otp,
     role: data.role,
     name: data.name,
+    websiteUrl: data.websiteUrl,
+    yearEstablished: data.yearEstablished,
+    hasOTP: !!data.otp,
+    otpValue: data.otp,
     dataKeys: Object.keys(data)
   });
 
@@ -70,12 +73,13 @@ const register = async (data) => {
   // Check if user already exists (additional safety check)
   const userExist = await User.findOne({ email });
   if (userExist) {
+    console.error("❌ [AUTH-SERVICE] User already exists");
     throw new ApiError(400, "An account with this email already exists");
   }
 
   // Validate that OTP exists in the data
   if (!data.otp) {
-    console.error("❌ Auth Service - OTP missing in service layer");
+    console.error("❌ [AUTH-SERVICE] OTP missing in service layer");
     throw new ApiError(400, "OTP is required for registration");
   }
 
@@ -117,6 +121,11 @@ const register = async (data) => {
     userData.ngoDescription = data.ngoDescription;
     userData.focusAreas = data.focusAreas || [];
     userData.organizationSize = data.organizationSize;
+    
+    console.log("🏢 [AUTH-SERVICE] NGO fields added:", {
+      websiteUrl: userData.websiteUrl,
+      yearEstablished: userData.yearEstablished
+    });
   }
 
   // Add Corporate-specific fields if role is 'corporate'
@@ -136,16 +145,51 @@ const register = async (data) => {
     };
     userData.companyDescription = data.companyDescription;
     userData.csrFocusAreas = data.csrFocusAreas || [];
+    
+    console.log("🏢 [AUTH-SERVICE] Corporate fields added:", {
+      websiteUrl: userData.websiteUrl,
+      yearEstablished: userData.yearEstablished
+    });
   }
 
-  console.log("👤 Creating user with data:", {
+  console.log("👤 [AUTH-SERVICE] Creating user in database...");
+  console.log("📋 [AUTH-SERVICE] User data to be saved:", {
     email: userData.email,
     role: userData.role,
+    websiteUrl: userData.websiteUrl,
+    yearEstablished: userData.yearEstablished,
     hasPassword: !!userData.password
   });
 
-  // Save user
-  const user = await User.create(userData);
+  try {
+    // Save user
+    const user = await User.create(userData);
+    console.log("✅ [AUTH-SERVICE] User created successfully in database");
+    
+    return user;
+  } catch (error) {
+    console.error("❌ [AUTH-SERVICE] Database error while creating user:");
+    console.error("💥 [AUTH-SERVICE] Error name:", error.name);
+    console.error("💥 [AUTH-SERVICE] Error message:", error.message);
+    
+    if (error.name === 'ValidationError') {
+      console.error("🔴 [AUTH-SERVICE] Mongoose Validation Error!");
+      console.error("📋 [AUTH-SERVICE] Validation errors:", error.errors);
+      
+      const validationErrors = Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message,
+        kind: error.errors[key].kind,
+        value: error.errors[key].value
+      }));
+      
+      console.error("🔴 [AUTH-SERVICE] Detailed validation errors:", validationErrors);
+      
+      throw new ApiError(400, `Database validation error: ${error.message}`);
+    }
+    
+    throw error;
+  }
 
   // Save registration reward separately
   await RegistrationReward.create({
