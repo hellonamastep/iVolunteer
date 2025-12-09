@@ -500,7 +500,7 @@ const signup = async (signupData: SignupData): Promise<boolean> => {
     setTimeout(
       () =>
         toast.success(
-          "🎉 Welcome to iVolunteer! You've been awarded 50 coins as a welcome bonus!"
+          "🎉 Welcome to Namastep"
         ),
       100
     );

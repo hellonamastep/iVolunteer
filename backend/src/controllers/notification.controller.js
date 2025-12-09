@@ -183,7 +183,7 @@ export const notificationService = {
         recipient: ngoId,
         type: "event_approved",
         title: "Event Approved",
-        message: `Your event "${eventTitle}" has been approved by admin`,
+        message: `Your event "${eventTitle}" has been approved`,
         actionUrl: `/ngo-dashboard`,
         metadata: { eventId },
       });
@@ -192,7 +192,7 @@ export const notificationService = {
     }
   },
 
-  async notifyNGOEventRejected(ngoId, eventId, eventTitle, reason) {
+  async notifyNGOEventRejected(ngoId, eventId, eventTitle, reason = "") {
     try {
       await Notification.create({
         recipient: ngoId,

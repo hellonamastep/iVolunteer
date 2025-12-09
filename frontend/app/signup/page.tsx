@@ -31,6 +31,7 @@ import {
   getCitiesByState,
   getStationsByCity
 } from "@/lib/locationData";
+import { Logo } from "@/components/logo";
 
 type SignupFormValues = {
   name: string;
@@ -194,7 +195,7 @@ export default function SignupPage() {
     try {
       await sendOTP(emailValue);
       setOtpResendTimer(60);
-      toast.success("OTP sent to your email!");
+      // Toast already shown in auth-context
     } catch (error) {
       // Error handled in the context
     }
@@ -224,7 +225,7 @@ export default function SignupPage() {
           formValue: watch("otp"),
         });
 
-        toast.success("Email verified successfully!");
+        // Toast already shown in auth-context
       }
     } catch (error) {
       setOtpVerified(false);
@@ -240,7 +241,7 @@ export default function SignupPage() {
     try {
       await resendOTP(emailValue);
       setOtpResendTimer(60);
-      toast.success("OTP resent to your email!");
+      // Toast already shown in auth-context
     } catch (error) {
       // Error handled in the context
     }
@@ -465,7 +466,7 @@ export default function SignupPage() {
       const success = await signup(signupData);
 
       if (success) {
-        toast.success("🎉 Account created successfully!");
+        // Toast already shown in auth-context
         router.push("/");
       } else {
         toast.error("Registration failed. Please try again.");
@@ -497,19 +498,7 @@ export default function SignupPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-gradient-to-br from-[#E9FDF1] via-[#F0FDF4] to-[#E9FDF1] font-['Manrope']">
       {/* Header */}
       <div className="flex flex-col items-center mb-4 sm:mb-6 lg:mb-8">
-        <div className="relative">
-          <Image
-            src="/images/loginmascot.gif"
-            alt="Namastep Logo"
-            width={80}
-            height={80}
-            className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
-            priority
-          />
-        </div>
-        <h1 className="text-[#50C878] font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-wide">
-          NAMASTEP
-        </h1>
+        <Logo />
         <p className="text-gray-600 text-xs sm:text-sm lg:text-base mt-1 text-center max-w-xs sm:max-w-sm">
           Make Doing Good Fun, Rewarding & Impactful
         </p>
@@ -519,43 +508,51 @@ export default function SignupPage() {
       <div className="bg-white/95 backdrop-blur-sm w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl rounded-xl sm:rounded-2xl shadow-lg border border-white/20">
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Progress Steps */}
-          <div className="flex justify-center mb-4 sm:mb-6 lg:mb-8">
+          <div className="flex justify-center mb-4 sm:mb-6 lg:mb-8 px-2">
             <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
-              {steps.map((step, index) => (
-                <React.Fragment key={step.number}>
-                  <div className="flex flex-col items-center min-w-12 sm:min-w-16">
-                    <div
-                      className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm transition-all duration-300 ${activeStep >= step.number
-                        ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
-                        : "bg-gray-200 text-gray-400"
-                        } ${activeStep === step.number
-                          ? "ring-2 sm:ring-4 ring-[#3ABBA5]/20 scale-110"
-                          : ""
+              {steps.map((step, index) => {
+                // On small screens, only show first step, active step, and last step
+                const isFirstStep = step.number === 1;
+                const isLastStep = step.number === steps.length;
+                const isActiveStep = step.number === activeStep;
+                const shouldShowOnMobile = isFirstStep || isLastStep || isActiveStep;
+                
+                return (
+                  <React.Fragment key={step.number}>
+                    <div className={`flex flex-col items-center min-w-[40px] sm:min-w-16 ${!shouldShowOnMobile ? 'hidden sm:flex' : ''}`}>
+                      <div
+                        className={`w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-[10px] sm:text-sm transition-all duration-300 ${activeStep >= step.number
+                          ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
+                          : "bg-gray-200 text-gray-400"
+                          } ${activeStep === step.number
+                            ? "ring-1 sm:ring-4 ring-[#3ABBA5]/20 scale-110"
+                            : ""
+                          }`}
+                      >
+                        {activeStep > step.number ? "✓" : step.number}
+                      </div>
+                      <span
+                        className={`text-[8px] sm:text-xs lg:text-sm mt-1 font-medium text-center max-w-[40px] sm:max-w-none leading-tight ${
+                          activeStep >= step.number
+                            ? "text-[#3ABBA5]"
+                            : "text-gray-400"
                         }`}
-                    >
-                      {activeStep > step.number ? "✓" : step.number}
+                      >
+                        {step.title}
+                      </span>
                     </div>
-                    <span
-                      className={`text-[10px] sm:text-xs lg:text-sm mt-1 font-medium text-center ${
-                        activeStep >= step.number
-                          ? "text-[#3ABBA5]"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {step.title}
-                    </span>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div
-                      className={`w-4 h-1 sm:w-6 sm:h-1 lg:w-12 lg:h-1 rounded-full transition-all duration-300 ${
-                        activeStep > step.number
-                          ? "bg-[#3ABBA5]"
-                          : "bg-gray-200"
-                      }`}
-                    ></div>
-                  )}
-                </React.Fragment>
-              ))}
+                    {index < steps.length - 1 && (
+                      <div
+                        className={`w-3 h-0.5 sm:w-6 sm:h-1 lg:w-12 lg:h-1 rounded-full transition-all duration-300 flex-shrink-0 ${
+                          activeStep > step.number
+                            ? "bg-[#3ABBA5]"
+                            : "bg-gray-200"
+                        } ${!shouldShowOnMobile && (index === steps.length - 2 || !steps[index + 1] || !(steps[index + 1].number === 1 || steps[index + 1].number === steps.length || steps[index + 1].number === activeStep)) ? 'hidden sm:block' : ''}`}
+                      ></div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
 
@@ -1371,7 +1368,7 @@ export default function SignupPage() {
                       <div className="relative">
                         <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                         <input
-                          type="url"
+                          type="text"
                           placeholder="https://example.com"
                           {...register("websiteUrl")}
                           className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"

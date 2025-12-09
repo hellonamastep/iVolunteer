@@ -42,7 +42,7 @@ const registerSchema = Joi.object({
     otherwise: Joi.string().optional(),
   }),
 
-  websiteUrl: Joi.string().uri().trim().allow("").optional(),
+  websiteUrl: Joi.string().trim().allow("").optional(),
   yearEstablished: Joi.number().integer().min(1800).max(new Date().getFullYear()).optional(),
 
   contactNumber: Joi.when("role", {

@@ -44,6 +44,8 @@ export function Providers({ children }: { children: ReactNode }) {
                                 pauseOnHover
                                 draggable
                                 theme="light"
+                                limit={3}
+                                newestOnTop
                               />
                               <Toaster />
                             </EventsProvider>
