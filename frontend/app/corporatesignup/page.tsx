@@ -689,10 +689,27 @@ export default function CorporateSignupPage() {
                       <input
                         type="number"
                         placeholder="2010"
-                        {...register("yearEstablished")}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        {...register("yearEstablished", {
+                          valueAsNumber: true,
+                          min: {
+                            value: 1800,
+                            message: "Year must be after 1800"
+                          },
+                          max: {
+                            value: new Date().getFullYear(),
+                            message: "Year cannot be in the future"
+                          }
+                        })}
+                        className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.yearEstablished ? "border-red-400 focus:ring-red-400" : "border-gray-200 focus:border-[#3ABBA5]"
+                        }`}
                       />
                     </div>
+                    {errors.yearEstablished && (
+                      <p className="text-red-500 text-sm animate-shake">
+                        {errors.yearEstablished.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Address Fields */}

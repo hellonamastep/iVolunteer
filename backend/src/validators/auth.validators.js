@@ -172,9 +172,7 @@ const registerSchema = Joi.object({
         otherwise: Joi.string().optional()
     }),
 
-    websiteUrl: Joi.string().uri().trim().allow('').optional().messages({
-        "string.uri": "Website or social media URL must be a valid URL"
-    }),
+    websiteUrl: Joi.string().trim().allow('').optional(),
 
     yearEstablished: Joi.number().integer().min(1800).max(new Date().getFullYear()).optional().messages({
         "number.min": "Year established must be after 1800",
