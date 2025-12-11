@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import Image from "next/image";
 import {
   Eye,
   EyeOff,
@@ -27,9 +26,6 @@ import Link from "next/link";
 import {
   indianStatesData,
   railwayStationsByCity,
-  getAllStates,
-  getCitiesByState,
-  getStationsByCity
 } from "@/lib/locationData";
 import { Logo } from "@/components/logo";
 
@@ -64,6 +60,167 @@ type SignupFormValues = {
   organizationSize?: string;
 };
 
+const FieldError = ({ message }: { message?: string }) => {
+  if (!message) return null;
+  return (
+    <p className="text-red-500 text-xs sm:text-sm animate-shake">
+      {message}
+    </p>
+  );
+};
+
+// Reusable Password Field Component
+const PasswordField = ({
+  register,
+  errors,
+  showPassword,
+  setShowPassword,
+  fieldName = "password",
+  label = "Password *",
+}: {
+  register: any;
+  errors: any;
+  showPassword: boolean;
+  setShowPassword: (val: boolean) => void;
+  fieldName?: string;
+  label?: string;
+}) => (
+  <div className="space-y-1 sm:space-y-2">
+    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+      {label}
+    </label>
+    <div className="relative">
+      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+      <input
+        type={showPassword ? "text" : "password"}
+        placeholder="••••••••"
+        {...register(fieldName, {
+          required: "Password is required",
+          minLength: {
+            value: 8,
+            message: "Minimum 8 characters",
+          },
+        })}
+        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+          errors[fieldName] ? "border-red-400" : "border-gray-200"
+        }`}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        {showPassword ? (
+          <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+        ) : (
+          <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+        )}
+      </button>
+    </div>
+    <FieldError message={errors[fieldName]?.message} />
+  </div>
+);
+
+// Reusable Confirm Password Field Component
+const ConfirmPasswordField = ({
+  register,
+  errors,
+  showConfirmPassword,
+  setShowConfirmPassword,
+  watchedPassword,
+  watchedConfirmPassword,
+}: {
+  register: any;
+  errors: any;
+  showConfirmPassword: boolean;
+  setShowConfirmPassword: (val: boolean) => void;
+  watchedPassword: string;
+  watchedConfirmPassword: string;
+}) => (
+  <div className="space-y-1 sm:space-y-2">
+    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+      Confirm Password *
+    </label>
+    <div className="relative">
+      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+      <input
+        type={showConfirmPassword ? "text" : "password"}
+        placeholder="••••••••"
+        {...register("confirmPassword", {
+          required: "Please confirm your password",
+          validate: (val: string) =>
+            val === watchedPassword || "Passwords do not match",
+        })}
+        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+          errors.confirmPassword ? "border-red-400" : "border-gray-200"
+        }`}
+      />
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
+        {!errors.confirmPassword && watchedConfirmPassword && (
+          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+        )}
+        <button
+          type="button"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          {showConfirmPassword ? (
+            <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+          ) : (
+            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+          )}
+        </button>
+      </div>
+    </div>
+    <FieldError message={errors.confirmPassword?.message} />
+  </div>
+);
+
+// Reusable Contact Number Field Component
+const ContactNumberField = ({
+  register,
+  errors,
+  showErrorBorder = true,
+}: {
+  register: any;
+  errors: any;
+  showErrorBorder?: boolean;
+}) => (
+  <div className="space-y-1 sm:space-y-2">
+    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+      Contact Number *
+    </label>
+    <div className="relative">
+      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+      <input
+        type="tel"
+        placeholder="9876543210"
+        maxLength={10}
+        inputMode="numeric"
+        onKeyDown={(e) => {
+          if (
+            !/[0-9]/.test(e.key) &&
+            !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)
+          ) {
+            e.preventDefault();
+          }
+        }}
+        {...register("contactNumber", {
+          required: "Contact number is required",
+          pattern: {
+            value: /^[6-9]\d{9}$/,
+            message: "Please enter a valid 10-digit mobile number",
+          },
+        })}
+        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+          showErrorBorder && errors.contactNumber ? "border-red-400" : "border-gray-200"
+        }`}
+      />
+    </div>
+    <FieldError message={errors.contactNumber?.message} />
+  </div>
+);
+
 export default function SignupPage() {
   const {
     signup,
@@ -81,6 +238,8 @@ export default function SignupPage() {
   const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>([]);
   const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [emailExists, setEmailExists] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [isEmailFieldTouched, setIsEmailFieldTouched] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpResendTimer, setOtpResendTimer] = useState(0);
   const [selectedState, setSelectedState] = useState<string>("");
@@ -97,7 +256,6 @@ export default function SignupPage() {
     setValue,
     setError,
     clearErrors,
-    getValues,
   } = useForm<SignupFormValues>({
     mode: "onChange",
   });
@@ -151,7 +309,7 @@ export default function SignupPage() {
 
   // Check if email already exists
   const checkEmailExists = async (email: string) => {
-    if (!email || !/^\S+@\S+$/i.test(email)) return;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return;
 
     setEmailCheckLoading(true);
     try {
@@ -170,12 +328,14 @@ export default function SignupPage() {
 
       if (data.exists) {
         setEmailExists(true);
+        setEmailVerified(false);
         setError("email", {
           type: "manual",
           message: "This email is already registered. Please login instead.",
         });
       } else {
         setEmailExists(false);
+        setEmailVerified(true);
         clearErrors("email");
       }
     } catch (error) {
@@ -219,13 +379,6 @@ export default function SignupPage() {
           shouldDirty: true,
           shouldTouch: true,
         });
-
-        console.log("✅ OTP verified and stored:", {
-          otp: otpValue,
-          formValue: watch("otp"),
-        });
-
-        // Toast already shown in auth-context
       }
     } catch (error) {
       setOtpVerified(false);
@@ -249,9 +402,16 @@ export default function SignupPage() {
 
   // Debounce email check
   React.useEffect(() => {
+    // Reset verification state when email changes
+    if (isEmailFieldTouched) {
+      setEmailVerified(false);
+    }
+
     const timeoutId = setTimeout(() => {
       if (emailValue && emailValue.length > 0) {
         checkEmailExists(emailValue);
+      } else {
+        setEmailVerified(false);
       }
     }, 800);
 
@@ -291,6 +451,8 @@ export default function SignupPage() {
             fields: [
               "password",
               "confirmPassword",
+              "organizationType",
+              "contactNumber",
               "ngoDescription",
             ],
           },
@@ -308,42 +470,40 @@ export default function SignupPage() {
     const currentStepFields = steps[activeStep - 1].fields;
     const isValid = await trigger(currentStepFields as any);
 
-    console.log("➡️ Navigation attempt:", {
-      currentStep: activeStep,
-      isValid,
-      isOTPSent,
-      otpVerified,
-      nextStep: activeStep + 1,
-    });
-
     if (!isValid) {
-      console.log("❌ Navigation blocked - form validation failed");
       return;
     }
 
     if (activeStep === 2) {
-      console.log("✅ Allowing navigation to OTP step");
       setActiveStep(3);
       return;
     }
 
     if (activeStep === 3) {
       if (!otpVerified) {
-        toast.error("❌ Please verify your email with OTP first");
-        console.log("❌ Blocked: OTP not verified");
+        toast.error("Please verify your email with OTP first");
         return;
       }
-      console.log("✅ OTP verified, allowing navigation");
       setActiveStep(4);
       return;
     }
 
-    console.log("✅ Allowing normal navigation to step:", activeStep + 1);
     setActiveStep((prev) => prev + 1);
   };
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeStep < steps.length) {
+        handleNext();
+      } else {
+        handleSubmit(onSubmit)();
+      }
+    }
   };
 
   const toggleFocusArea = (area: string) => {
@@ -367,27 +527,17 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormValues) => {
     try {
-     
       if (!otpVerified) {
-        toast.error("❌ Please verify your email with OTP first");
+        toast.error("Please verify your email with OTP first");
         setActiveStep(3);
         return;
       }
 
       const otpToSend = data.otp || verifiedOTP || watch("otp");
 
-      // console.log("🔍 OTP Debug:", {
-      //   formDataOTP: data.otp,
-      //   verifiedOTPState: verifiedOTP,
-      //   watchedOTP: watch("otp"),
-      //   finalOTP: otpToSend,
-      //   otpVerifiedFlag: otpVerified,
-      // });
-
       if (!otpToSend || otpToSend.length !== 6) {
-        console.error("❌ OTP is missing or invalid:", otpToSend);
         toast.error(
-          "❌ OTP verification failed. Please verify your email again."
+          "OTP verification failed. Please verify your email again."
         );
         setActiveStep(3);
         setOtpVerified(false);
@@ -403,18 +553,8 @@ export default function SignupPage() {
         otp: otpToSend,
       };
 
-      // console.log("📝 Signup data being prepared:", {
-      //   email: signupData.email,
-      //   hasOTP: !!signupData.otp,
-      //   otpValue: signupData.otp,
-      //   otpLength: signupData.otp?.length,
-      //   role: signupData.role,
-      //   allKeys: Object.keys(signupData),
-      // });
-
       // Add role-specific fields
       if (data.role === "ngo") {
-        // ✅ ADD ALL REQUIRED NGO FIELDS
         signupData.organizationType = data.organizationType;
         signupData.websiteUrl = data.websiteUrl || "";
         signupData.yearEstablished = data.yearEstablished
@@ -422,7 +562,6 @@ export default function SignupPage() {
           : undefined;
         signupData.contactNumber = data.contactNumber;
 
-        // ✅ ADD ADDRESS FIELD (REQUIRED)
         signupData.address = {
           street: data.address?.street || "",
           city: data.address?.city || "",
@@ -444,25 +583,6 @@ export default function SignupPage() {
         signupData.nearestRailwayStation = data.nearestRailwayStation || "";
       }
 
-      // console.log("🔒 Final data before API call:", {
-      //   hasOTP: !!signupData.otp,
-      //   otpValue: signupData.otp,
-      //   keys: Object.keys(signupData),
-      //   ngoFields:
-      //     data.role === "ngo"
-      //       ? {
-      //           hasOrganizationType: !!signupData.organizationType,
-      //           hasContactNumber: !!signupData.contactNumber,
-      //           hasAddress: !!signupData.address,
-      //           hasDescription: !!signupData.ngoDescription,
-      //           hasFocusAreas:
-      //             !!signupData.focusAreas && signupData.focusAreas.length > 0,
-      //           hasOrganizationSize: !!signupData.organizationSize,
-      //         }
-      //       : null,
-      // });
-
-      // console.log("🚀 Calling signup with complete data");
       const success = await signup(signupData);
 
       if (success) {
@@ -581,6 +701,7 @@ export default function SignupPage() {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
+            onKeyPress={handleKeyPress}
             className="space-y-4 sm:space-y-6 lg:space-y-8"
           >
             {/* Step 1: Role Selection */}
@@ -638,11 +759,7 @@ export default function SignupPage() {
                     );
                   })}
                 </div>
-                {errors.role && (
-                  <p className="text-red-500 text-xs sm:text-sm text-center animate-shake">
-                    {errors.role.message}
-                  </p>
-                )}
+                <FieldError message={errors.role?.message} />
               </div>
             )}
 
@@ -674,11 +791,7 @@ export default function SignupPage() {
                           }`}
                       />
                     </div>
-                    {errors.name && (
-                      <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    <FieldError message={errors.name?.message} />
                   </div>
 
                   {/* Email Field */}
@@ -694,53 +807,33 @@ export default function SignupPage() {
                         {...register("email", {
                           required: "Email is required",
                           pattern: {
-                            value: /^\S+@\S+$/i,
-                            message: "Invalid email address",
+                            value: /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i,
+                            message: "Email must include a valid domain",
                           },
                         })}
+                        onFocus={() => setIsEmailFieldTouched(true)}
+                        onChange={(e) => {
+                          setIsEmailFieldTouched(true);
+                          setEmailVerified(false);
+                          register("email").onChange(e);
+                        }}
                         className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-10 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.email
-                            ? "border-red-400"
-                            : emailExists
-                            ? "border-red-400"
-                            : "border-gray-200"
+                          errors.email || emailExists ? "border-red-400" : "border-gray-200"
                         }`}
                       />
                       {emailCheckLoading && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <svg
-                            className="animate-spin h-4 w-4 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
+                          <svg className="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
                         </div>
                       )}
-                      {!emailCheckLoading &&
-                        emailValue &&
-                        !errors.email &&
-                        !emailExists && (
-                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
+                      {!emailCheckLoading && emailValue && !errors.email && !emailExists && (
+                        <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      )}
                     </div>
-                    {errors.email && (
-                      <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                        {errors.email.message}
-                      </p>
-                    )}
+                    <FieldError message={errors.email?.message} />
                   </div>
 
                   {/* Volunteer-specific fields in Step 2 */}
@@ -767,11 +860,7 @@ export default function SignupPage() {
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
-                        {errors.age && (
-                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                            {errors.age.message}
-                          </p>
-                        )}
+                        <FieldError message={errors.age?.message} />
                       </div>
 
                       {/* State Field */}
@@ -796,7 +885,7 @@ export default function SignupPage() {
                             ))}
                           </select>
                         </div>
-                        {errors.state && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.state.message}</p>}
+                        <FieldError message={errors.state?.message} />
                       </div>
 
                       {/* City Field */}
@@ -820,11 +909,7 @@ export default function SignupPage() {
                             ))}
                           </select>
                         </div>
-                        {errors.city && (
-                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                            {errors.city.message}
-                          </p>
-                        )}
+                        <FieldError message={errors.city?.message} />
                       </div>
 
                       {/* Nearest Railway Station Field */}
@@ -848,37 +933,15 @@ export default function SignupPage() {
                             )}
                           </select>
                         </div>
-                        {errors.nearestRailwayStation && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.nearestRailwayStation.message}</p>}
+                        <FieldError message={errors.nearestRailwayStation?.message} />
                       </div>
 
                       {/* Contact Number Field */}
-                      <div className="space-y-1 sm:space-y-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                          Contact Number *
-                        </label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                          <input
-                            type="tel"
-                            placeholder="9876543210"
-                            maxLength={10}
-                            {...register("contactNumber", {
-                              required: "Contact number is required",
-                              pattern: {
-                                value: /^[6-9]\d{9}$/,
-                                message:
-                                  "Please enter a valid 10-digit mobile number",
-                              },
-                            })}
-                            className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                          />
-                        </div>
-                        {errors.contactNumber && (
-                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                            {errors.contactNumber.message}
-                          </p>
-                        )}
-                      </div>
+                      <ContactNumberField
+                        register={register}
+                        errors={errors}
+                        showErrorBorder={false}
+                      />
                     </>
                   )}
                 </div>
@@ -960,11 +1023,7 @@ export default function SignupPage() {
                           )}
                         </button>
                       </div>
-                      {errors.otp && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.otp.message}
-                        </p>
-                      )}
+                      <FieldError message={errors.otp?.message} />
                       {otpVerified && (
                         <p className="text-green-500 text-xs sm:text-sm">
                           ✓ Email verified successfully!
@@ -1022,95 +1081,22 @@ export default function SignupPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                     {/* Password Field */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...register("password", {
-                            required: "Password is required",
-                            minLength: {
-                              value: 8,
-                              message: "Minimum 8 characters",
-                            },
-                          })}
-                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.password
-                              ? "border-red-400"
-                              : "border-gray-200"
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
-                          ) : (
-                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                          )}
-                        </button>
-                      </div>
-                      {errors.password && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.password.message}
-                        </p>
-                      )}
-                    </div>
+                    <PasswordField
+                      register={register}
+                      errors={errors}
+                      showPassword={showPassword}
+                      setShowPassword={setShowPassword}
+                    />
 
                     {/* Confirm Password */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Confirm Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...register("confirmPassword", {
-                            required: "Please confirm your password",
-                            validate: (val) =>
-                              val === watchedFields.password ||
-                              "Passwords do not match",
-                          })}
-                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.confirmPassword
-                              ? "border-red-400"
-                              : "border-gray-200"
-                          }`}
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
-                          {!errors.confirmPassword &&
-                            watchedFields.confirmPassword && (
-                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
-                            )}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
-                            ) : (
-                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {errors.confirmPassword && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
+                    <ConfirmPasswordField
+                      register={register}
+                      errors={errors}
+                      showConfirmPassword={showConfirmPassword}
+                      setShowConfirmPassword={setShowConfirmPassword}
+                      watchedPassword={watchedFields.password}
+                      watchedConfirmPassword={watchedFields.confirmPassword}
+                    />
 
                     {/* Profession Dropdown Field */}
                     <div className="space-y-1 sm:space-y-2 col-span-1 sm:col-span-2">
@@ -1166,11 +1152,7 @@ export default function SignupPage() {
                           <option value="other">Other</option>
                         </select>
                       </div>
-                      {errors.profession && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.profession.message}
-                        </p>
-                      )}
+                      <FieldError message={errors.profession?.message} />
                     </div>
 
                     {/* Conditional: If "other" is selected, show text input */}
@@ -1193,11 +1175,7 @@ export default function SignupPage() {
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                           />
                         </div>
-                        {errors.professionOther && (
-                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                            {errors.professionOther.message}
-                          </p>
-                        )}
+                        <FieldError message={errors.professionOther?.message} />
                       </div>
                     )}
                   </div>
@@ -1215,95 +1193,22 @@ export default function SignupPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                     {/* Password Field for NGO */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...register("password", {
-                            required: "Password is required",
-                            minLength: {
-                              value: 8,
-                              message: "Minimum 8 characters",
-                            },
-                          })}
-                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.password
-                              ? "border-red-400"
-                              : "border-gray-200"
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
-                          ) : (
-                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                          )}
-                        </button>
-                      </div>
-                      {errors.password && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.password.message}
-                        </p>
-                      )}
-                    </div>
+                    <PasswordField
+                      register={register}
+                      errors={errors}
+                      showPassword={showPassword}
+                      setShowPassword={setShowPassword}
+                    />
 
                     {/* Confirm Password for NGO */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Confirm Password *
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          {...register("confirmPassword", {
-                            required: "Please confirm your password",
-                            validate: (val) =>
-                              val === watchedFields.password ||
-                              "Passwords do not match",
-                          })}
-                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.confirmPassword
-                              ? "border-red-400"
-                              : "border-gray-200"
-                          }`}
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
-                          {!errors.confirmPassword &&
-                            watchedFields.confirmPassword && (
-                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
-                            )}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
-                            ) : (
-                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {errors.confirmPassword && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
+                    <ConfirmPasswordField
+                      register={register}
+                      errors={errors}
+                      showConfirmPassword={showConfirmPassword}
+                      setShowConfirmPassword={setShowConfirmPassword}
+                      watchedPassword={watchedFields.password}
+                      watchedConfirmPassword={watchedFields.confirmPassword}
+                    />
 
                     {/* Organization Type */}
                     <div className="space-y-1 sm:space-y-2">
@@ -1314,7 +1219,9 @@ export default function SignupPage() {
                         {...register("organizationType", {
                           required: "Please select organization type",
                         })}
-                        className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.organizationType ? "border-red-400" : "border-gray-200"
+                        }`}
                       >
                         <option value="">Select type</option>
                         <option value="non-profit">Non-profit</option>
@@ -1324,41 +1231,15 @@ export default function SignupPage() {
                         <option value="society">Society</option>
                         <option value="other">Other</option>
                       </select>
-                      {errors.organizationType && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.organizationType.message}
-                        </p>
-                      )}
+                      <FieldError message={errors.organizationType?.message} />
                     </div>
 
                     {/* Contact Number */}
-                    <div className="space-y-1 sm:space-y-2">
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
-                        Contact Number *
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                        <input
-                          type="tel"
-                          placeholder="9876543210"
-                          maxLength={10}
-                          {...register("contactNumber", {
-                            required: "Contact number is required",
-                            pattern: {
-                              value: /^[6-9]\d{9}$/,
-                              message:
-                                "Please enter a valid 10-digit mobile number",
-                            },
-                          })}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
-                        />
-                      </div>
-                      {errors.contactNumber && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.contactNumber.message}
-                        </p>
-                      )}
-                    </div>
+                    <ContactNumberField
+                      register={register}
+                      errors={errors}
+                      showErrorBorder={true}
+                    />
 
                     {/* Website */}
                     <div className="space-y-1 sm:space-y-2">
@@ -1370,10 +1251,18 @@ export default function SignupPage() {
                         <input
                           type="text"
                           placeholder="https://example.com"
-                          {...register("websiteUrl")}
-                          className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          {...register("websiteUrl", {
+                            pattern: {
+                              value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                              message: "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
+                            },
+                          })}
+                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                            errors.websiteUrl ? "border-red-400" : "border-gray-200"
+                          }`}
                         />
                       </div>
+                      <FieldError message={errors.websiteUrl?.message} />
                     </div>
 
                     {/* Year Established */}
@@ -1402,11 +1291,7 @@ export default function SignupPage() {
                           }`}
                         />
                       </div>
-                      {errors.yearEstablished && (
-                        <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                          {errors.yearEstablished.message}
-                        </p>
-                      )}
+                      <FieldError message={errors.yearEstablished?.message} />
                     </div>
                   </div>
 
@@ -1473,11 +1358,7 @@ export default function SignupPage() {
                         ))}
                       </select>
                     </div>
-                    {errors.organizationSize && (
-                      <p className="text-red-500 text-xs sm:text-sm animate-shake">
-                        {errors.organizationSize.message}
-                      </p>
-                    )}
+                    <FieldError message={errors.organizationSize?.message} />
                   </div>
 
                   {/* Focus Areas */}
@@ -1625,7 +1506,7 @@ export default function SignupPage() {
                           })}
                           className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
                         />
-                        {errors.address?.street && <p className="text-red-500 text-xs sm:text-sm">{errors.address.street.message}</p>}
+                        <FieldError message={errors.address?.street?.message} />
                       </div>
                     </div>
                   </div>
@@ -1808,7 +1689,10 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={activeStep === 3 && !otpVerified}
+                  disabled={
+                    (activeStep === 2 && (emailCheckLoading || emailExists || !emailVerified || (isEmailFieldTouched && !emailValue))) ||
+                    (activeStep === 3 && !otpVerified)
+                  }
                   className="px-4 py-2 sm:px-6 sm:py-3 bg-[#3ABBA5] text-white font-semibold rounded-lg hover:bg-[#36a894] transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm"
                 >
                   Continue
