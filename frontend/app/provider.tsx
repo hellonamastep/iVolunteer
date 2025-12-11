@@ -17,6 +17,7 @@ import { BlogProvider } from "@/contexts/blog-context";
 import { CorporateEventProvider } from "@/contexts/corporateEvent-context";
 import { ParticipationRequestProvider } from "@/contexts/participation-request-context";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { PostDeletionAlert } from "@/components/post-deletion-alert";
 
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -36,6 +37,7 @@ export function Providers({ children }: { children: ReactNode }) {
                           <CorporateEventProvider>
                             <EventsProvider> {/* ✅ wrap it here */}
                               {children}
+                              <PostDeletionAlert />
                               <ToastContainer
                                 position="top-right"
                                 autoClose={3000}

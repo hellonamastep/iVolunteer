@@ -22,6 +22,7 @@ const notificationSchema = new mongoose.Schema(
         "donation_event_request",
         "blog_approval_request",
         "corporate_event_request",
+        "post_deleted_by_admin",
         
         // NGO notifications
         "event_approved",
@@ -67,6 +68,10 @@ const notificationSchema = new mongoose.Schema(
       points: { type: Number },
       badgeName: { type: String },
       certificateUrl: { type: String },
+      postId: { type: mongoose.Schema.Types.ObjectId },
+      postTitle: { type: String },
+      reason: { type: String },
+      deletedBy: { type: String },
     },
   },
   {
