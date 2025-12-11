@@ -27,7 +27,7 @@ import {
   indianStatesData,
   railwayStationsByCity,
 } from "@/lib/locationData";
-import { Logo } from "@/components/logo";
+import Logo from "@/components/logo";
 
 type SignupFormValues = {
   name: string;

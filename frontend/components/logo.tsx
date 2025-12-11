@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export function Logo() {
+export default function Logo() {
   const [showStep, setShowStep] = useState(true);
 
   useEffect(() => {

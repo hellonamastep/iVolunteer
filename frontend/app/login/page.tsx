@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Logo } from "@/components/logo";
+import Logo from "@/components/logo";
 
 type FormValues = { email: string; password: string; otp?: string };
 

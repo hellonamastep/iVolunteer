@@ -8,6 +8,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import api from "@/lib/api";
+import Logo from "@/components/logo";
 
 type FormValues = { email: string };
 
@@ -38,8 +39,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#E9FDF1] to-[#E9FDF1]/80 font-['Manrope']">
       {/* Logo */}
       <div className="flex flex-col items-center mb-4">
-        <Image src="/images/auth.png" alt="Namastep Logo" width={150} height={150} priority className="h-auto" />
-        <h1 className="text-[#50C878] font-extrabold text-2xl tracking-wide">NAMASTEP</h1>
+        <Logo/>
         <p className="text-gray-600 text-md mt-1 text-center">Make Doing Good Fun, Rewarding & Impactful</p>
       </div>
 

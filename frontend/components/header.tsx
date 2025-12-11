@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Logo } from "@/components/logo";
+import Logo from "@/components/logo";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 // import RecentActivities from "@/components/RecentActivities";
 
