@@ -5,6 +5,7 @@ import { cloudinary } from "../config/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import { notificationService } from "./notification.controller.js";
 
 
 export const addEvent = asyncHandler(async (req, res) => {
@@ -47,9 +48,32 @@ export const addEvent = asyncHandler(async (req, res) => {
     organizationName
   );
 
+  // Send notification to admins about new event approval request
+  try {
+    console.log("[AddEvent] Sending notification to admins for event:", event.title);
+    await notificationService.notifyAdminEventApproval(
+      event._id,
+      event.title,
+      organizationName,
+      organizationId
+    );
+    console.log("[AddEvent] Notification sent successfully to admins");
+    
+    // Also notify the NGO that their event was submitted
+    await notificationService.notifyNGOEventSubmitted(
+      organizationId,
+      event._id,
+      event.title
+    );
+    console.log("[AddEvent] Confirmation notification sent to NGO");
+  } catch (notificationError) {
+    console.error("Error sending notification to admins:", notificationError);
+    // Don't fail the request if notification fails
+  }
+
   res.status(201).json({
     success: true,
-    message: "Event created successfully",
+    message: "Event request sent to admin for approval",
     event,
   });
 });

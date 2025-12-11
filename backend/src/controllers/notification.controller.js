@@ -1,4 +1,5 @@
 import { Notification } from "../models/Notification.js";
+import { User } from "../models/User.js";
 
 // Create a notification
 export const createNotification = async (req, res) => {
@@ -138,7 +139,14 @@ export const notificationService = {
   // Admin notifications
   async notifyAdminEventApproval(eventId, eventTitle, ngoName, ngoId) {
     try {
-      const admins = await require("../models/User.js").User.find({ role: "admin" });
+      console.log("[Notification] Finding admins for event approval notification...");
+      const admins = await User.find({ role: "admin" });
+      console.log(`[Notification] Found ${admins.length} admin(s)`);
+      
+      if (admins.length === 0) {
+        console.log("[Notification] No admins found to notify");
+        return;
+      }
       
       const notifications = admins.map((admin) => ({
         recipient: admin._id,
@@ -150,7 +158,8 @@ export const notificationService = {
         metadata: { eventId },
       }));
 
-      await Notification.insertMany(notifications);
+      const result = await Notification.insertMany(notifications);
+      console.log(`[Notification] Created ${result.length} notification(s) for admins`);
     } catch (error) {
       console.error("Error notifying admins:", error);
     }
@@ -158,7 +167,7 @@ export const notificationService = {
 
   async notifyAdminEventCompletion(eventId, eventTitle, ngoName, ngoId) {
     try {
-      const admins = await require("../models/User.js").User.find({ role: "admin" });
+      const admins = await User.find({ role: "admin" });
       
       const notifications = admins.map((admin) => ({
         recipient: admin._id,
@@ -177,6 +186,22 @@ export const notificationService = {
   },
 
   // NGO notifications
+  async notifyNGOEventSubmitted(ngoId, eventId, eventTitle) {
+    try {
+      await Notification.create({
+        recipient: ngoId,
+        type: "event_submitted",
+        title: "Event Submitted for Review",
+        message: `Your event "${eventTitle}" has been submitted to admin for approval`,
+        actionUrl: `/volunteer`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Created event submission notification for NGO`);
+    } catch (error) {
+      console.error("Error notifying NGO about event submission:", error);
+    }
+  },
+
   async notifyNGOEventApproved(ngoId, eventId, eventTitle) {
     try {
       await Notification.create({

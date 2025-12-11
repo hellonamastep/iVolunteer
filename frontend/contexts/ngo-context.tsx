@@ -90,7 +90,7 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
       );
 
       setEvents((prev) => [...prev, (res.data as any).event]);
-      toast.success("Event created successfully!");
+      // Toast is handled by the calling component to avoid duplicates
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to create event";
       setError(message);

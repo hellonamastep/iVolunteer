@@ -26,6 +26,7 @@ const notificationSchema = new mongoose.Schema(
         // NGO notifications
         "event_approved",
         "event_rejected",
+        "event_submitted",
         "event_completion_approved",
         "event_completion_rejected",
         "participation_request",

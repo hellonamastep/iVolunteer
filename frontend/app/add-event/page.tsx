@@ -75,6 +75,7 @@ const CreateEventForm: React.FC = () => {
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
   const [requirementInputs, setRequirementInputs] = useState([""]);
   const [loadingLocation, setLoadingLocation] = useState(true);
+  const [dateTimeError, setDateTimeError] = useState<string>("");
   
   // Custom time picker state
   const [selectedHour, setSelectedHour] = useState<string>("09");
@@ -168,6 +169,25 @@ const CreateEventForm: React.FC = () => {
     }
   }, [isSpecialEvent, setValue]);
 
+  // Validation function to check if selected datetime is in the future
+  const validateDateTime = (date: string, time: string) => {
+    if (!date || !time) {
+      setDateTimeError("");
+      return true;
+    }
+
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+
+    if (selectedDateTime <= now) {
+      setDateTimeError("Event date and time must be in the future");
+      return false;
+    }
+
+    setDateTimeError("");
+    return true;
+  };
+
   // Sync custom time picker with form time field
   useEffect(() => {
     const convert12to24 = (hour: string, minute: string, period: string) => {
@@ -182,6 +202,12 @@ const CreateEventForm: React.FC = () => {
     
     const time24 = convert12to24(selectedHour, selectedMinute, selectedPeriod);
     setValue("time", time24);
+    
+    // Validate datetime whenever time changes
+    const currentDate = watch("date");
+    if (currentDate) {
+      validateDateTime(currentDate, time24);
+    }
   }, [selectedHour, selectedMinute, selectedPeriod, setValue]);
 
   // Load draft from localStorage on mount
@@ -216,7 +242,7 @@ const CreateEventForm: React.FC = () => {
             
             // Don't restore images from draft - user will need to re-select
             
-            toast.info("Draft restored successfully! Please re-select your image if you had one.", { autoClose: 3000 });
+            toast.info("Draft restored successfully! Please re-select your image if you had one.", { autoClose: 3000, toastId: "draft-restored" });
             setLastSaved(new Date(draftData._savedAt));
           }
         }
@@ -277,7 +303,15 @@ const CreateEventForm: React.FC = () => {
       
       // Validate event image is uploaded in step 1
       if (!eventImageFile && !eventImagePreview) {
-        toast.error("Please upload an event image before proceeding");
+        toast.error("Please upload an event image before proceeding", { toastId: "image-required" });
+        return;
+      }
+      
+      // Validate that the selected datetime is in the future
+      const selectedDate = watch("date");
+      const selectedTime = watch("time");
+      if (!validateDateTime(selectedDate, selectedTime)) {
+        toast.error("Event date and time must be in the future", { toastId: "datetime-validation" });
         return;
       }
     } else if (activeStep === 2) {
@@ -300,7 +334,7 @@ const CreateEventForm: React.FC = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } else {
-      toast.error("Please fill in all required fields correctly");
+      toast.error("Please fill in all required fields correctly", { toastId: "fields-required" });
     }
   };
 
@@ -349,7 +383,7 @@ const CreateEventForm: React.FC = () => {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Error processing image:", error);
-      toast.error("Failed to process image");
+      toast.error("Failed to process image", { toastId: "image-error" });
     }
   };
 
@@ -428,7 +462,12 @@ const CreateEventForm: React.FC = () => {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(IMAGES_STORAGE_KEY);
       
-      toast.success(isSpecialEvent ? "Special event created successfully!" : "Event created successfully!");
+      toast.success(
+        isSpecialEvent 
+          ? "Special event request sent to admin successfully!" 
+          : "Event request sent to admin successfully!",
+        { toastId: "event-created" }
+      );
       
       reset();
       setActiveStep(1);
@@ -442,7 +481,7 @@ const CreateEventForm: React.FC = () => {
       }, 1500);
     } catch (err: any) {
       console.error('Submit error:', err);
-      toast.error(err.response?.data?.message || "Failed to create event");
+      toast.error(err.response?.data?.message || "Failed to create event", { toastId: "create-event-error" });
     }
   };
 
@@ -456,7 +495,7 @@ const CreateEventForm: React.FC = () => {
       setRequirementInputs([""]);
       setActiveStep(1);
       setLastSaved(null);
-      toast.info("Draft cleared successfully!");
+      toast.info("Draft cleared successfully!", { toastId: "draft-cleared" });
     }
   };
 
@@ -750,6 +789,13 @@ const CreateEventForm: React.FC = () => {
                           type="date"
                           {...register("date", { required: "Date is required" })}
                           min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) => {
+                            setValue("date", e.target.value);
+                            const currentTime = watch("time");
+                            if (currentTime) {
+                              validateDateTime(e.target.value, currentTime);
+                            }
+                          }}
                           className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                         />
                       </div>
@@ -799,6 +845,7 @@ const CreateEventForm: React.FC = () => {
                         </div>
                       </div>
                       {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time.message}</p>}
+                      {dateTimeError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3" />{dateTimeError}</p>}
                       <p className="text-xs text-gray-500 mt-1">Select hour, minute, and AM/PM</p>
                     </div>
                   </div>

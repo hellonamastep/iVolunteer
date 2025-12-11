@@ -131,7 +131,7 @@ export const DonationEventProvider = ({ children }: Props) => {
         }
       );
       setEvents((prev) => [res.data.event, ...prev]);
-      toast.success("Event created successfully! Pending admin approval.");
+      // Toast is handled by the calling component to avoid duplicates
       return res.data.event;
     } catch (err: any) {
       console.error("Failed to add event:", err);

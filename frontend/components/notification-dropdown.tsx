@@ -36,6 +36,12 @@ const getNotificationIcon = (type: string) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       );
+    case "event_submitted":
+      return (
+        <svg className="w-4 h-4 text-[#7DD9A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
     case "event_approved":
     case "participation_accepted":
     case "event_completion_approved":
@@ -81,6 +87,8 @@ const getNotificationColor = (type: string) => {
     case "event_approval_request":
     case "event_completion_request":
       return "bg-[#F9D71C]/[0.2]";
+    case "event_submitted":
+      return "bg-[#7DD9A6]/[0.2]";
     case "event_approved":
     case "participation_accepted":
     case "event_completion_approved":

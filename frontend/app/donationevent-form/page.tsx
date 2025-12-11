@@ -155,7 +155,10 @@ const AddEventForm: React.FC = () => {
             // Don't restore images from draft - they cause FileList issues
             // User will need to re-select images if they restore a draft
             
-            toast.info("Draft restored successfully! Please re-select your images if you had any.", { autoClose: 3000 });
+            toast.info("Draft restored successfully! Please re-select your images if you had any.", { 
+              autoClose: 3000,
+              toastId: "draft-restored"
+            });
             setLastSaved(new Date(draftData._savedAt));
           }
         }
@@ -196,7 +199,8 @@ const AddEventForm: React.FC = () => {
         console.error("Error saving draft:", error);
         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
           toast.error('Storage quota exceeded. Please clear some browser data or reduce image sizes.', {
-            autoClose: 5000
+            autoClose: 5000,
+            toastId: 'storage-quota-error'
           });
           const usage = getStorageUsage();
           console.error(`Storage usage: ${usage.usedMB}MB / ${usage.totalMB}MB`);
@@ -256,7 +260,7 @@ const AddEventForm: React.FC = () => {
     const availableSlots = 5 - currentCount;
     
     if (availableSlots <= 0) {
-      toast.warning("Maximum 5 files allowed for supporting media");
+      toast.warning("Maximum 5 files allowed for supporting media", { toastId: 'max-files-warning' });
       if (supportingMediaInputRef.current) {
         supportingMediaInputRef.current.value = "";
       }
@@ -266,7 +270,7 @@ const AddEventForm: React.FC = () => {
     const filesToProcess = filesToAdd.slice(0, availableSlots);
     
     if (filesToAdd.length > availableSlots) {
-      toast.info(`Only ${availableSlots} more file(s) can be added (5 max total)`);
+      toast.info(`Only ${availableSlots} more file(s) can be added (5 max total)`, { toastId: 'available-slots-info' });
     }
     
     const loadPreviews = async () => {
@@ -308,7 +312,7 @@ const AddEventForm: React.FC = () => {
       supportingMediaInputRef.current.value = "";
     }
     
-    toast.success("Image removed successfully");
+    toast.success("Image removed successfully", { toastId: 'image-removed' });
   };
 
   const handleDocumentSelection = async (e: React.ChangeEvent<HTMLInputElement>, type: 'governmentId' | 'proofOfNeed') => {
@@ -355,7 +359,9 @@ const AddEventForm: React.FC = () => {
     setShowDocumentConfirmation(false);
     setPendingDocument(null);
     
-    toast.success(`${type === 'governmentId' ? 'Government ID' : 'Proof of Need'} uploaded successfully!`);
+    toast.success(`${type === 'governmentId' ? 'Government ID' : 'Proof of Need'} uploaded successfully!`, { 
+      toastId: `${type}-uploaded` 
+    });
   };
 
   const cancelDocumentUpload = () => {
@@ -497,7 +503,7 @@ const AddEventForm: React.FC = () => {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(IMAGES_STORAGE_KEY);
       
-      toast.success("Donation campaign created successfully!");
+      toast.success("Donation campaign request sent to admin successfully!", { toastId: "donation-created" });
       
       reset();
       setActiveStep(1);
@@ -513,7 +519,7 @@ const AddEventForm: React.FC = () => {
       }, 1500);
     } catch (err: any) {
       console.error('Submit error:', err);
-      toast.error(err.response?.data?.message || "Failed to create campaign");
+      toast.error(err.response?.data?.message || "Failed to create campaign", { toastId: 'submit-error' });
     }
   };
 
@@ -529,7 +535,7 @@ const AddEventForm: React.FC = () => {
       setSupportingMediaPreviews([]);
       setActiveStep(1);
       setLastSaved(null);
-      toast.info("Draft cleared successfully!");
+      toast.info("Draft cleared successfully!", { toastId: 'draft-cleared' });
     }
   };
 
