@@ -60,7 +60,7 @@ interface PostContextType {
     addComment: (postId: string, content: string) => Promise<Comment>;
     deleteComment: (postId: string, commentId: string) => Promise<void>;
     toggleReaction: (postId: string, type: Reaction['type']) => Promise<Reaction[]>;
-    deletePost: (postId: string) => Promise<void>;
+    deletePost: (postId: string, reason?: string) => Promise<void>;
 }
 
 interface PostProviderProps {
@@ -201,9 +201,10 @@ export function PostProvider({ children }: PostProviderProps) {
         }
     };
 
-    const deletePost = async (postId: string) => {
+    const deletePost = async (postId: string, reason?: string) => {
         try {
-            await api.delete(`/v1/posts/${postId}`);
+            const config = reason ? { data: { reason } } : {};
+            await api.delete(`/v1/posts/${postId}`, config);
             setPosts(prevPosts => prevPosts.filter(post => post._id !== postId));
         } catch (err) {
             const message = handleError(err);

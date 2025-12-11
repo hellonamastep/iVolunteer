@@ -1,5 +1,6 @@
 import Post from '../models/Post.js';
 import { deleteImage } from '../config/cloudinary.js';
+import { Notification } from '../models/Notification.js';
 
 // Get all available categories
 export const getCategories = async (req, res) => {
@@ -319,9 +320,32 @@ export const deletePost = async (req, res) => {
             return res.status(404).json({ message: 'Post not found' });
         }
 
-        // Check if the user is the owner of the post
-        if (post.user.toString() !== req.user._id.toString()) {
+        // Check if the user is the owner of the post or an admin
+        const isOwner = post.user ? post.user.toString() === req.user._id.toString() : false;
+        const isAdmin = req.user.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({ message: 'Not authorized to delete this post' });
+        }
+
+        // If admin is deleting another user's post, create notification
+        if (isAdmin && !isOwner && post.user) {
+            const reason = req.body?.reason || '';
+            
+            // Create notification for the post owner
+            await Notification.create({
+                recipient: post.user,
+                sender: req.user._id,
+                type: 'post_deleted_by_admin',
+                title: 'Post Deleted by Admin',
+                message: reason ? `Your post "${post.title}" was deleted by an admin. Reason: ${reason}` : `Your post "${post.title}" was deleted by an admin.`,
+                metadata: {
+                    postId: post._id,
+                    postTitle: post.title,
+                    reason: reason || 'No reason provided',
+                    deletedBy: req.user.name
+                }
+            });
         }
 
         // Delete image from Cloudinary if it exists
@@ -335,6 +359,7 @@ export const deletePost = async (req, res) => {
         res.json({ message: 'Post deleted successfully' });
     } catch (error) {
         console.error('Error deleting post:', error);
-        res.status(500).json({ message: 'Error deleting post' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ message: 'Error deleting post', error: error.message });
     }
 };

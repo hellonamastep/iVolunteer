@@ -100,6 +100,8 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
     const [showReactions, setShowReactions] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showAdminReasonDialog, setShowAdminReasonDialog] = useState(false);
+    const [deletionReason, setDeletionReason] = useState('');
     const [showComments, setShowComments] = useState(false);
     const [copied, setCopied] = useState(false);
     const { addComment, deleteComment, toggleReaction, deletePost } = usePosts();
@@ -159,14 +161,52 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
     };
 
     const handleDelete = async () => {
-        if (!user || user._id !== post.user._id) return;
+        if (!user || (post.user && user._id !== post.user._id && user.role !== 'admin')) return;
+        if (!user || (!post.user && user.role !== 'admin')) return;
+
+        // Check if admin is deleting another user's post and that user exists
+        const isAdminDeletingOtherUser = user.role === 'admin' && post.user && user._id !== post.user._id;
+        
+        if (isAdminDeletingOtherUser) {
+            // Show reason dialog for admin deletions
+            setShowDeleteDialog(false);
+            setShowAdminReasonDialog(true);
+        } else {
+            // Delete without reason for own posts or deleted users
+            try {
+                await deletePost(post._id);
+                toast({
+                    title: 'Success',
+                    description: 'Post deleted successfully',
+                });
+            } catch (error) {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to delete post',
+                    variant: 'destructive'
+                });
+            }
+        }
+    };
+
+    const handleAdminDeleteWithReason = async () => {
+        if (!deletionReason.trim()) {
+            toast({
+                title: 'Error',
+                description: 'Please provide a reason for deletion',
+                variant: 'destructive'
+            });
+            return;
+        }
 
         try {
-            await deletePost(post._id);
+            await deletePost(post._id, deletionReason);
             toast({
                 title: 'Success',
                 description: 'Post deleted successfully',
             });
+            setShowAdminReasonDialog(false);
+            setDeletionReason('');
         } catch (error) {
             toast({
                 title: 'Error',
@@ -195,7 +235,7 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
     };
 
     const userReaction = user 
-        ? post.reactions.find(reaction => reaction.user._id === user._id)?.type 
+        ? post.reactions.find(reaction => reaction.user && reaction.user._id === user._id)?.type 
         : null;
 
     const categoryStyle = categoryConfig[post.category as keyof typeof categoryConfig] || categoryConfig['Other'];
@@ -267,7 +307,7 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
                         </div>
                     </div>
                     
-                    {user && post.user && user._id === post.user._id && (
+                    {user && ((post.user && (user._id === post.user._id || user.role === 'admin')) || (user.role === 'admin' && !post.user)) && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -275,17 +315,21 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                                    <Edit3 className="mr-2 h-4 w-4" />
-                                    Edit Post
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
+                                {post.user && user._id === post.user._id && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                                            <Edit3 className="mr-2 h-4 w-4" />
+                                            Edit Post
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                    </>
+                                )}
                                 <DropdownMenuItem 
                                     onClick={() => setShowDeleteDialog(true)}
                                     className="text-red-600"
                                 >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Post
+                                    Delete Post{user.role === 'admin' && (!post.user || user._id !== post.user._id) ? ' (Admin)' : ''}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -564,6 +608,42 @@ export function PostDisplay({ post, searchText, showCityTag = true }: PostDispla
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Delete Post
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Admin Deletion Reason Dialog */}
+            <AlertDialog open={showAdminReasonDialog} onOpenChange={setShowAdminReasonDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                            Admin Delete Post
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You are about to delete a post from another user. Please provide a reason for this deletion.
+                            The user will be notified about this action.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            value={deletionReason}
+                            onChange={(e) => setDeletionReason(e.target.value)}
+                            placeholder="Enter reason for deletion..."
+                            className="min-h-[100px] resize-none"
+                        />
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => {
+                            setDeletionReason('');
+                            setShowAdminReasonDialog(false);
+                        }}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleAdminDeleteWithReason}
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             Delete Post
