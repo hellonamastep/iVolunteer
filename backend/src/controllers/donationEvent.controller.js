@@ -64,9 +64,9 @@ export const getPendingEvents = async (req, res) => {
 export const updateEventApproval = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { status } = req.body; // approved | rejected
+    const { status, rejectionReason } = req.body; // approved | rejected
 
-    const event = await eventService.updateEventApprovalService(eventId, status);
+    const event = await eventService.updateEventApprovalService(eventId, status, rejectionReason);
 
     if (!event) {
       return res.status(404).json({ success: false, message: "Event not found" });
@@ -93,6 +93,41 @@ export const getOrganizationEvents = async (req, res) => {
     const ngoId = req.user._id;
     const events = await eventService.getOrganizationEventsService(ngoId);
     res.json({ success: true, events });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const updateEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const ngoId = req.user._id;
+    const updateData = req.body;
+    
+    const event = await eventService.updateEventService(eventId, ngoId, updateData);
+    
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found or unauthorized" });
+    }
+    
+    res.json({ success: true, event });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const deleteEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const ngoId = req.user._id;
+    
+    const event = await eventService.deleteEventService(eventId, ngoId);
+    
+    if (!event) {
+      return res.status(404).json({ success: false, message: "Event not found or unauthorized" });
+    }
+    
+    res.json({ success: true, message: "Event deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
