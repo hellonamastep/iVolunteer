@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
 import StatusBanner from "@/components/StatusBanner";
+import EventAttendanceVerification from "@/components/event-attendance-verification";
 
 interface EventItem {
   _id: string;
@@ -50,6 +51,7 @@ const Ngoeventtable = () => {
   const [editedEvent, setEditedEvent] = useState<EventItem | null>(null);
   const tableRef = useRef<HTMLElement>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
 
   // State for dismissed banners
   const [dismissedBanners, setDismissedBanners] = useState<{
@@ -327,8 +329,19 @@ const Ngoeventtable = () => {
         return;
       }
 
+      // Determine endpoint based on event type
+      const endpoint = editedEvent.isDonationEvent 
+        ? `/v1/donation-event/${editedEvent._id}`
+        : `/v1/event/${editedEvent._id}`;
+
       // Prepare event data for update
-      const updateData = {
+      const updateData = editedEvent.isDonationEvent ? {
+        title: editedEvent.title,
+        description: editedEvent.description,
+        location: editedEvent.location,
+        category: editedEvent.category,
+        goalAmount: editedEvent.goalAmount,
+      } : {
         title: editedEvent.title,
         description: editedEvent.description,
         location: editedEvent.location,
@@ -344,7 +357,7 @@ const Ngoeventtable = () => {
         eventType: editedEvent.eventType,
       };
 
-      await api.put(`/v1/event/${editedEvent._id}`, updateData, {
+      await api.put(endpoint, updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -366,7 +379,11 @@ const Ngoeventtable = () => {
 
     try {
       const token = localStorage.getItem("auth-token");
-      await api.delete(`/v1/event/${selectedEvent._id}`, {
+      const endpoint = selectedEvent.isDonationEvent 
+        ? `/v1/donation-event/${selectedEvent._id}`
+        : `/v1/event/${selectedEvent._id}`;
+      
+      await api.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -378,6 +395,24 @@ const Ngoeventtable = () => {
     }
   };
 
+  const openEndEventModal = () => {
+    console.log("End Event clicked, selectedEvent:", selectedEvent);
+    if (selectedEvent) {
+      console.log("Opening attendance modal...");
+      setShowAttendanceModal(true);
+    }
+  };
+
+  const handleCloseAttendanceModal = () => {
+    setShowAttendanceModal(false);
+  };
+
+  const handleAttendanceSubmitSuccess = () => {
+    setShowAttendanceModal(false);
+    setSelectedEvent(null);
+    fetchEvents();
+  };
+
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
     
@@ -387,7 +422,11 @@ const Ngoeventtable = () => {
 
     try {
       const token = localStorage.getItem("auth-token");
-      await api.delete(`/v1/event/${selectedEvent._id}`, {
+      const endpoint = selectedEvent.isDonationEvent 
+        ? `/v1/donation-event/${selectedEvent._id}`
+        : `/v1/event/${selectedEvent._id}`;
+      
+      await api.delete(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -809,8 +848,19 @@ const Ngoeventtable = () => {
         />
       )}
 
-      {/* Event Details Modal */}
-      {selectedEvent && (
+      {/* Event Attendance Verification Modal */}
+      {showAttendanceModal && selectedEvent && (
+        <EventAttendanceVerification
+          eventId={selectedEvent._id}
+          eventTitle={selectedEvent.title}
+          pointsOffered={selectedEvent.pointsOffered || 0}
+          onClose={handleCloseAttendanceModal}
+          onSubmitSuccess={handleAttendanceSubmitSuccess}
+        />
+      )}
+
+      {/* Event Details Modal - Hide when attendance modal is showing */}
+      {selectedEvent && !showAttendanceModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Modal Header */}
@@ -1144,6 +1194,17 @@ const Ngoeventtable = () => {
                       </>
                     )}
                   </>
+                )}
+
+                {/* End Event button - Only show for approved volunteer events (not donation events) */}
+                {selectedEvent.status === "approved" && !selectedEvent.isDonationEvent && (
+                  <button
+                    onClick={openEndEventModal}
+                    className="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] text-white rounded-lg hover:from-[#6BC794] hover:to-[#5AB583] transition font-medium text-sm md:text-base"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    End Event
+                  </button>
                 )}
                 
                 <button

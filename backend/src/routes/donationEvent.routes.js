@@ -9,6 +9,8 @@ import {
   getPendingEvents,
   updateEventApproval,
   getOrganizationEvents,
+  updateEvent,
+  deleteEvent,
 } from "../controllers/donationEvent.controller.js";
 import { upload } from "../config/cloudinary.js";
 
@@ -48,6 +50,20 @@ donationEventRouter.patch(
   authorizeRole("admin"),
   updateEventApproval
 );
+
+// NGO routes - Update and Delete their own events
+donationEventRouter.put(
+  "/:eventId",
+  authMiddleware,
+  updateEvent
+);
+
+donationEventRouter.delete(
+  "/:eventId",
+  authMiddleware,
+  deleteEvent
+);
+
 donationEventRouter.get("/:eventId", getEventById); // Get single donation event
 
 export default donationEventRouter;
