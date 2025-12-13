@@ -339,6 +339,161 @@ export const notificationService = {
       console.error("Error notifying volunteer:", error);
     }
   },
+
+  // Corporate notifications
+  async notifyCorporateEventSubmitted(corporateId, eventId, eventTitle) {
+    try {
+      await Notification.create({
+        recipient: corporateId,
+        type: "corporate_event_submitted",
+        title: "Corporate Event Submitted",
+        message: `Your corporate event "${eventTitle}" has been submitted for admin approval`,
+        actionUrl: `/`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Created corporate event submission notification`);
+    } catch (error) {
+      console.error("Error notifying corporate about event submission:", error);
+    }
+  },
+
+  async notifyCorporateEventApproved(corporateId, eventId, eventTitle) {
+    try {
+      await Notification.create({
+        recipient: corporateId,
+        type: "corporate_event_approved",
+        title: "Corporate Event Approved",
+        message: `Your corporate event "${eventTitle}" has been approved and is now live`,
+        actionUrl: `/activities/${eventId}`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Created corporate event approval notification`);
+    } catch (error) {
+      console.error("Error notifying corporate about event approval:", error);
+    }
+  },
+
+  async notifyCorporateEventRejected(corporateId, eventId, eventTitle, reason = "") {
+    try {
+      await Notification.create({
+        recipient: corporateId,
+        type: "corporate_event_rejected",
+        title: "Corporate Event Rejected",
+        message: reason 
+          ? `Your corporate event "${eventTitle}" was rejected. Reason: ${reason}`
+          : `Your corporate event "${eventTitle}" was rejected`,
+        actionUrl: `/`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Created corporate event rejection notification`);
+    } catch (error) {
+      console.error("Error notifying corporate about event rejection:", error);
+    }
+  },
+
+  async notifyCorporateNewEvent(eventId, eventTitle, creatorName) {
+    try {
+      // Notify all corporate users about a new approved corporate event
+      const corporates = await User.find({ role: "corporate" });
+      
+      if (corporates.length === 0) {
+        console.log("[Notification] No corporate users found to notify");
+        return;
+      }
+      
+      const notifications = corporates.map((corporate) => ({
+        recipient: corporate._id,
+        type: "new_corporate_event",
+        title: "New CSR Opportunity Available!",
+        message: `A new corporate partnership opportunity "${eventTitle}" has been posted by ${creatorName}. Explore this opportunity to make a positive impact!`,
+        actionUrl: `/allcorporateevents`,
+        metadata: { eventId },
+      }));
+
+      const result = await Notification.insertMany(notifications);
+      console.log(`[Notification] Created ${result.length} notifications for corporate users`);
+    } catch (error) {
+      console.error("Error notifying corporate users:", error);
+    }
+  },
+
+  async notifyAdminCorporateEventApproval(eventId, eventTitle, ngoName, ngoId) {
+    try {
+      console.log("[Notification] Finding admins for corporate event approval notification...");
+      const admins = await User.find({ role: "admin" });
+      console.log(`[Notification] Found ${admins.length} admin(s)`);
+      
+      if (admins.length === 0) {
+        console.log("[Notification] No admins found to notify");
+        return;
+      }
+      
+      const notifications = admins.map((admin) => ({
+        recipient: admin._id,
+        sender: ngoId,
+        type: "corporate_event_approval_request",
+        title: "New Corporate Event Approval Request",
+        message: `NGO "${ngoName}" has submitted corporate event "${eventTitle}" for approval`,
+        actionUrl: `/pendingcorporateevent`,
+        metadata: { eventId },
+      }));
+
+      const result = await Notification.insertMany(notifications);
+      console.log(`[Notification] Created ${result.length} corporate event notification(s) for admins`);
+    } catch (error) {
+      console.error("Error notifying admins about corporate event:", error);
+    }
+  },
+
+  // Corporate Interest Notifications
+  async notifyCorporateInterestSent(corporateUserId, eventId, eventTitle) {
+    try {
+      await Notification.create({
+        recipient: corporateUserId,
+        type: "interest_sent",
+        title: "Interest Sent Successfully",
+        message: `Your interest in "${eventTitle}" has been sent to the organizing NGO. You will be notified when they respond.`,
+        actionUrl: `/allcorporateevents`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Interest confirmation sent to corporate user`);
+    } catch (error) {
+      console.error("Error notifying corporate about interest sent:", error);
+    }
+  },
+
+  async notifyNGONewCorporateInterest(ngoId, eventId, eventTitle, corporateName) {
+    try {
+      await Notification.create({
+        recipient: ngoId,
+        type: "new_corporate_interest",
+        title: "New Corporate Interest Received",
+        message: `${corporateName} has expressed interest in your corporate event "${eventTitle}"`,
+        actionUrl: `/ngo-dashboard`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] New interest notification sent to NGO`);
+    } catch (error) {
+      console.error("Error notifying NGO about new interest:", error);
+    }
+  },
+
+  async notifyCorporateInterestResponse(corporateUserId, eventId, eventTitle, status) {
+    try {
+      const statusText = status === "accepted" ? "accepted" : "declined";
+      await Notification.create({
+        recipient: corporateUserId,
+        type: `interest_${status}`,
+        title: `Interest ${status === "accepted" ? "Accepted" : "Declined"}`,
+        message: `The NGO has ${statusText} your interest in "${eventTitle}". ${status === "accepted" ? "They will contact you soon!" : "You can explore other events."}`,
+        actionUrl: `/allcorporateevents`,
+        metadata: { eventId },
+      });
+      console.log(`[Notification] Interest response notification sent to corporate user`);
+    } catch (error) {
+      console.error("Error notifying corporate about interest response:", error);
+    }
+  },
 };
 
 export default {

@@ -23,6 +23,8 @@ const createEvent = async (data, organizationId, organizationName) => {
     eventType = "community",
     image,
     images = [],
+    corporatePartner,
+    csrObjectives = [],
   } = data;
 
   const event = new Event({
@@ -46,20 +48,13 @@ const createEvent = async (data, organizationId, organizationName) => {
     sponsorshipContactNumber,
     image,
     images,
+    corporatePartner,
+    csrObjectives,
     status: "pending",
   });
 
   try {
     const savedEvent = await event.save();
-    
-    // Notify admins about new event approval request
-    await notificationService.notifyAdminEventApproval(
-      savedEvent._id,
-      savedEvent.title,
-      organizationName,
-      organizationId
-    );
-    
     return savedEvent;
   } catch (error) {
     throw new ApiError(
@@ -75,8 +70,18 @@ const getAllPublishedEvents = async (locationFilter = null) => {
   console.log('\n[SERVICE] getAllPublishedEvents called');
   console.log('[SERVICE] locationFilter:', JSON.stringify(locationFilter, null, 2));
   
-  // Build the base query - only show approved events
-  const baseQuery = { status: "approved" };
+  // Corporate event types that should be excluded from public listings
+  const corporateEventTypes = ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"];
+  
+  // Build the base query - only show approved events, EXCLUDE corporate events
+  const baseQuery = { 
+    status: "approved",
+    // Exclude corporate events - they should only be visible on corporate dashboard
+    $and: [
+      { eventType: { $nin: corporateEventTypes } },
+      { $or: [{ corporatePartner: { $exists: false } }, { corporatePartner: "" }, { corporatePartner: null }] }
+    ]
+  };
   
   // Add location filter if provided
   const query = locationFilter 
@@ -288,26 +293,62 @@ const updateEventStatus = async (eventId, status, rejectionReason = null) => {
     eventId,
     updateData,
     { new: true }
-  );
+  ).populate('organizationId', 'role');
 
   if (!event) {
     throw new ApiError(404, "Event not found");
   }
 
-  // Notify NGO about event approval/rejection
+  // Check if this is a corporate event (has corporatePartner or is corporate event type)
+  const isCorporateEvent = event.corporatePartner || 
+    ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"].includes(event.eventType);
+
+  // Notify based on event type
   if (status === "approved") {
-    await notificationService.notifyNGOEventApproved(
-      event.organizationId,
-      event._id,
-      event.title
-    );
+    if (isCorporateEvent) {
+      // Corporate event created by NGO - notify the NGO about approval
+      await notificationService.notifyNGOEventApproved(
+        event.organizationId._id || event.organizationId,
+        event._id,
+        event.title
+      );
+      console.log("[UpdateEventStatus] Notified NGO about corporate event approval");
+      
+      // Notify ALL corporate users about the new approved corporate event
+      const creatorName = event.organization || "An NGO partner";
+      await notificationService.notifyCorporateNewEvent(
+        event._id,
+        event.title,
+        creatorName
+      );
+      console.log("[UpdateEventStatus] Notified all corporate users about new corporate event");
+    } else {
+      // Notify NGO about event approval
+      await notificationService.notifyNGOEventApproved(
+        event.organizationId._id || event.organizationId,
+        event._id,
+        event.title
+      );
+    }
   } else if (status === "rejected") {
-    await notificationService.notifyNGOEventRejected(
-      event.organizationId,
-      event._id,
-      event.title,
-      rejectionReason || "No reason provided"
-    );
+    if (isCorporateEvent) {
+      // Corporate event created by NGO - notify the NGO about rejection
+      await notificationService.notifyNGOEventRejected(
+        event.organizationId._id || event.organizationId,
+        event._id,
+        event.title,
+        rejectionReason || "No reason provided"
+      );
+      console.log("[UpdateEventStatus] Notified NGO about corporate event rejection");
+    } else {
+      // Notify NGO about event rejection
+      await notificationService.notifyNGOEventRejected(
+        event.organizationId._id || event.organizationId,
+        event._id,
+        event.title,
+        rejectionReason || "No reason provided"
+      );
+    }
   }
 
   return event;
@@ -316,6 +357,31 @@ const updateEventStatus = async (eventId, status, rejectionReason = null) => {
 // Get all pending events (for admin)
 const getPendingEvents = async () => {
   return await Event.find({ status: "pending" }).sort({ createdAt: -1 });
+};
+
+// Get all pending corporate events (for admin)
+const getPendingCorporateEvents = async () => {
+  return await Event.find({ 
+    status: "pending",
+    eventType: { 
+      $in: ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"] 
+    }
+  }).sort({ createdAt: -1 });
+};
+
+// Get all approved corporate events (for corporate dashboard)
+const getApprovedCorporateEvents = async () => {
+  const corporateEventTypes = ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"];
+  
+  return await Event.find({ 
+    status: "approved",
+    $or: [
+      { eventType: { $in: corporateEventTypes } },
+      { corporatePartner: { $exists: true, $ne: "", $ne: null } }
+    ]
+  })
+    .populate('organizationId', 'name email organizationType websiteUrl')
+    .sort({ createdAt: -1 });
 };
 
 // Participate in an event
@@ -637,6 +703,28 @@ const approveEventWithScoring = async (
   event.pointsOffered = totalPoints;
 
   await event.save();
+  
+  // Notify NGO about event approval
+  await notificationService.notifyNGOEventApproved(
+    event.organizationId,
+    event._id,
+    event.title
+  );
+  
+  // Check if this is a corporate event and notify all corporate users
+  const isCorporateEvent = event.corporatePartner || 
+    ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"].includes(event.eventType);
+  
+  if (isCorporateEvent) {
+    const creatorName = event.organization || "An NGO partner";
+    await notificationService.notifyCorporateNewEvent(
+      event._id,
+      event.title,
+      creatorName
+    );
+    console.log("[ApproveEventWithScoring] Notified all corporate users about new corporate event");
+  }
+  
   return event;
 };
 
@@ -688,6 +776,8 @@ export const ngoEventService = {
   leaveEvent,
   getUserParticipatedEvents,
   getPendingEvents,
+  getPendingCorporateEvents,
+  getApprovedCorporateEvents,
   updateEventStatus,
 
   requestEventCompletion,

@@ -52,29 +52,6 @@ const Adminstats = () => {
 
   return (
     <div className="  dark:from-gray-900 dark:to-green-950/20">
-      {/* Attractive but Simple Header */}
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-2">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-green-100 dark:border-green-900/30 shadow-sm mb-4">
-              <div className="w-2 h-2 bg-[#5D8A6E] rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                System Active
-              </span>
-            </div>
-          </div>
-          
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Admin Dashboard
-            </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#5D8A6E] to-[#A56CB4] rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-500 dark:text-gray-400 text-lg max-w-2xl mx-auto">
-              Welcome back! Here's your overview of community activities waiting for attention.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Section */}
       <div className="p-6">

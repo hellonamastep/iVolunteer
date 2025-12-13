@@ -116,6 +116,7 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationListRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -162,6 +163,39 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
     }
   }, [user]);
 
+  // Prevent background scroll when scrolling inside notification list
+  useEffect(() => {
+    const notificationList = notificationListRef.current;
+    if (!notificationList || !isOpen) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = notificationList;
+      const isAtTop = scrollTop === 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight;
+
+      // Prevent scroll if not at boundaries, or if scrolling into boundaries
+      if (
+        (!isAtTop && !isAtBottom) ||
+        (isAtTop && e.deltaY < 0) ||
+        (isAtBottom && e.deltaY > 0)
+      ) {
+        // Allow internal scroll but prevent propagation
+      } else if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+        e.preventDefault();
+      }
+      
+      // Always prevent the background from scrolling
+      e.preventDefault();
+      notificationList.scrollTop += e.deltaY;
+    };
+
+    notificationList.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      notificationList.removeEventListener('wheel', handleWheel);
+    };
+  }, [isOpen]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -170,8 +204,11 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
       }
     };
 
-    const handleScroll = () => {
-      setIsOpen(false);
+    const handleScroll = (event: Event) => {
+      // Only close if scroll is outside the dropdown
+      if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     };
 
     if (isOpen) {
@@ -203,6 +240,19 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
     }
   };
 
+  const deleteAllNotifications = async () => {
+    try {
+      // Delete all notifications
+      const deletePromises = notifications.map(notif => 
+        api.delete(`/v1/notifications/${notif._id}`)
+      );
+      await Promise.all(deletePromises);
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+    }
+  };
+
   const deleteNotification = async (id: string) => {
     try {
       await api.delete(`/v1/notifications/${id}`);
@@ -226,7 +276,14 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          const newOpenState = !isOpen;
+          setIsOpen(newOpenState);
+          // Mark all as read when opening
+          if (newOpenState && unreadCount > 0) {
+            markAllAsRead();
+          }
+        }}
         className="rounded-lg p-2 hover:bg-gray-100 transition-colors duration-200 relative"
         aria-label="Notifications"
       >
@@ -261,27 +318,23 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
+                {notifications.length > 0 && (
                   <button
-                    onClick={markAllAsRead}
-                    className="p-1 hover:bg-white rounded-lg transition-colors text-xs text-blue-600 hover:text-blue-700"
-                    title="Mark all as read"
+                    onClick={deleteAllNotifications}
+                    className="p-1 hover:bg-white rounded-lg transition-colors text-xs text-red-600 hover:text-red-700"
+                    title="Delete all notifications"
                   >
-                    <Check className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1 hover:bg-white rounded-lg transition-colors"
-                  aria-label="Close notifications"
-                >
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
               </div>
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div 
+              ref={notificationListRef}
+              className="max-h-[60vh] overflow-y-auto"
+            >
               {loading ? (
                 <div className="p-8 text-center text-gray-500">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

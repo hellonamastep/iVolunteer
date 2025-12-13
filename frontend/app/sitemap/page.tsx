@@ -71,8 +71,8 @@ const SitemapPage = () => {
       icon: "🏢",
       description: "Corporate partner sections",
       links: [
-        { name: "Corporate Dashboard", href: "/corporate" },
-        { name: "Corporate Events", href: "/corporate/events" }
+        { name: "Corporate Dashboard", href: "/" },
+        { name: "All Corporate Events", href: "/allcorporateevents" }
       ]
     },
     {

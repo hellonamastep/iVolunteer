@@ -255,7 +255,7 @@ const PendingGroupsPage = () => {
                               <div className="space-y-3 animate-in fade-in duration-200">
                                 <div className="relative">
                                   <textarea
-                                    placeholder="Please provide a reason for rejection (minimum 10 characters)..."
+                                    placeholder="Optionally provide a reason for rejection..."
                                     className="block w-full px-4 py-3 text-sm border border-red-200 rounded-xl placeholder-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 resize-none"
                                     rows={3}
                                     value={rejectionReasons[group._id] || ""}

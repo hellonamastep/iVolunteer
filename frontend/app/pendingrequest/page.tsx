@@ -350,7 +350,7 @@ const PendingEventsPage = () => {
               
               <div className="relative mb-6">
                 <textarea
-                  placeholder="Please provide a reason for rejection (minimum 10 characters)..."
+                  placeholder="Optionally provide a reason for rejection..."
                   className="block w-full px-3 py-3 text-sm border-2 border-red-200 rounded-xl placeholder-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 resize-none bg-white"
                   rows={4}
                   value={denialReasons[showRejectInput] || ""}
@@ -359,11 +359,6 @@ const PendingEventsPage = () => {
                   }
                   autoFocus
                 />
-                <div className="absolute bottom-2 right-2">
-                  <span className={`text-xs ${denialReasons[showRejectInput]?.length >= 10 ? 'text-green-500' : 'text-red-400'}`}>
-                    {denialReasons[showRejectInput]?.length || 0}/10
-                  </span>
-                </div>
               </div>
 
               <p className="text-sm text-gray-500 text-center mb-6">
@@ -379,8 +374,7 @@ const PendingEventsPage = () => {
                 </button>
                 <button
                   onClick={() => onDeny(showRejectInput)}
-                  disabled={!denialReasons[showRejectInput]?.trim() || denialReasons[showRejectInput]?.trim().length < 10}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg disabled:opacity-50 transition-all duration-300"
+                  className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg transition-all duration-300"
                 >
                   Confirm Reject
                 </button>

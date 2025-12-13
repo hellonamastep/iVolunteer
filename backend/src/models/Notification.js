@@ -22,6 +22,7 @@ const notificationSchema = new mongoose.Schema(
         "donation_event_request",
         "blog_approval_request",
         "corporate_event_request",
+        "corporate_event_approval_request",
         "post_deleted_by_admin",
         
         // NGO notifications
@@ -33,6 +34,7 @@ const notificationSchema = new mongoose.Schema(
         "participation_request",
         "volunteer_joined",
         "volunteer_left",
+        "new_corporate_interest",
         
         // Volunteer notifications
         "participation_accepted",
@@ -44,6 +46,12 @@ const notificationSchema = new mongoose.Schema(
         "badge_earned",
         "event_cancelled",
         "event_updated",
+        
+        // Corporate notifications
+        "interest_sent",
+        "interest_accepted",
+        "interest_rejected",
+        "new_corporate_event",
       ],
     },
     title: {

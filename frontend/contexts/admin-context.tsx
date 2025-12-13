@@ -85,6 +85,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [pendingDonationEvents, setPendingDonationEvents] = useState<
     DonationEventItem[]
   >([]);
+  const [pendingCorporateEvents, setPendingCorporateEvents] = useState<EventItem[]>([]);
 
   const loginAdmin = (info: AdminInfo) => {
     setAdminInfo(info);
@@ -96,6 +97,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     setIsAdmin(false);
     setPendingEvents([]);
     setPendingDonationEvents([]);
+    setPendingCorporateEvents([]);
     localStorage.removeItem("auth-user");
   };
 
@@ -198,6 +200,69 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Corporate events
+  const fetchPendingCorporateEvents = async () => {
+    if (!isAdmin) return;
+    const token = localStorage.getItem("auth-token");
+    if (!token) return console.warn("No auth token found");
+
+    try {
+      const res = await api.get<{ success: boolean; events: EventItem[] }>(
+        "/v1/event/pending-corporate",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setPendingCorporateEvents(res.data.events);
+    } catch (err) {
+      console.error("Failed to fetch pending corporate events", err);
+    }
+  };
+
+  const handleApproveCorporateEvent = async (
+    id: string,
+    baseCategoryOrPoints: number,
+    difficultyKeyOrMultiplier: number,
+    hoursWorked: number
+  ) => {
+    if (!isAdmin) return;
+    const token = localStorage.getItem("auth-token");
+
+    try {
+      await api.put(
+        `/v1/event/admin/approve-with-scoring/${id}`,
+        {
+          baseCategory: baseCategoryOrPoints,
+          difficulty: difficultyKeyOrMultiplier,
+          hoursWorked: hoursWorked || 0,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setPendingCorporateEvents((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error("Failed to approve corporate event", err);
+    }
+  };
+
+  const handleDenyCorporateEvent = async (id: string, reason: string) => {
+    if (!isAdmin) return;
+    const token = localStorage.getItem("auth-token");
+    try {
+      await api.put(
+        `/v1/event/status/${id}`,
+        {
+          status: "rejected",
+          rejectionReason: reason || "",
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPendingCorporateEvents((prev) => prev.filter((e) => e._id !== id));
+    } catch (err) {
+      console.error("Failed to reject corporate event", err);
+    }
+  };
+
   useEffect(() => {
     const userStr = localStorage.getItem("auth-user");
     if (userStr) loginAdmin(JSON.parse(userStr));
@@ -207,6 +272,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     if (isAdmin) {
       fetchPendingEvents();
       fetchPendingDonationEvents();
+      fetchPendingCorporateEvents();
     }
   }, [isAdmin]);
 
@@ -221,7 +287,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     handleDeny,
     pendingDonationEvents,
     fetchPendingDonationEvents,
-    handleUpdateDonationEventStatus, // 🔹 added here
+    handleUpdateDonationEventStatus,
+    pendingCorporateEvents,
+    fetchPendingCorporateEvents,
+    handleApproveCorporateEvent,
+    handleDenyCorporateEvent,
   };
 
   return (
