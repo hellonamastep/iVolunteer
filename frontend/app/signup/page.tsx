@@ -384,6 +384,20 @@ export default function SignupPage() {
     }
   }, []);
 
+  // Automatically send OTP when user reaches Step 3
+  React.useEffect(() => {
+    if (activeStep === 3 && emailValue && !emailExists && !isOTPSent && !otpLoading) {
+      handleSendOTP();
+    }
+  }, [activeStep]);
+
+  // Auto-verify OTP when 6 digits are entered
+  React.useEffect(() => {
+    if (otpValue && otpValue.length === 6 && !otpVerified && !otpLoading) {
+      handleVerifyOTP();
+    }
+  }, [otpValue]);
+
   // OTP Timer for resend
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
