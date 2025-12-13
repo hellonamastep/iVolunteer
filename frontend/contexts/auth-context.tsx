@@ -286,6 +286,12 @@ interface SignupData {
   focusAreas?: string[];
   organizationSize?: string;
   otp: string; // Add OTP field
+  // Corporate-specific fields
+  industrySector?: string;
+  companyType?: string;
+  companyDescription?: string;
+  companySize?: string;
+  csrFocusAreas?: string[];
 }
 
 // OTP Interfaces

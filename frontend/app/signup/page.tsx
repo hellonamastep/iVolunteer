@@ -20,6 +20,7 @@ import {
   Users,
   Target,
   RefreshCw,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -58,6 +59,12 @@ type SignupFormValues = {
   ngoDescription?: string;
   focusAreas?: string[];
   organizationSize?: string;
+  // corporate-specific
+  industrySector?: string;
+  companyType?: string;
+  companyDescription?: string;
+  companySize?: string;
+  csrFocusAreas?: string[];
 };
 
 const FieldError = ({ message }: { message?: string }) => {
@@ -246,6 +253,7 @@ export default function SignupPage() {
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedNgoState, setSelectedNgoState] = useState<string>("");
   const [selectedNgoCity, setSelectedNgoCity] = useState<string>("");
+  const [selectedCsrFocusAreas, setSelectedCsrFocusAreas] = useState<string[]>([]);
 
   const {
     register,
@@ -288,6 +296,71 @@ export default function SignupPage() {
     "500+",
   ];
 
+  // Corporate-specific options
+  const industrySectorOptions = [
+    "it-software",
+    "healthcare",
+    "finance",
+    "manufacturing",
+    "retail",
+    "education",
+    "consulting",
+    "real-estate",
+    "other",
+  ];
+
+  const companyTypeOptions = [
+    "private-limited",
+    "public-limited",
+    "llp",
+    "partnership",
+    "sole-proprietorship",
+    "mnc",
+    "startup",
+    "other",
+  ];
+
+  const companySizeOptions = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
+
+  const csrFocusAreaOptions = [
+    "employee-volunteering",
+    "community-development",
+    "education-skill-development",
+    "environment-sustainability",
+    "healthcare",
+    "disaster-relief",
+    "women-empowerment",
+    "rural-development",
+    "other",
+  ];
+
+  const getDisplayName = (value: string) => {
+    const displayNames: { [key: string]: string } = {
+      "it-software": "IT & Software",
+      "public-limited": "Public Limited",
+      "private-limited": "Private Limited",
+      "sole-proprietorship": "Sole Proprietorship",
+      "employee-volunteering": "Employee Volunteering",
+      "education-skill-development": "Education & Skill Development",
+      "environment-sustainability": "Environment & Sustainability",
+      "women-empowerment": "Women Empowerment",
+      "rural-development": "Rural Development",
+      "community-development": "Community Development",
+      "disaster-relief": "Disaster Relief",
+      llp: "LLP (Limited Liability Partnership)",
+      mnc: "Multinational Corporation",
+      partnership: "Partnership",
+    };
+    return (
+      displayNames[value] ||
+      value
+        ?.split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ") ||
+      ""
+    );
+  };
+
   const selectedRole = watch("role");
   const watchedFields = watch();
   const selectedProfession = watch("profession");
@@ -295,6 +368,21 @@ export default function SignupPage() {
   const otpValue = watch("otp");
 
   const [verifiedOTP, setVerifiedOTP] = useState<string>("");
+
+  // Handle corporate signup link click
+  const handleCorporateSignup = () => {
+    setValue("role", "corporate");
+    setActiveStep(2);
+  };
+
+  // Check for corporate parameter in URL on mount
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('type') === 'corporate') {
+      setValue("role", "corporate");
+      setActiveStep(2);
+    }
+  }, []);
 
   // OTP Timer for resend
   React.useEffect(() => {
@@ -463,7 +551,28 @@ export default function SignupPage() {
           },
         ]
       : []),
-    { number: selectedRole === "ngo" ? 6 : 5, title: "Complete" },
+    ...(selectedRole === "corporate"
+      ? [
+          {
+            number: 4,
+            title: "Company Details",
+            fields: [
+              "password",
+              "confirmPassword",
+              "industrySector",
+              "companyType",
+              "contactNumber",
+              "companyDescription",
+            ],
+          },
+          {
+            number: 5,
+            title: "CSR & Additional",
+            fields: ["companySize", "csrFocusAreas", "address"],
+          },
+        ]
+      : []),
+    { number: selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5, title: "Complete" },
   ];
 
   const handleNext = async () => {
@@ -513,6 +622,15 @@ export default function SignupPage() {
 
     setSelectedFocusAreas(newFocusAreas);
     setValue("focusAreas", newFocusAreas, { shouldValidate: true });
+  };
+
+  const toggleCsrFocusArea = (area: string) => {
+    const newFocusAreas = selectedCsrFocusAreas.includes(area)
+      ? selectedCsrFocusAreas.filter((a) => a !== area)
+      : [...selectedCsrFocusAreas, area];
+
+    setSelectedCsrFocusAreas(newFocusAreas);
+    setValue("csrFocusAreas", newFocusAreas, { shouldValidate: true });
   };
 
   const validateDescription = (value: string | undefined) => {
@@ -581,6 +699,26 @@ export default function SignupPage() {
           data.profession === "other" ? data.professionOther : data.profession;
         signupData.contactNumber = data.contactNumber || "";
         signupData.nearestRailwayStation = data.nearestRailwayStation || "";
+      } else if (data.role === "corporate") {
+        signupData.industrySector = data.industrySector;
+        signupData.companyType = data.companyType;
+        signupData.websiteUrl = data.websiteUrl || "";
+        signupData.yearEstablished = data.yearEstablished
+          ? Number(data.yearEstablished)
+          : undefined;
+        signupData.contactNumber = data.contactNumber;
+
+        signupData.address = {
+          street: data.address?.street || "",
+          city: data.address?.city || "",
+          state: data.address?.state || "",
+          zip: data.address?.zip || "",
+          country: data.address?.country || "India",
+        };
+
+        signupData.companyDescription = data.companyDescription;
+        signupData.companySize = data.companySize;
+        signupData.csrFocusAreas = data.csrFocusAreas || [];
       }
 
       const success = await signup(signupData);
@@ -691,10 +829,16 @@ export default function SignupPage() {
               {activeStep === 4 &&
                 selectedRole === "ngo" &&
                 "Organization information"}
+              {activeStep === 4 &&
+                selectedRole === "corporate" &&
+                "Company information"}
               {activeStep === 5 &&
                 selectedRole === "ngo" &&
                 "Additional details"}
-              {activeStep === (selectedRole === "ngo" ? 6 : 5) &&
+              {activeStep === 5 &&
+                selectedRole === "corporate" &&
+                "CSR & Additional information"}
+              {activeStep === (selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5) &&
                 "Complete your profile"}
             </p>
           </div>
@@ -1586,8 +1730,348 @@ export default function SignupPage() {
               </div>
             )}
 
+            {/* Step 4: Corporate Company Details */}
+            {activeStep === 4 && selectedRole === "corporate" && (
+              <div className="space-y-3 sm:space-y-6 animate-fadeIn">
+                <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#3ABBA5]/20">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-[#3ABBA5] mb-3 sm:mb-4 lg:mb-6 text-center">
+                    Company Information
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                    {/* Password Field for Corporate */}
+                    <PasswordField
+                      register={register}
+                      errors={errors}
+                      showPassword={showPassword}
+                      setShowPassword={setShowPassword}
+                    />
+
+                    {/* Confirm Password for Corporate */}
+                    <ConfirmPasswordField
+                      register={register}
+                      errors={errors}
+                      showConfirmPassword={showConfirmPassword}
+                      setShowConfirmPassword={setShowConfirmPassword}
+                      watchedPassword={watchedFields.password}
+                      watchedConfirmPassword={watchedFields.confirmPassword}
+                    />
+
+                    {/* Industry Sector */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                        Industry Sector *
+                      </label>
+                      <select
+                        {...register("industrySector", {
+                          required: "Please select industry sector",
+                        })}
+                        className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.industrySector ? "border-red-400" : "border-gray-200"
+                        }`}
+                      >
+                        <option value="">Select industry sector</option>
+                        {industrySectorOptions.map((sector) => (
+                          <option key={sector} value={sector}>
+                            {getDisplayName(sector)}
+                          </option>
+                        ))}
+                      </select>
+                      <FieldError message={errors.industrySector?.message} />
+                    </div>
+
+                    {/* Company Type */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                        Company Type *
+                      </label>
+                      <select
+                        {...register("companyType", {
+                          required: "Please select company type",
+                        })}
+                        className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.companyType ? "border-red-400" : "border-gray-200"
+                        }`}
+                      >
+                        <option value="">Select company type</option>
+                        {companyTypeOptions.map((type) => (
+                          <option key={type} value={type}>
+                            {getDisplayName(type)}
+                          </option>
+                        ))}
+                      </select>
+                      <FieldError message={errors.companyType?.message} />
+                    </div>
+
+                    {/* Contact Number */}
+                    <ContactNumberField
+                      register={register}
+                      errors={errors}
+                      showErrorBorder={true}
+                    />
+
+                    {/* Website */}
+                    <div className="space-y-1 sm:space-y-2">
+                      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                        Website URL
+                      </label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                        <input
+                          type="text"
+                          placeholder="https://example.com"
+                          {...register("websiteUrl", {
+                            pattern: {
+                              value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                              message: "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
+                            },
+                          })}
+                          className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                            errors.websiteUrl ? "border-red-400" : "border-gray-200"
+                          }`}
+                        />
+                      </div>
+                      <FieldError message={errors.websiteUrl?.message} />
+                    </div>
+                  </div>
+
+                  {/* Company Description */}
+                  <div className="space-y-1 sm:space-y-2 mt-3 sm:mt-4">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                      Company Description *
+                    </label>
+                    <textarea
+                      placeholder="Describe your company's mission, values, and business activities (minimum 10 words)..."
+                      rows={3}
+                      {...register("companyDescription", {
+                        required: "Description is required",
+                        validate: validateDescription,
+                      })}
+                      className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none resize-none transition-all"
+                    />
+                    {errors.companyDescription && (
+                      <p className="text-red-500 text-xs sm:text-sm animate-shake">
+                        {errors.companyDescription.message}
+                      </p>
+                    )}
+                    <p className="text-[10px] sm:text-xs text-gray-500">
+                      Current word count:{" "}
+                      {watchedFields.companyDescription
+                        ? watchedFields.companyDescription
+                            .trim()
+                            .split(/\s+/)
+                            .filter((word) => word.length > 0).length
+                        : 0}
+                      /10
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Corporate CSR & Additional Details */}
+            {activeStep === 5 && selectedRole === "corporate" && (
+              <div className="space-y-3 sm:space-y-6 animate-fadeIn">
+                <div className="bg-gradient-to-r from-[#3ABBA5]/5 to-[#50C878]/5 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-[#3ABBA5]/20">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold text-[#3ABBA5] mb-3 sm:mb-4 lg:mb-6 text-center">
+                    CSR & Additional Information
+                  </h3>
+
+                  {/* Company Size */}
+                  <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                      Company Size *
+                    </label>
+                    <div className="relative">
+                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                      <select
+                        {...register("companySize", {
+                          required: "Company size is required",
+                        })}
+                        className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                      >
+                        <option value="">Select company size</option>
+                        {companySizeOptions.map((size) => (
+                          <option key={size} value={size}>
+                            {size} employees
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <FieldError message={errors.companySize?.message} />
+                  </div>
+
+                  {/* CSR Focus Areas */}
+                  <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                      CSR Focus Areas (Select areas of interest)
+                    </label>
+                    <div className="relative">
+                      <Target className="absolute left-3 top-2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                      <div className="pl-8 sm:pl-10 lg:pl-12">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-3">
+                          {csrFocusAreaOptions.map((area) => (
+                            <label
+                              key={area}
+                              className="flex items-center space-x-1 sm:space-x-2 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                value={area}
+                                checked={selectedCsrFocusAreas.includes(area)}
+                                onChange={() => toggleCsrFocusArea(area)}
+                                className="hidden"
+                              />
+                              <div
+                                className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded border flex items-center justify-center transition-all ${
+                                  selectedCsrFocusAreas.includes(area)
+                                    ? "bg-[#3ABBA5] border-[#3ABBA5]"
+                                    : "border-gray-300 bg-white"
+                                }`}
+                              >
+                                {selectedCsrFocusAreas.includes(area) && (
+                                  <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
+                                )}
+                              </div>
+                              <span className="text-xs sm:text-sm text-gray-700">
+                                {getDisplayName(area)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        <input type="hidden" {...register("csrFocusAreas")} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Year Established */}
+                  <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                      Year Established
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+                      <input
+                        type="number"
+                        placeholder="2010"
+                        {...register("yearEstablished", {
+                          valueAsNumber: true,
+                          min: {
+                            value: 1800,
+                            message: "Year must be after 1800"
+                          },
+                          max: {
+                            value: new Date().getFullYear(),
+                            message: "Year cannot be in the future"
+                          }
+                        })}
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.yearEstablished ? "border-red-400" : "border-gray-200"
+                        }`}
+                      />
+                    </div>
+                    <FieldError message={errors.yearEstablished?.message} />
+                  </div>
+
+                  {/* Address Fields */}
+                  <div className="space-y-2 sm:space-y-3">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                      Company Address *
+                    </label>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                        <div className="space-y-1 sm:space-y-2">
+                          <input
+                            type="text"
+                            value="India"
+                            readOnly
+                            {...register("address.country", {
+                              required: "Country is required",
+                            })}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all bg-gray-50 cursor-not-allowed"
+                          />
+                          {errors.address?.country && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.country.message}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-1 sm:space-y-2">
+                          <select
+                            {...register("address.state", {
+                              required: "State is required",
+                            })}
+                            onChange={(e) => {
+                              setSelectedNgoState(e.target.value);
+                              setSelectedNgoCity("");
+                              setValue("address.city", "");
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
+                          >
+                            <option value="">Select State</option>
+                            {Object.keys(indianStatesData).sort().map((state) => (
+                              <option key={state} value={state}>{state}</option>
+                            ))}
+                          </select>
+                          {errors.address?.state && <p className="text-red-500 text-xs">{errors.address.state.message}</p>}
+                        </div>
+                        <div className="space-y-1 sm:space-y-2">
+                          <select
+                            {...register("address.city", {
+                              required: "City is required",
+                            })}
+                            onChange={(e) => setSelectedNgoCity(e.target.value)}
+                            disabled={!selectedNgoState}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="">Select City</option>
+                            {selectedNgoState && indianStatesData[selectedNgoState]?.map((city) => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </select>
+                          {errors.address?.city && <p className="text-red-500 text-xs">{errors.address.city.message}</p>}
+                        </div>
+                        <div className="space-y-1 sm:space-y-2">
+                          <input
+                            type="text"
+                            placeholder="ZIP Code"
+                            maxLength={6}
+                            {...register("address.zip", {
+                              required: "ZIP code is required",
+                              pattern: {
+                                value: /^\d{6}$/,
+                                message: "Invalid ZIP code.",
+                              },
+                            })}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                          />
+                          {errors.address?.zip && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.zip.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1 sm:space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Street Address"
+                          {...register("address.street", {
+                            required: "Street address is required",
+                          })}
+                          className="w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all"
+                        />
+                        <FieldError message={errors.address?.street?.message} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Step 6/5: Complete */}
-            {activeStep === (selectedRole === "ngo" ? 6 : 5) && (
+            {activeStep === (selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5) && (
               <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 animate-fadeIn">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-green-500" />
@@ -1598,7 +2082,7 @@ export default function SignupPage() {
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm lg:text-base max-w-xs sm:max-w-md mx-auto">
                     You're all set to create your{" "}
-                    {selectedRole === "ngo" ? "organization" : "volunteer"}{" "}
+                    {selectedRole === "ngo" ? "organization" : selectedRole === "corporate" ? "corporate" : "volunteer"}{" "}
                     account. Review your information and click create account to
                     get started.
                   </p>
@@ -1610,7 +2094,7 @@ export default function SignupPage() {
                   <div className="space-y-1 text-xs sm:text-sm text-gray-600">
                     <p>
                       <strong>Role:</strong>{" "}
-                      {selectedRole === "ngo" ? "NGO" : "Volunteer"}
+                      {selectedRole === "ngo" ? "NGO" : selectedRole === "corporate" ? "Corporate" : "Volunteer"}
                     </p>
                     <p>
                       <strong>Name:</strong> {watchedFields.name}
@@ -1639,6 +2123,30 @@ export default function SignupPage() {
                         <p>
                           <strong>Organization Size:</strong>{" "}
                           {watchedFields.organizationSize}
+                        </p>
+                      </>
+                    )}
+                    {selectedRole === "corporate" && (
+                      <>
+                        <p>
+                          <strong>Industry Sector:</strong>{" "}
+                          {getDisplayName(watchedFields.industrySector || "")}
+                        </p>
+                        <p>
+                          <strong>Company Type:</strong>{" "}
+                          {getDisplayName(watchedFields.companyType || "")}
+                        </p>
+                        <p>
+                          <strong>Contact:</strong>{" "}
+                          {watchedFields.contactNumber}
+                        </p>
+                        <p>
+                          <strong>Company Size:</strong>{" "}
+                          {watchedFields.companySize}
+                        </p>
+                        <p>
+                          <strong>CSR Focus Areas:</strong>{" "}
+                          {selectedCsrFocusAreas.map((area) => getDisplayName(area)).join(", ")}
                         </p>
                       </>
                     )}
@@ -1745,14 +2253,15 @@ export default function SignupPage() {
                 Log in here
               </Link>
             </p>
-            <p className="text-gray-600 text-xs sm:text-sm">
+            <p className="text-gray-600 text-xs sm:text-sm mt-2">
               Are you a corporate partner?{" "}
-              <Link
-                href="/corporatesignup"
-                className="text-indigo-400 font-semibold hover:underline transition-colors"
+              <button
+                type="button"
+                onClick={handleCorporateSignup}
+                className="text-[#8B5CF6] font-semibold hover:underline transition-colors"
               >
                 Sign up here
-              </Link>
+              </button>
             </p>
           </div>
         </div>
