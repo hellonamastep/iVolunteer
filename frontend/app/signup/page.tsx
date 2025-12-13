@@ -24,10 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import {
-  indianStatesData,
-  railwayStationsByCity,
-} from "@/lib/locationData";
+import { indianStatesData, railwayStationsByCity } from "@/lib/locationData";
 import Logo from "@/components/logo";
 
 type SignupFormValues = {
@@ -70,9 +67,7 @@ type SignupFormValues = {
 const FieldError = ({ message }: { message?: string }) => {
   if (!message) return null;
   return (
-    <p className="text-red-500 text-xs sm:text-sm animate-shake">
-      {message}
-    </p>
+    <p className="text-red-500 text-xs sm:text-sm animate-shake">{message}</p>
   );
 };
 
@@ -207,7 +202,9 @@ const ContactNumberField = ({
         onKeyDown={(e) => {
           if (
             !/[0-9]/.test(e.key) &&
-            !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)
+            !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(
+              e.key
+            )
           ) {
             e.preventDefault();
           }
@@ -220,7 +217,9 @@ const ContactNumberField = ({
           },
         })}
         className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-          showErrorBorder && errors.contactNumber ? "border-red-400" : "border-gray-200"
+          showErrorBorder && errors.contactNumber
+            ? "border-red-400"
+            : "border-gray-200"
         }`}
       />
     </div>
@@ -253,7 +252,9 @@ export default function SignupPage() {
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedNgoState, setSelectedNgoState] = useState<string>("");
   const [selectedNgoCity, setSelectedNgoCity] = useState<string>("");
-  const [selectedCsrFocusAreas, setSelectedCsrFocusAreas] = useState<string[]>([]);
+  const [selectedCsrFocusAreas, setSelectedCsrFocusAreas] = useState<string[]>(
+    []
+  );
 
   const {
     register,
@@ -378,7 +379,7 @@ export default function SignupPage() {
   // Check for corporate parameter in URL on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('type') === 'corporate') {
+    if (params.get("type") === "corporate") {
       setValue("role", "corporate");
       setActiveStep(2);
     }
@@ -386,7 +387,13 @@ export default function SignupPage() {
 
   // Automatically send OTP when user reaches Step 3
   React.useEffect(() => {
-    if (activeStep === 3 && emailValue && !emailExists && !isOTPSent && !otpLoading) {
+    if (
+      activeStep === 3 &&
+      emailValue &&
+      !emailExists &&
+      !isOTPSent &&
+      !otpLoading
+    ) {
       handleSendOTP();
     }
   }, [activeStep]);
@@ -537,11 +544,7 @@ export default function SignupPage() {
           {
             number: 4,
             title: "Personal Details",
-            fields: [
-              "password",
-              "confirmPassword",
-              "profession",
-            ],
+            fields: ["password", "confirmPassword", "profession"],
           },
         ]
       : []),
@@ -586,7 +589,10 @@ export default function SignupPage() {
           },
         ]
       : []),
-    { number: selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5, title: "Complete" },
+    {
+      number: selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5,
+      title: "Complete",
+    },
   ];
 
   const handleNext = async () => {
@@ -668,9 +674,7 @@ export default function SignupPage() {
       const otpToSend = data.otp || verifiedOTP || watch("otp");
 
       if (!otpToSend || otpToSend.length !== 6) {
-        toast.error(
-          "OTP verification failed. Please verify your email again."
-        );
+        toast.error("OTP verification failed. Please verify your email again.");
         setActiveStep(3);
         setOtpVerified(false);
         return;
@@ -747,14 +751,17 @@ export default function SignupPage() {
       console.error("Signup error:", error);
 
       // Check if user already exists - handle different error formats
-      const errorMessage = error?.message?.toLowerCase() ||
+      const errorMessage =
+        error?.message?.toLowerCase() ||
         error?.response?.data?.message?.toLowerCase() ||
         error?.toString().toLowerCase();
 
-      if (errorMessage.includes("already exists") ||
+      if (
+        errorMessage.includes("already exists") ||
         errorMessage.includes("user exists") ||
         errorMessage.includes("email already") ||
-        errorMessage.includes("account exists")) {
+        errorMessage.includes("account exists")
+      ) {
         toast.error("Account already exists. Please login instead.");
         // Redirect to login page after a short delay
         setTimeout(() => {
@@ -787,19 +794,26 @@ export default function SignupPage() {
                 const isFirstStep = step.number === 1;
                 const isLastStep = step.number === steps.length;
                 const isActiveStep = step.number === activeStep;
-                const shouldShowOnMobile = isFirstStep || isLastStep || isActiveStep;
-                
+                const shouldShowOnMobile =
+                  isFirstStep || isLastStep || isActiveStep;
+
                 return (
                   <React.Fragment key={step.number}>
-                    <div className={`flex flex-col items-center min-w-[40px] sm:min-w-16 ${!shouldShowOnMobile ? 'hidden sm:flex' : ''}`}>
+                    <div
+                      className={`flex flex-col items-center min-w-[40px] sm:min-w-16 ${
+                        !shouldShowOnMobile ? "hidden sm:flex" : ""
+                      }`}
+                    >
                       <div
-                        className={`w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-[10px] sm:text-sm transition-all duration-300 ${activeStep >= step.number
-                          ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
-                          : "bg-gray-200 text-gray-400"
-                          } ${activeStep === step.number
+                        className={`w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-[10px] sm:text-sm transition-all duration-300 ${
+                          activeStep >= step.number
+                            ? "bg-[#3ABBA5] text-white shadow-md sm:shadow-lg"
+                            : "bg-gray-200 text-gray-400"
+                        } ${
+                          activeStep === step.number
                             ? "ring-1 sm:ring-4 ring-[#3ABBA5]/20 scale-110"
                             : ""
-                          }`}
+                        }`}
                       >
                         {activeStep > step.number ? "✓" : step.number}
                       </div>
@@ -819,7 +833,18 @@ export default function SignupPage() {
                           activeStep > step.number
                             ? "bg-[#3ABBA5]"
                             : "bg-gray-200"
-                        } ${!shouldShowOnMobile && (index === steps.length - 2 || !steps[index + 1] || !(steps[index + 1].number === 1 || steps[index + 1].number === steps.length || steps[index + 1].number === activeStep)) ? 'hidden sm:block' : ''}`}
+                        } ${
+                          !shouldShowOnMobile &&
+                          (index === steps.length - 2 ||
+                            !steps[index + 1] ||
+                            !(
+                              steps[index + 1].number === 1 ||
+                              steps[index + 1].number === steps.length ||
+                              steps[index + 1].number === activeStep
+                            ))
+                            ? "hidden sm:block"
+                            : ""
+                        }`}
                       ></div>
                     )}
                   </React.Fragment>
@@ -852,8 +877,10 @@ export default function SignupPage() {
               {activeStep === 5 &&
                 selectedRole === "corporate" &&
                 "CSR & Additional information"}
-              {activeStep === (selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5) &&
-                "Complete your profile"}
+              {activeStep ===
+                (selectedRole === "ngo" || selectedRole === "corporate"
+                  ? 6
+                  : 5) && "Complete your profile"}
             </p>
           </div>
 
@@ -881,10 +908,11 @@ export default function SignupPage() {
                           className="hidden"
                         />
                         <div
-                          className={`relative p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 transition-all duration-200 group-hover:scale-[1.02] sm:group-hover:scale-105 ${isSelected
-                            ? "border-[#3ABBA5] bg-[#3ABBA5]/5 shadow-md sm:shadow-lg"
-                            : "border-gray-200 bg-white hover:border-[#3ABBA5]/50"
-                            }`}
+                          className={`relative p-3 sm:p-4 lg:p-6 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 transition-all duration-200 group-hover:scale-[1.02] sm:group-hover:scale-105 ${
+                            isSelected
+                              ? "border-[#3ABBA5] bg-[#3ABBA5]/5 shadow-md sm:shadow-lg"
+                              : "border-gray-200 bg-white hover:border-[#3ABBA5]/50"
+                          }`}
                         >
                           <div className="flex sm:flex-col items-center sm:items-center space-x-3 sm:space-x-0 sm:space-y-2 lg:space-y-3">
                             <div
@@ -945,8 +973,9 @@ export default function SignupPage() {
                         {...register("name", {
                           required: "This field is required",
                         })}
-                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.name ? "border-red-400" : "border-gray-200"
-                          }`}
+                        className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                          errors.name ? "border-red-400" : "border-gray-200"
+                        }`}
                       />
                     </div>
                     <FieldError message={errors.name?.message} />
@@ -976,20 +1005,40 @@ export default function SignupPage() {
                           register("email").onChange(e);
                         }}
                         className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-10 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.email || emailExists ? "border-red-400" : "border-gray-200"
+                          errors.email || emailExists
+                            ? "border-red-400"
+                            : "border-gray-200"
                         }`}
                       />
                       {emailCheckLoading && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <svg className="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                         </div>
                       )}
-                      {!emailCheckLoading && emailValue && !errors.email && !emailExists && (
-                        <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                      )}
+                      {!emailCheckLoading &&
+                        emailValue &&
+                        !errors.email &&
+                        !emailExists && (
+                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
                     </div>
                     <FieldError message={errors.email?.message} />
                   </div>
@@ -1023,7 +1072,9 @@ export default function SignupPage() {
 
                       {/* State Field */}
                       <div className="space-y-1 sm:space-y-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">State *</label>
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                          State *
+                        </label>
                         <div className="relative">
                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
                           <select
@@ -1038,9 +1089,13 @@ export default function SignupPage() {
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
                           >
                             <option value="">Select State</option>
-                            {Object.keys(indianStatesData).sort().map((state) => (
-                              <option key={state} value={state}>{state}</option>
-                            ))}
+                            {Object.keys(indianStatesData)
+                              .sort()
+                              .map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
                           </select>
                         </div>
                         <FieldError message={errors.state?.message} />
@@ -1062,9 +1117,12 @@ export default function SignupPage() {
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="">Select City</option>
-                            {selectedState && indianStatesData[selectedState]?.map((city) => (
-                              <option key={city} value={city}>{city}</option>
-                            ))}
+                            {selectedState &&
+                              indianStatesData[selectedState]?.map((city) => (
+                                <option key={city} value={city}>
+                                  {city}
+                                </option>
+                              ))}
                           </select>
                         </div>
                         <FieldError message={errors.city?.message} />
@@ -1072,7 +1130,9 @@ export default function SignupPage() {
 
                       {/* Nearest Railway Station Field */}
                       <div className="space-y-1 sm:space-y-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Nearest Railway Station *</label>
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                          Nearest Railway Station *
+                        </label>
                         <div className="relative">
                           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 z-10" />
                           <select
@@ -1083,15 +1143,23 @@ export default function SignupPage() {
                             className="w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border border-gray-200 text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="">Select Railway Station</option>
-                            {selectedCity && railwayStationsByCity[selectedCity]?.map((station) => (
-                              <option key={station} value={station}>{station}</option>
-                            ))}
-                            {selectedCity && !railwayStationsByCity[selectedCity] && (
-                              <option value="Other">Other</option>
-                            )}
+                            {selectedCity &&
+                              railwayStationsByCity[selectedCity]?.map(
+                                (station) => (
+                                  <option key={station} value={station}>
+                                    {station}
+                                  </option>
+                                )
+                              )}
+                            {selectedCity &&
+                              !railwayStationsByCity[selectedCity] && (
+                                <option value="Other">Other</option>
+                              )}
                           </select>
                         </div>
-                        <FieldError message={errors.nearestRailwayStation?.message} />
+                        <FieldError
+                          message={errors.nearestRailwayStation?.message}
+                        />
                       </div>
 
                       {/* Contact Number Field */}
@@ -1378,7 +1446,9 @@ export default function SignupPage() {
                           required: "Please select organization type",
                         })}
                         className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.organizationType ? "border-red-400" : "border-gray-200"
+                          errors.organizationType
+                            ? "border-red-400"
+                            : "border-gray-200"
                         }`}
                       >
                         <option value="">Select type</option>
@@ -1411,12 +1481,16 @@ export default function SignupPage() {
                           placeholder="https://example.com"
                           {...register("websiteUrl", {
                             pattern: {
-                              value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
-                              message: "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
+                              value:
+                                /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                              message:
+                                "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
                             },
                           })}
                           className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.websiteUrl ? "border-red-400" : "border-gray-200"
+                            errors.websiteUrl
+                              ? "border-red-400"
+                              : "border-gray-200"
                           }`}
                         />
                       </div>
@@ -1437,15 +1511,17 @@ export default function SignupPage() {
                             valueAsNumber: true,
                             min: {
                               value: 1800,
-                              message: "Year must be after 1800"
+                              message: "Year must be after 1800",
                             },
                             max: {
                               value: new Date().getFullYear(),
-                              message: "Year cannot be in the future"
-                            }
+                              message: "Year cannot be in the future",
+                            },
                           })}
                           className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.yearEstablished ? "border-red-400" : "border-gray-200"
+                            errors.yearEstablished
+                              ? "border-red-400"
+                              : "border-gray-200"
                           }`}
                         />
                       </div>
@@ -1524,9 +1600,9 @@ export default function SignupPage() {
                     <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                       Focus Areas * (Select at least one)
                     </label>
+
                     <div className="relative">
-                      <Target className="absolute left-3 top-2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                      <div className="pl-8 sm:pl-10 lg:pl-12">
+                      <div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-2 lg:gap-3">
                           {focusAreaOptions.map((area) => (
                             <label
@@ -1540,6 +1616,7 @@ export default function SignupPage() {
                                 onChange={() => toggleFocusArea(area)}
                                 className="hidden"
                               />
+
                               <div
                                 className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded border flex items-center justify-center transition-all ${
                                   selectedFocusAreas.includes(area)
@@ -1551,17 +1628,20 @@ export default function SignupPage() {
                                   <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
                                 )}
                               </div>
+
                               <span className="text-xs sm:text-sm text-gray-700">
                                 {area}
                               </span>
                             </label>
                           ))}
                         </div>
+
                         {errors.focusAreas && (
                           <p className="text-red-500 text-xs sm:text-sm animate-shake mt-1">
                             Please select at least one focus area
                           </p>
                         )}
+
                         <input
                           type="hidden"
                           {...register("focusAreas", {
@@ -1580,7 +1660,6 @@ export default function SignupPage() {
                       Address *
                     </label>
                     <div className="space-y-2 sm:space-y-3">
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                         <div className="space-y-1 sm:space-y-2">
                           <input
@@ -1612,11 +1691,19 @@ export default function SignupPage() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
                           >
                             <option value="">Select State</option>
-                            {Object.keys(indianStatesData).sort().map((state) => (
-                              <option key={state} value={state}>{state}</option>
-                            ))}
+                            {Object.keys(indianStatesData)
+                              .sort()
+                              .map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
                           </select>
-                          {errors.address?.state && <p className="text-red-500 text-xs">{errors.address.state.message}</p>}
+                          {errors.address?.state && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.state.message}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1 sm:space-y-2">
                           <select
@@ -1628,11 +1715,20 @@ export default function SignupPage() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="">Select City</option>
-                            {selectedNgoState && indianStatesData[selectedNgoState]?.map((city) => (
-                              <option key={city} value={city}>{city}</option>
-                            ))}
+                            {selectedNgoState &&
+                              indianStatesData[selectedNgoState]?.map(
+                                (city) => (
+                                  <option key={city} value={city}>
+                                    {city}
+                                  </option>
+                                )
+                              )}
                           </select>
-                          {errors.address?.city && <p className="text-red-500 text-xs">{errors.address.city.message}</p>}
+                          {errors.address?.city && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.city.message}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1 sm:space-y-2">
                           <input
@@ -1671,11 +1767,15 @@ export default function SignupPage() {
 
                   {/* Password Section */}
                   <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-                    <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">Account Security</h4>
+                    <h4 className="text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">
+                      Account Security
+                    </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {/* Password Field */}
                       <div className="space-y-1 sm:space-y-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Password *</label>
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                          Password *
+                        </label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                           <input
@@ -1685,34 +1785,51 @@ export default function SignupPage() {
                               required: "Password is required",
                               minLength: {
                                 value: 8,
-                                message: "Password must be at least 8 characters",
+                                message:
+                                  "Password must be at least 8 characters",
                               },
                               validate: {
                                 hasUpperCase: (value) =>
-                                  /[A-Z]/.test(value || "") || "Password must contain at least 1 uppercase letter",
+                                  /[A-Z]/.test(value || "") ||
+                                  "Password must contain at least 1 uppercase letter",
                                 hasLowerCase: (value) =>
-                                  /[a-z]/.test(value || "") || "Password must contain at least 1 lowercase letter",
+                                  /[a-z]/.test(value || "") ||
+                                  "Password must contain at least 1 lowercase letter",
                                 hasSpecialChar: (value) =>
-                                  /[!@#$%^&*(),.?":{}|<>]/.test(value || "") || "Password must contain at least 1 special character",
-                              }
+                                  /[!@#$%^&*(),.?":{}|<>]/.test(value || "") ||
+                                  "Password must contain at least 1 special character",
+                              },
                             })}
-                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.password ? "border-red-400" : "border-gray-200"
-                              }`}
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.password
+                                ? "border-red-400"
+                                : "border-gray-200"
+                            }`}
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
-                            {showPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                            {showPassword ? (
+                              <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                            ) : (
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            )}
                           </button>
                         </div>
-                        {errors.password && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.password.message}</p>}
+                        {errors.password && (
+                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
+                            {errors.password.message}
+                          </p>
+                        )}
                       </div>
 
                       {/* Confirm Password */}
                       <div className="space-y-1 sm:space-y-2">
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">Confirm Password *</label>
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700">
+                          Confirm Password *
+                        </label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
                           <input
@@ -1720,23 +1837,41 @@ export default function SignupPage() {
                             placeholder="••••••••"
                             {...register("confirmPassword", {
                               required: "Please confirm your password",
-                              validate: (val) => val === watchedFields.password || "Passwords do not match",
+                              validate: (val) =>
+                                val === watchedFields.password ||
+                                "Passwords do not match",
                             })}
-                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${errors.confirmPassword ? "border-red-400" : "border-gray-200"
-                              }`}
+                            className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-8 sm:pr-10 lg:pr-12 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
+                              errors.confirmPassword
+                                ? "border-red-400"
+                                : "border-gray-200"
+                            }`}
                           />
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1 sm:space-x-2">
-                            {!errors.confirmPassword && watchedFields.confirmPassword && <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                            {!errors.confirmPassword &&
+                              watchedFields.confirmPassword && (
+                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
+                              )}
                             <button
                               type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                               className="text-gray-400 hover:text-gray-600 transition-colors"
                             >
-                              {showConfirmPassword ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                              ) : (
+                                <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                              )}
                             </button>
                           </div>
                         </div>
-                        {errors.confirmPassword && <p className="text-red-500 text-xs sm:text-sm animate-shake">{errors.confirmPassword.message}</p>}
+                        {errors.confirmPassword && (
+                          <p className="text-red-500 text-xs sm:text-sm animate-shake">
+                            {errors.confirmPassword.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1781,7 +1916,9 @@ export default function SignupPage() {
                           required: "Please select industry sector",
                         })}
                         className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.industrySector ? "border-red-400" : "border-gray-200"
+                          errors.industrySector
+                            ? "border-red-400"
+                            : "border-gray-200"
                         }`}
                       >
                         <option value="">Select industry sector</option>
@@ -1804,7 +1941,9 @@ export default function SignupPage() {
                           required: "Please select company type",
                         })}
                         className={`w-full px-3 py-2 sm:py-3 rounded-lg sm:rounded-xl border text-sm sm:text-base focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.companyType ? "border-red-400" : "border-gray-200"
+                          errors.companyType
+                            ? "border-red-400"
+                            : "border-gray-200"
                         }`}
                       >
                         <option value="">Select company type</option>
@@ -1836,12 +1975,16 @@ export default function SignupPage() {
                           placeholder="https://example.com"
                           {...register("websiteUrl", {
                             pattern: {
-                              value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
-                              message: "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
+                              value:
+                                /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                              message:
+                                "Domain must end with a dot + at least 2 letters (e.g., .com, .org)",
                             },
                           })}
                           className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                            errors.websiteUrl ? "border-red-400" : "border-gray-200"
+                            errors.websiteUrl
+                              ? "border-red-400"
+                              : "border-gray-200"
                           }`}
                         />
                       </div>
@@ -1920,9 +2063,9 @@ export default function SignupPage() {
                     <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                       CSR Focus Areas (Select areas of interest)
                     </label>
+
                     <div className="relative">
-                      <Target className="absolute left-3 top-2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                      <div className="pl-8 sm:pl-10 lg:pl-12">
+                      <div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-1 sm:gap-2 lg:gap-3">
                           {csrFocusAreaOptions.map((area) => (
                             <label
@@ -1936,6 +2079,7 @@ export default function SignupPage() {
                                 onChange={() => toggleCsrFocusArea(area)}
                                 className="hidden"
                               />
+
                               <div
                                 className={`w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded border flex items-center justify-center transition-all ${
                                   selectedCsrFocusAreas.includes(area)
@@ -1947,12 +2091,14 @@ export default function SignupPage() {
                                   <CheckCircle className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
                                 )}
                               </div>
+
                               <span className="text-xs sm:text-sm text-gray-700">
                                 {getDisplayName(area)}
                               </span>
                             </label>
                           ))}
                         </div>
+
                         <input type="hidden" {...register("csrFocusAreas")} />
                       </div>
                     </div>
@@ -1972,15 +2118,17 @@ export default function SignupPage() {
                           valueAsNumber: true,
                           min: {
                             value: 1800,
-                            message: "Year must be after 1800"
+                            message: "Year must be after 1800",
                           },
                           max: {
                             value: new Date().getFullYear(),
-                            message: "Year cannot be in the future"
-                          }
+                            message: "Year cannot be in the future",
+                          },
                         })}
                         className={`w-full pl-8 sm:pl-10 lg:pl-12 pr-3 py-2 sm:py-3 lg:py-4 rounded-lg sm:rounded-xl border text-sm sm:text-base placeholder-gray-400 focus:ring-1 sm:focus:ring-2 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all ${
-                          errors.yearEstablished ? "border-red-400" : "border-gray-200"
+                          errors.yearEstablished
+                            ? "border-red-400"
+                            : "border-gray-200"
                         }`}
                       />
                     </div>
@@ -2024,11 +2172,19 @@ export default function SignupPage() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white"
                           >
                             <option value="">Select State</option>
-                            {Object.keys(indianStatesData).sort().map((state) => (
-                              <option key={state} value={state}>{state}</option>
-                            ))}
+                            {Object.keys(indianStatesData)
+                              .sort()
+                              .map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
                           </select>
-                          {errors.address?.state && <p className="text-red-500 text-xs">{errors.address.state.message}</p>}
+                          {errors.address?.state && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.state.message}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1 sm:space-y-2">
                           <select
@@ -2040,11 +2196,20 @@ export default function SignupPage() {
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-[#3ABBA5] focus:border-[#3ABBA5] outline-none transition-all appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="">Select City</option>
-                            {selectedNgoState && indianStatesData[selectedNgoState]?.map((city) => (
-                              <option key={city} value={city}>{city}</option>
-                            ))}
+                            {selectedNgoState &&
+                              indianStatesData[selectedNgoState]?.map(
+                                (city) => (
+                                  <option key={city} value={city}>
+                                    {city}
+                                  </option>
+                                )
+                              )}
                           </select>
-                          {errors.address?.city && <p className="text-red-500 text-xs">{errors.address.city.message}</p>}
+                          {errors.address?.city && (
+                            <p className="text-red-500 text-xs">
+                              {errors.address.city.message}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1 sm:space-y-2">
                           <input
@@ -2085,7 +2250,10 @@ export default function SignupPage() {
             )}
 
             {/* Step 6/5: Complete */}
-            {activeStep === (selectedRole === "ngo" || selectedRole === "corporate" ? 6 : 5) && (
+            {activeStep ===
+              (selectedRole === "ngo" || selectedRole === "corporate"
+                ? 6
+                : 5) && (
               <div className="text-center space-y-3 sm:space-y-4 lg:space-y-6 animate-fadeIn">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-green-500" />
@@ -2096,7 +2264,11 @@ export default function SignupPage() {
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm lg:text-base max-w-xs sm:max-w-md mx-auto">
                     You're all set to create your{" "}
-                    {selectedRole === "ngo" ? "organization" : selectedRole === "corporate" ? "corporate" : "volunteer"}{" "}
+                    {selectedRole === "ngo"
+                      ? "organization"
+                      : selectedRole === "corporate"
+                      ? "corporate"
+                      : "volunteer"}{" "}
                     account. Review your information and click create account to
                     get started.
                   </p>
@@ -2108,7 +2280,11 @@ export default function SignupPage() {
                   <div className="space-y-1 text-xs sm:text-sm text-gray-600">
                     <p>
                       <strong>Role:</strong>{" "}
-                      {selectedRole === "ngo" ? "NGO" : selectedRole === "corporate" ? "Corporate" : "Volunteer"}
+                      {selectedRole === "ngo"
+                        ? "NGO"
+                        : selectedRole === "corporate"
+                        ? "Corporate"
+                        : "Volunteer"}
                     </p>
                     <p>
                       <strong>Name:</strong> {watchedFields.name}
@@ -2160,7 +2336,9 @@ export default function SignupPage() {
                         </p>
                         <p>
                           <strong>CSR Focus Areas:</strong>{" "}
-                          {selectedCsrFocusAreas.map((area) => getDisplayName(area)).join(", ")}
+                          {selectedCsrFocusAreas
+                            .map((area) => getDisplayName(area))
+                            .join(", ")}
                         </p>
                       </>
                     )}
@@ -2212,7 +2390,11 @@ export default function SignupPage() {
                   type="button"
                   onClick={handleNext}
                   disabled={
-                    (activeStep === 2 && (emailCheckLoading || emailExists || !emailVerified || (isEmailFieldTouched && !emailValue))) ||
+                    (activeStep === 2 &&
+                      (emailCheckLoading ||
+                        emailExists ||
+                        !emailVerified ||
+                        (isEmailFieldTouched && !emailValue))) ||
                     (activeStep === 3 && !otpVerified)
                   }
                   className="px-4 py-2 sm:px-6 sm:py-3 bg-[#3ABBA5] text-white font-semibold rounded-lg hover:bg-[#36a894] transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs sm:text-sm"
