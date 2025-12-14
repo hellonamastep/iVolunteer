@@ -41,7 +41,11 @@ export const CorporateProvider: React.FC<{ children: ReactNode }> = ({ children 
         description: item.description || "",
         image: item.images?.[0] || "/images/default-event.avif",
         date: item.date ? new Date(item.date).toLocaleDateString() : "",
-        location: item.location || "",
+        location: typeof item.location === 'object' 
+          ? (item.location?.city && item.location?.state 
+            ? `${item.location.city}, ${item.location.state}` 
+            : "")
+          : (item.location || ""),
         participants: `${item.participants?.length || 0} / ${item.participantsNeeded || 0}`,
         goal: item.goal || `${item.sponsorshipAmount || 0} USD`,
         category: item.category || "",

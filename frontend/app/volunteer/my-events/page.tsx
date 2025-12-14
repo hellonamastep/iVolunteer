@@ -204,7 +204,11 @@ const MyEventsPage: React.FC = () => {
                     <div className="flex items-center text-gray-600">
                       <MapPin className="h-4 w-4 mr-3 text-red-600" />
                       <span className="text-sm">
-                        {event.location || "Location not specified"}
+                        {typeof event.location === 'object' 
+                          ? (event.location?.city && event.location?.state 
+                            ? `${event.location.city}, ${event.location.state}` 
+                            : 'Location not specified')
+                          : (event.location || "Location not specified")}
                       </span>
                     </div>
 

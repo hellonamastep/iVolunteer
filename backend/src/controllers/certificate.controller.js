@@ -15,9 +15,9 @@ export const getVolunteerCertificates = asyncHandler(async (req, res) => {
   const user = await User.findById(userId)
     .populate({
       path: "completedEvents",
-      select: "title eventDate organizationName createdBy scoringRule pointsOffered completionApprovedAt",
+      select: "title date organization organizationId scoringRule pointsOffered completionApprovedAt",
       populate: {
-        path: "createdBy",
+        path: "organizationId",
         select: "fullName organizationName name",
       },
     })
@@ -34,15 +34,15 @@ export const getVolunteerCertificates = asyncHandler(async (req, res) => {
   const certificates = (user.completedEvents || [])
     .filter((event) => event && event._id) // Only include events that still exist
     .map((event) => {
-      const admin = event.createdBy;
+      const admin = event.organizationId;
       const pointsEarned = event.scoringRule?.totalPoints || event.pointsOffered || 0;
 
       return {
         _id: `${userId}_${event._id}`, // Unique certificate ID
         eventId: event._id,
         eventTitle: event.title || "Volunteer Event",
-        eventDate: event.eventDate || new Date(),
-        organizationName: admin?.organizationName || admin?.name || admin?.fullName || "Organization",
+        eventDate: event.date || new Date(),
+        organizationName: event.organization || admin?.organizationName || admin?.name || admin?.fullName || "Organization",
         volunteerName: user.fullName || user.name || "Volunteer",
         adminName: admin?.fullName || admin?.name || "Admin",
         completedAt: event.completionApprovedAt || new Date(),

@@ -176,7 +176,13 @@ export const VolunteerEventCard: React.FC<VolunteerEventCardProps> = ({
         {/* Location */}
         <div className="flex items-center text-gray-600 mb-3 text-xs">
           <MapPin className="h-3.5 w-3.5 mr-1.5 text-green-500" />
-          <span className="line-clamp-1">{event.location || 'Location TBD'}</span>
+          <span className="line-clamp-1">
+            {typeof event.location === 'object' 
+              ? (event.location?.city && event.location?.state 
+                ? `${event.location.city}, ${event.location.state}` 
+                : 'Location TBD')
+              : (event.location || 'Location TBD')}
+          </span>
         </div>
 
         {/* Participants Progress Bar */}

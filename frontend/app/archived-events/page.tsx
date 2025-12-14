@@ -255,7 +255,13 @@ export default function ArchivedEventsPage() {
                       {/* Location */}
                       <div className="flex items-center text-gray-600 mb-3 text-xs">
                         <MapPin className="h-3.5 w-3.5 mr-1.5 text-pink-500" />
-                        <span className="line-clamp-1">{event.location || "Virtual"}</span>
+                        <span className="line-clamp-1">
+                          {typeof event.location === 'object' 
+                            ? (event.location?.city && event.location?.state 
+                              ? `${event.location.city}, ${event.location.state}` 
+                              : 'Virtual')
+                            : (event.location || "Virtual")}
+                        </span>
                       </div>
 
                       {/* Participants Progress */}

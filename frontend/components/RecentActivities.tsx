@@ -47,7 +47,7 @@ export default function RecentActivities() {
             </svg>
           </div>
           <div className="flex-1">
-            <p className="text-sm text-[#2C3E50]">Received $500 donation</p>
+            <p className="text-sm text-[#2C3E50]">Received ₹500 donation</p>
             <p className="text-xs text-[#6B7280] mt-1">1 day ago</p>
           </div>
         </div>

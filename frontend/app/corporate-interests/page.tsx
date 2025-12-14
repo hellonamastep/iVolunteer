@@ -395,7 +395,7 @@ export default function CorporateInterestsPage() {
                           </div>
                           
                           <p className="text-sm text-[#173043]/60 mb-2">
-                            Interested in: <span className="font-medium text-[#39c2ba]">{interest.event.title}</span>
+                            Interested in: <span className="font-medium text-[#39c2ba]">{interest.event?.title || "Event not available"}</span>
                           </p>
                           
                           <div className="flex items-center gap-4 flex-wrap text-sm text-[#173043]/50">
@@ -520,41 +520,54 @@ export default function CorporateInterestsPage() {
                             </div>
 
                             {/* Event Details */}
-                            <div>
-                              <h5 className="text-sm font-semibold text-[#173043] mb-3 flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-[#39c2ba]" />
-                                Event Details
-                              </h5>
-                              <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
-                                {getImageUrl(interest.event.image) && (
-                                  <div className="h-32 overflow-hidden">
-                                    <img
-                                      src={getImageUrl(interest.event.image)!}
-                                      alt={interest.event.title}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                )}
-                                <div className="p-4 space-y-3">
-                                  <h6 className="font-semibold text-[#173043]">{interest.event.title}</h6>
-                                  <div className="flex items-center gap-4 flex-wrap text-sm text-[#173043]/60">
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="w-4 h-4 text-[#39c2ba]" />
-                                      {formatDate(interest.event.date)}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="w-4 h-4 text-[#39c2ba]" />
-                                      {interest.event.city || interest.event.location}
-                                    </span>
-                                  </div>
-                                  {interest.event.category && (
-                                    <span className="inline-block px-2 py-1 bg-[#f5f8c3] rounded-full text-xs font-medium">
-                                      {interest.event.category}
-                                    </span>
+                            {interest.event ? (
+                              <div>
+                                <h5 className="text-sm font-semibold text-[#173043] mb-3 flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-[#39c2ba]" />
+                                  Event Details
+                                </h5>
+                                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+                                  {getImageUrl(interest.event.image) && (
+                                    <div className="h-32 overflow-hidden">
+                                      <img
+                                        src={getImageUrl(interest.event.image)!}
+                                        alt={interest.event.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
                                   )}
+                                  <div className="p-4 space-y-3">
+                                    <h6 className="font-semibold text-[#173043]">{interest.event.title}</h6>
+                                    <div className="flex items-center gap-4 flex-wrap text-sm text-[#173043]/60">
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="w-4 h-4 text-[#39c2ba]" />
+                                        {formatDate(interest.event.date)}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <MapPin className="w-4 h-4 text-[#39c2ba]" />
+                                        {typeof interest.event.location === 'object' 
+                                          ? (interest.event.location?.city && interest.event.location?.state 
+                                            ? `${interest.event.location.city}, ${interest.event.location.state}` 
+                                            : (interest.event.city || 'N/A'))
+                                          : (interest.event.city || interest.event.location || 'N/A')}
+                                      </span>
+                                    </div>
+                                    {interest.event.category && (
+                                      <span className="inline-block px-2 py-1 bg-[#f5f8c3] rounded-full text-xs font-medium">
+                                        {interest.event.category}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p className="text-sm text-red-700 flex items-center gap-2">
+                                  <X className="w-4 h-4" />
+                                  Event no longer available
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Message */}
@@ -618,14 +631,16 @@ export default function CorporateInterestsPage() {
                                 </span>
                               </div>
                             )}
-                            <a
-                              href={`/volunteer/${interest.event._id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="py-3 px-6 bg-[#173043] text-white rounded-lg hover:bg-[#173043]/90 transition-colors font-medium flex items-center gap-2 shadow-sm"
-                            >
-                              <Eye className="w-5 h-5" />
-                              View Event
-                            </a>
+                            {interest.event && (
+                              <a
+                                href={`/volunteer/${interest.event._id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="py-3 px-6 bg-[#173043] text-white rounded-lg hover:bg-[#173043]/90 transition-colors font-medium flex items-center gap-2 shadow-sm"
+                              >
+                                  <Eye className="w-4 h-4" />
+                                  View Event
+                                </a>
+                            )}
                           </div>
                         </div>
                       </motion.div>

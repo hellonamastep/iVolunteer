@@ -302,29 +302,30 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className={`absolute ${
-              isMobile ? "right-0" : "right-0"
-            } mt-2 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50`}
+            className={`fixed sm:absolute 
+              left-4 right-4 sm:left-auto sm:right-0
+              mt-2 sm:w-96 max-w-[calc(100vw-2rem)] 
+              bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-blue-600" />
-                <h3 className="text-base font-semibold text-gray-800">Notifications</h3>
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <h3 className="text-sm sm:text-base font-semibold text-gray-800 truncate">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                  <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full flex-shrink-0">
                     {unreadCount}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {notifications.length > 0 && (
                   <button
                     onClick={deleteAllNotifications}
                     className="p-1 hover:bg-white rounded-lg transition-colors text-xs text-red-600 hover:text-red-700"
                     title="Delete all notifications"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>
@@ -333,7 +334,7 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
             {/* Notifications List */}
             <div 
               ref={notificationListRef}
-              className="max-h-[60vh] overflow-y-auto"
+              className="max-h-[60vh] overflow-y-auto overflow-x-hidden"
             >
               {loading ? (
                 <div className="p-8 text-center text-gray-500">
@@ -346,26 +347,26 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
                   <p className="text-sm">No notifications yet</p>
                 </div>
               ) : (
-                <div className="p-4 space-y-2">
+                <div className="p-3 sm:p-4 space-y-2">
                   {notifications.map((notification) => {
                     const NotificationContent = (
                       <div
-                        className={`flex items-start gap-3 p-3 rounded-xl transition-colors cursor-pointer ${
+                        className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl transition-colors cursor-pointer overflow-hidden ${
                           notification.read ? "bg-gray-50 hover:bg-gray-100" : "bg-blue-50 hover:bg-blue-100"
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className={`w-8 h-8 ${getNotificationColor(notification.type)} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 ${getNotificationColor(notification.type)} rounded-full flex items-center justify-center flex-shrink-0`}>
                           {getNotificationIcon(notification.type)}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${notification.read ? "text-gray-700" : "text-gray-900"}`}>
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className={`text-xs sm:text-sm font-medium truncate ${notification.read ? "text-gray-700" : "text-gray-900"}`}>
                             {notification.title}
                           </p>
-                          <p className={`text-xs mt-1 ${notification.read ? "text-gray-500" : "text-gray-600"}`}>
+                          <p className={`text-xs mt-1 break-words overflow-wrap-anywhere line-clamp-2 ${notification.read ? "text-gray-500" : "text-gray-600"}`}>
                             {notification.message}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-400 mt-1 truncate">
                             {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                           </p>
                         </div>
@@ -378,7 +379,7 @@ export function NotificationDropdown({ isMobile = false }: { isMobile?: boolean 
                           className="p-1 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0"
                           title="Delete notification"
                         >
-                          <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-600" />
+                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 hover:text-red-600" />
                         </button>
                       </div>
                     );

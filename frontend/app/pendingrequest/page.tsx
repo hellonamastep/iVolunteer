@@ -7,7 +7,8 @@ import {
   basePointsMap,
   difficultyMap,
 } from "@/contexts/admin-context";
-import { Calendar, MapPin, Clock, Users, Award, CheckCircle, XCircle, Settings } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, Award, CheckCircle, XCircle, Settings, Eye } from "lucide-react";
+import Link from "next/link";
 
 const PendingEventsPage = () => {
   const { pendingEvents, handleApprove, handleDeny } = useAdmin();
@@ -172,7 +173,11 @@ const PendingEventsPage = () => {
                           <div>
                             <p className="text-sm font-medium text-gray-500">Location</p>
                             <p className="text-base font-semibold text-gray-900">
-                              {event.location}
+                              {typeof event.location === 'object' 
+                                ? (event.location?.city && event.location?.state 
+                                  ? `${event.location.city}, ${event.location.state}` 
+                                  : 'N/A')
+                                : event.location}
                             </p>
                           </div>
                         </div>
@@ -181,6 +186,15 @@ const PendingEventsPage = () => {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-green-100">
+                      {/* View Full Detail Button */}
+                      <Link
+                        href={`/volunteer/${event._id}`}
+                        className="group flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                      >
+                        <Eye className="w-5 h-5" />
+                        View Full Detail
+                      </Link>
+
                       {/* Approve Button */}
                       <button
                         onClick={() => setShowApproveConfirm(event._id)}

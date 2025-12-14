@@ -17,7 +17,8 @@ import {
   Heart,
   X,
   Check,
-  Loader2
+  Loader2,
+  Clock
 } from "lucide-react";
 
 interface CorporateEvent {
@@ -49,7 +50,7 @@ const CorporateEventsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [interestStates, setInterestStates] = useState<Record<string, 'none' | 'loading' | 'sent'>>({});
+  const [interestStates, setInterestStates] = useState<Record<string, { state: 'none' | 'loading' | 'sent', status?: 'pending' | 'accepted' | 'rejected' }>>({});
   const [selectedEvent, setSelectedEvent] = useState<CorporateEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -57,25 +58,74 @@ const CorporateEventsPage = () => {
     const fetchCorporateEvents = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/v1/event/approved-corporate");
-        const corporateEvents = (response.data as { events?: CorporateEvent[] })?.events || [];
+        
+        // Fetch from both endpoints - regular corporate events and CSR opportunities
+        const [regularEventsRes, csrOpportunitiesRes] = await Promise.all([
+          api.get("/v1/event/approved-corporate").catch((err) => {
+            console.log("Regular corporate events fetch error:", err);
+            return { data: { events: [] } };
+          }),
+          api.get("/v1/corporate-events/approved").catch((err) => {
+            console.log("CSR opportunities fetch error:", err);
+            return { data: { events: [] } };
+          })
+        ]);
+        
+        const regularEvents = (regularEventsRes.data as { events?: CorporateEvent[] })?.events || [];
+        const csrEvents = (csrOpportunitiesRes.data as { events?: any[] })?.events || [];
+        
+        // Map CSR opportunities to match CorporateEvent interface
+        const mappedCsrEvents: CorporateEvent[] = csrEvents.map((e: any) => ({
+          _id: e._id,
+          title: e.title,
+          description: e.description || e.problemStatement || '',
+          date: e.timeline?.startDate || e.createdAt,
+          location: typeof e.location === 'object' 
+            ? (e.location?.city && e.location?.state ? `${e.location.city}, ${e.location.state}` : '')
+            : (e.location || ''),
+          city: typeof e.location === 'object' 
+            ? (e.location?.city || '')
+            : (e.location || ''),
+          category: e.opportunityType || 'CSR Partnership',
+          volunteersNeeded: 0,
+          image: e.coverImage,
+          corporatePartner: '',
+          csrObjectives: e.csrModes || [],
+          status: e.status,
+          organizationId: e.ngoId ? {
+            _id: e.ngoId._id || '',
+            name: e.ngoId.organizationName || e.ngoId.name || 'NGO',
+            organizationType: 'NGO',
+            email: e.ngoId.email || ''
+          } : undefined
+        }));
+        
+        // Combine both event types
+        const corporateEvents = [...regularEvents, ...mappedCsrEvents];
         setEvents(corporateEvents);
         
         // Check interest status for each event
         const interestPromises = corporateEvents.map(async (event) => {
           try {
             const res = await api.get(`/v1/corporate-interest/check/${event._id}`);
-            const data = res.data as { hasInterest?: boolean };
-            return { eventId: event._id, hasInterest: data.hasInterest };
+            const data = res.data as { hasInterest?: boolean; interest?: { status?: string } };
+            return { 
+              eventId: event._id, 
+              hasInterest: data.hasInterest,
+              status: data.interest?.status as 'pending' | 'accepted' | 'rejected' | undefined
+            };
           } catch {
-            return { eventId: event._id, hasInterest: false };
+            return { eventId: event._id, hasInterest: false, status: undefined };
           }
         });
         
         const interestResults = await Promise.all(interestPromises);
-        const newInterestStates: Record<string, 'none' | 'loading' | 'sent'> = {};
-        interestResults.forEach(({ eventId, hasInterest }) => {
-          newInterestStates[eventId] = hasInterest ? 'sent' : 'none';
+        const newInterestStates: Record<string, { state: 'none' | 'loading' | 'sent', status?: 'pending' | 'accepted' | 'rejected' }> = {};
+        interestResults.forEach(({ eventId, hasInterest, status }) => {
+          newInterestStates[eventId] = { 
+            state: hasInterest ? 'sent' : 'none',
+            status: status
+          };
         });
         setInterestStates(newInterestStates);
       } catch (err: any) {
@@ -122,19 +172,19 @@ const CorporateEventsPage = () => {
   };
 
   const handleExpressInterest = async (eventId: string) => {
-    if (interestStates[eventId] === 'sent') {
+    if (interestStates[eventId]?.state === 'sent') {
       toast.info("You have already expressed interest in this event");
       return;
     }
     
-    setInterestStates(prev => ({ ...prev, [eventId]: 'loading' }));
+    setInterestStates(prev => ({ ...prev, [eventId]: { state: 'loading' } }));
     
     try {
       await api.post(`/v1/corporate-interest/express-interest/${eventId}`);
-      setInterestStates(prev => ({ ...prev, [eventId]: 'sent' }));
+      setInterestStates(prev => ({ ...prev, [eventId]: { state: 'sent', status: 'pending' } }));
       toast.success("Interest sent successfully! The NGO will be notified.");
     } catch (err: any) {
-      setInterestStates(prev => ({ ...prev, [eventId]: 'none' }));
+      setInterestStates(prev => ({ ...prev, [eventId]: { state: 'none' } }));
       toast.error(err.response?.data?.message || "Failed to express interest");
     }
   };
@@ -339,24 +389,38 @@ const CorporateEventsPage = () => {
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleExpressInterest(event._id); }}
-                      disabled={interestStates[event._id] === 'loading' || interestStates[event._id] === 'sent'}
+                      disabled={interestStates[event._id]?.state === 'loading' || interestStates[event._id]?.state === 'sent'}
                       className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-colors ${
-                        interestStates[event._id] === 'sent'
+                        interestStates[event._id]?.status === 'accepted'
                           ? 'bg-green-100 text-green-700 cursor-default'
-                          : interestStates[event._id] === 'loading'
+                          : interestStates[event._id]?.status === 'rejected'
+                          ? 'bg-red-100 text-red-700 cursor-default'
+                          : interestStates[event._id]?.state === 'sent'
+                          ? 'bg-yellow-100 text-yellow-700 cursor-default'
+                          : interestStates[event._id]?.state === 'loading'
                           ? 'bg-gray-100 text-gray-500 cursor-wait'
                           : 'bg-[#f5f8c3] text-[#173043] hover:bg-[#e8eb8a]'
                       }`}
                     >
-                      {interestStates[event._id] === 'loading' ? (
+                      {interestStates[event._id]?.state === 'loading' ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : interestStates[event._id] === 'sent' ? (
+                      ) : interestStates[event._id]?.status === 'accepted' ? (
                         <Check className="w-3 h-3" />
+                      ) : interestStates[event._id]?.status === 'rejected' ? (
+                        <X className="w-3 h-3" />
+                      ) : interestStates[event._id]?.state === 'sent' ? (
+                        <Clock className="w-3 h-3" />
                       ) : (
                         <Heart className="w-3 h-3" />
                       )}
                       <span>
-                        {interestStates[event._id] === 'sent' ? 'Interested' : 'Interested'}
+                        {interestStates[event._id]?.status === 'accepted' 
+                          ? 'Accepted' 
+                          : interestStates[event._id]?.status === 'rejected'
+                          ? 'Rejected'
+                          : interestStates[event._id]?.state === 'sent' 
+                          ? 'Pending' 
+                          : 'Interest'}
                       </span>
                     </button>
                     <button
@@ -465,24 +529,38 @@ const CorporateEventsPage = () => {
               <div className="flex gap-3 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => handleExpressInterest(selectedEvent._id)}
-                  disabled={interestStates[selectedEvent._id] === 'loading' || interestStates[selectedEvent._id] === 'sent'}
+                  disabled={interestStates[selectedEvent._id]?.state === 'loading' || interestStates[selectedEvent._id]?.state === 'sent'}
                   className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-                    interestStates[selectedEvent._id] === 'sent'
+                    interestStates[selectedEvent._id]?.status === 'accepted'
                       ? 'bg-green-100 text-green-700 cursor-default'
-                      : interestStates[selectedEvent._id] === 'loading'
+                      : interestStates[selectedEvent._id]?.status === 'rejected'
+                      ? 'bg-red-100 text-red-700 cursor-default'
+                      : interestStates[selectedEvent._id]?.state === 'sent'
+                      ? 'bg-yellow-100 text-yellow-700 cursor-default'
+                      : interestStates[selectedEvent._id]?.state === 'loading'
                       ? 'bg-gray-100 text-gray-500 cursor-wait'
                       : 'bg-[#f5f8c3] text-[#173043] hover:bg-[#e8eb8a]'
                   }`}
                 >
-                  {interestStates[selectedEvent._id] === 'loading' ? (
+                  {interestStates[selectedEvent._id]?.state === 'loading' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : interestStates[selectedEvent._id] === 'sent' ? (
+                  ) : interestStates[selectedEvent._id]?.status === 'accepted' ? (
                     <Check className="w-4 h-4" />
+                  ) : interestStates[selectedEvent._id]?.status === 'rejected' ? (
+                    <X className="w-4 h-4" />
+                  ) : interestStates[selectedEvent._id]?.state === 'sent' ? (
+                    <Clock className="w-4 h-4" />
                   ) : (
                     <Heart className="w-4 h-4" />
                   )}
                   <span>
-                    {interestStates[selectedEvent._id] === 'sent' ? 'Interest Sent' : 'Express Interest'}
+                    {interestStates[selectedEvent._id]?.status === 'accepted' 
+                      ? 'Interest Accepted' 
+                      : interestStates[selectedEvent._id]?.status === 'rejected'
+                      ? 'Interest Rejected'
+                      : interestStates[selectedEvent._id]?.state === 'sent' 
+                      ? 'Interest Pending' 
+                      : 'Express Interest'}
                   </span>
                 </button>
                 <button

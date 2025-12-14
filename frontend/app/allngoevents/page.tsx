@@ -112,7 +112,11 @@ const Allngopublisheventcta = () => {
             _id: e._id,
             title: e.title,
             date: new Date(e.date).toLocaleDateString(),
-            location: e.location,
+            location: typeof e.location === 'object' 
+              ? (e.location?.city && e.location?.state 
+                ? `${e.location.city}, ${e.location.state}` 
+                : 'N/A')
+              : (e.location || 'N/A'),
             filled: participantCount,
             maxParticipants: e.maxParticipants,
             status: displayStatus,

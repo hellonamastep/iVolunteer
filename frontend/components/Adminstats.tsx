@@ -8,13 +8,16 @@ const Adminstats = () => {
   const {
     pendingEvents,
     pendingDonationEvents,
+    pendingCorporateEvents,
     fetchPendingEvents,
     fetchPendingDonationEvents,
+    fetchPendingCorporateEvents,
   } = useAdmin();
 
   useEffect(() => {
     fetchPendingEvents();
     fetchPendingDonationEvents();
+    fetchPendingCorporateEvents();
   }, []);
 
   const metrics = [
@@ -39,8 +42,18 @@ const Adminstats = () => {
       trend: "charity drives"
     },
     {
+      title: "Pending Corporate Events",
+      value: (pendingCorporateEvents || []).length,
+      icon: <Shield className="w-5 h-5 text-[#8B5CF6]" />,
+      gradient: "from-[#F5F3FF] to-[#EDE9FE]",
+      border: "border-l-4 border-[#8B5CF6]",
+      accent: "bg-[#8B5CF6]/10",
+      description: "CSR opportunities",
+      trend: "corporate partnerships"
+    },
+    {
       title: "Total Events",
-      value: pendingEvents.length + pendingDonationEvents.length,
+      value: pendingEvents.length + pendingDonationEvents.length + (pendingCorporateEvents || []).length,
       icon: <Clock className="w-5 h-5 text-[#4A8BBA]" />,
       gradient: "from-[#F0F7FC] to-[#E4F0F8]",
       border: "border-l-4 border-[#4A8BBA]",
@@ -120,7 +133,7 @@ const Adminstats = () => {
                   
                   {/* Interactive dots */}
                   <div className="flex gap-1.5 mt-6">
-                    {[...Array(3)].map((_, i) => (
+                    {[...Array(4)].map((_, i) => (
                       <div
                         key={i}
                         className={`w-2 h-2 rounded-full transition-all duration-500 ${
@@ -128,8 +141,10 @@ const Adminstats = () => {
                             ? "bg-[#5D8A6E]" 
                             : i === 1 
                             ? "bg-[#A56CB4]" 
+                            : i === 2
+                            ? "bg-[#8B5CF6]"
                             : "bg-[#4A8BBA]"
-                        } ${i === index % 3 ? "opacity-100 scale-110" : "opacity-30"}`}
+                        } ${i === index % 4 ? "opacity-100 scale-110" : "opacity-30"}`}
                       />
                     ))}
                   </div>

@@ -103,47 +103,19 @@ export const addEvent = asyncHandler(async (req, res) => {
   });
 });
 
-// ngoEvent.controller.js (filtered by city for non-admin users)
+// ngoEvent.controller.js - Show ALL events to everyone (removed location filtering)
 const getAllPublishedEvents = asyncHandler(async (req, res) => {
   console.log('\n=== GET ALL PUBLISHED EVENTS ===');
   console.log('Request query:', req.query);
   console.log('User:', req.user ? { role: req.user.role, city: req.user.city, addressCity: req.user.address?.city } : 'Not authenticated');
   
-  // Check if user wants to see all events (showAll=true parameter)
-  const shouldShowAll = req.query.showAll === 'true';
+  // REMOVED LOCATION FILTERING - Show all events to everyone regardless of location
+  // Users will be prompted with a confirmation dialog if they try to join events from different locations
+  console.log('Showing all events - location filtering removed');
   
-  // Build query filter based on user role
-  let locationFilter = null;
-  
-  // Admins can see all events, others see events from their city + global events
-  // Unless showAll is explicitly requested
-  if (req.user && req.user.role !== 'admin' && !shouldShowAll) {
-    // Get the user's city
-    let userCity;
-    if (req.user.role === 'user') {
-      userCity = req.user.city;
-    } else if (req.user.role === 'ngo' || req.user.role === 'corporate') {
-      userCity = req.user.address?.city;
-    }
-
-    if (userCity) {
-      // Filter by user's city OR global events
-      locationFilter = {
-        $or: [
-          { location: new RegExp(`^${userCity.trim()}$`, 'i') },
-          { location: 'global' }
-        ]
-      };
-      console.log('User city for events:', userCity);
-      console.log('Filtered view - showing local + global events');
-    }
-  } else {
-    console.log(shouldShowAll ? 'Show all requested - showing all events' : 'Admin user - showing all events');
-  }
-  
-  const events = await ngoEventService.getAllPublishedEvents(locationFilter);
+  const events = await ngoEventService.getAllPublishedEvents(null);
   console.log('Events returned from service:', events.length);
-  console.log('Event statuses:', events.map(e => ({ title: e.title, status: e.status })));
+  console.log('Event statuses:', events.map(e => ({ title: e.title, status: e.status, location: e.location })));
   console.log('=================================\n');
   
   res.status(200).json({

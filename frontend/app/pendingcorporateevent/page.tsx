@@ -6,34 +6,55 @@ import {
   Calendar,
   MapPin,
   Clock,
-  DollarSign,
+  IndianRupee,
   Users,
   Briefcase,
   Target,
   Settings,
   Award,
+  Eye,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 interface EventItem {
   _id: string;
   title: string;
-  description: string;
-  location: string;
-  date: string;
-  time: string;
-  duration: string;
-  category: string;
-  imageUrl: string;
+  description?: string;
+  location?: string;
+  date?: string;
+  time?: string;
+  duration?: string;
+  category?: string;
+  imageUrl?: string;
   organizationId?: {
     _id: string;
     organizationName: string;
+  };
+  ngoId?: {
+    _id?: string;
+    name?: string;
+    organizationName?: string;
+    email?: string;
   };
   corporatePartner?: string;
   csrObjectives?: string[];
   eventType?: string;
   maxParticipants?: number;
-  budget?: string;
+  budget?: any;
+  opportunityType?: string;
+  coverImage?: {
+    url?: string;
+    publicId?: string;
+  };
+  problemStatement?: string;
+  timeline?: {
+    startDate?: string;
+    endDate?: string;
+  };
+  csrModes?: string[];
+  csrActAlignment?: string[];
+  [key: string]: any;
 }
 
 // Point calculation maps
@@ -113,7 +134,7 @@ const PendingCorporateEventsPage = () => {
   };
 
   const getEventById = (eventId: string): EventItem | undefined => {
-    return pendingCorporateEvents?.find((event: EventItem) => event._id === eventId);
+    return pendingCorporateEvents?.find((event) => event._id === eventId) as EventItem | undefined;
   };
 
   return (
@@ -151,7 +172,7 @@ const PendingCorporateEventsPage = () => {
           </div>
         ) : (
           <div className="grid gap-6 animate-in fade-in slide-in-from-bottom duration-700">
-            {pendingCorporateEvents.map((event: EventItem, index: number) => {
+            {pendingCorporateEvents.map((event: any, index: number) => {
               const isLoading = loadingAction === event._id;
               return (
                 <div
@@ -162,9 +183,9 @@ const PendingCorporateEventsPage = () => {
                   <div className="md:flex">
                     {/* Event Image */}
                     <div className="md:w-72 h-64 md:h-auto relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100">
-                      {event.imageUrl ? (
+                      {(event.coverImage?.url || event.imageUrl) ? (
                         <img
-                          src={event.imageUrl}
+                          src={event.coverImage?.url || event.imageUrl}
                           alt={event.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
@@ -175,7 +196,7 @@ const PendingCorporateEventsPage = () => {
                       )}
                       <div className="absolute top-4 left-4">
                         <span className="px-3 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full shadow-lg">
-                          {event.category || "Corporate"}
+                          {event.opportunityType || event.category || "Corporate"}
                         </span>
                       </div>
                     </div>
@@ -186,39 +207,49 @@ const PendingCorporateEventsPage = () => {
                         {event.title}
                       </h2>
                       
-                      <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                      <p className="text-gray-600 mb-4 line-clamp-2">
+                        {event.problemStatement || event.description || 'No description available'}
+                      </p>
 
                       {/* Corporate-specific Info */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                        {event.organizationId && (
+                        {(event.ngoId || event.organizationId) && (
                           <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg border border-orange-200">
                             <Users className="w-4 h-4 text-orange-600 flex-shrink-0" />
                             <span className="text-sm text-gray-700 truncate">
-                              {event.organizationId.organizationName}
+                              {event.ngoId?.name || event.ngoId?.organizationName || event.organizationId?.organizationName || 'NGO'}
                             </span>
                           </div>
                         )}
 
-                        {event.corporatePartner && (
+                        {event.opportunityType && (
                           <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg border border-purple-200">
                             <Briefcase className="w-4 h-4 text-purple-600 flex-shrink-0" />
                             <span className="text-sm text-gray-700 truncate">
-                              {event.corporatePartner}
+                              {event.opportunityType}
                             </span>
                           </div>
                         )}
 
                         <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
                           <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 truncate">{event.location}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
-                          <Calendar className="w-4 h-4 text-green-600 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">
-                            {new Date(event.date).toLocaleDateString()}
+                          <span className="text-sm text-gray-700 truncate">
+                            {typeof event.location === 'object' 
+                              ? (event.location?.city && event.location?.state 
+                                ? `${event.location.city}, ${event.location.state}` 
+                                : 'N/A')
+                              : (event.location || 'N/A')}
                           </span>
                         </div>
+
+                        {event.timeline?.startDate && (
+                          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                            <Calendar className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="text-sm text-gray-700">
+                              {new Date(event.timeline.startDate).toLocaleDateString()} - {new Date(event.timeline.endDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
 
                         {event.time && (
                           <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
@@ -234,10 +265,12 @@ const PendingCorporateEventsPage = () => {
                           </div>
                         )}
 
-                        {event.budget && (
+                        {event.budget && typeof event.budget === 'object' && event.budget.totalAmount && (
                           <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200">
-                            <DollarSign className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                            <span className="text-sm text-gray-700">{event.budget}</span>
+                            <IndianRupee className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                            <span className="text-sm text-gray-700">
+                              Budget: ₹{event.budget.totalAmount.toLocaleString()}
+                            </span>
                           </div>
                         )}
 
@@ -251,7 +284,46 @@ const PendingCorporateEventsPage = () => {
                         )}
                       </div>
 
-                      {/* CSR Objectives */}
+                      {/* CSR Modes */}
+                      {event.csrModes && event.csrModes.length > 0 && (
+                        <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-semibold text-blue-900">CSR Modes:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {event.csrModes.map((mode: string, idx: number) => (
+                              <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full border border-blue-200">
+                                {mode}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CSR Act Alignment */}
+                      {event.csrActAlignment && event.csrActAlignment.length > 0 && (
+                        <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Target className="w-4 h-4 text-purple-600" />
+                            <span className="text-sm font-semibold text-purple-900">CSR Act Alignment:</span>
+                          </div>
+                          <ul className="space-y-1 ml-6">
+                            {event.csrActAlignment.slice(0, 3).map((objective: string, idx: number) => (
+                              <li key={idx} className="text-sm text-gray-700 list-disc">
+                                {objective}
+                              </li>
+                            ))}
+                            {event.csrActAlignment.length > 3 && (
+                              <li className="text-sm text-purple-600 font-medium">
+                                +{event.csrActAlignment.length - 3} more
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* CSR Objectives (legacy field) */}
                       {event.csrObjectives && event.csrObjectives.length > 0 && (
                         <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                           <div className="flex items-center gap-2 mb-2">
@@ -259,7 +331,7 @@ const PendingCorporateEventsPage = () => {
                             <span className="text-sm font-semibold text-purple-900">CSR Objectives:</span>
                           </div>
                           <ul className="space-y-1 ml-6">
-                            {event.csrObjectives.slice(0, 3).map((objective, idx) => (
+                            {event.csrObjectives.slice(0, 3).map((objective: string, idx: number) => (
                               <li key={idx} className="text-sm text-gray-700 list-disc">
                                 {objective}
                               </li>
@@ -275,6 +347,13 @@ const PendingCorporateEventsPage = () => {
 
                       {/* Action Buttons */}
                       <div className="flex gap-3 mt-4">
+                        <Link
+                          href={`/volunteer/${event._id}?type=csr`}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                        >
+                          <Eye className="w-5 h-5" />
+                          View Full Detail
+                        </Link>
                         <button
                           onClick={() => onApprove(event._id)}
                           disabled={isLoading}

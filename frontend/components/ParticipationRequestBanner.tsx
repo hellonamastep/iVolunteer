@@ -53,20 +53,20 @@ export const ParticipationRequestBanner: React.FC = () => {
   }
 
   return (
-    <div className="space-y-3 mb-6">
+    <div className="space-y-3 mb-6 w-full overflow-hidden">
       {/* Pending Requests Banner */}
       {pendingRequests.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Clock className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <h4 className="font-semibold text-yellow-900 mb-1">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2.5 sm:p-3 md:p-4 w-full overflow-hidden">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <h4 className="font-semibold text-yellow-900 mb-1 text-sm sm:text-base truncate">
                 {pendingRequests.length} Participation Request{pendingRequests.length > 1 ? 's' : ''} Pending
               </h4>
-              <div className="text-sm text-yellow-800 space-y-1">
+              <div className="text-xs sm:text-sm text-yellow-800 space-y-1">
                 {pendingRequests.slice(0, 3).map((request) => (
-                  <p key={request._id}>
-                    <span className="font-medium">"{request.eventId?.title || "Event"}"</span> - 
+                  <p key={request._id} className="break-words overflow-wrap-anywhere">
+                    <span className="font-medium break-words">"{request.eventId?.title || "Event"}"</span> - 
                     Requested participation for {request.eventId?.date ? new Date(request.eventId.date).toLocaleDateString() : "an event"}
                   </p>
                 ))}
@@ -85,39 +85,39 @@ export const ParticipationRequestBanner: React.FC = () => {
       {recentStatusUpdates.map((request) => (
         <div
           key={request._id}
-          className={`border rounded-lg p-4 ${
+          className={`border rounded-lg p-2.5 sm:p-3 md:p-4 w-full overflow-hidden ${
             request.status === "accepted"
               ? "bg-green-50 border-green-200"
               : "bg-red-50 border-red-200"
           }`}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2 sm:gap-3">
             {request.status === "accepted" ? (
-              <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 flex-shrink-0" />
             )}
-            <div className="flex-1">
-              <h4 className={`font-semibold mb-1 ${
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <h4 className={`font-semibold mb-1 text-sm sm:text-base truncate ${
                 request.status === "accepted" ? "text-green-900" : "text-red-900"
               }`}>
                 Participation Request {request.status === "accepted" ? "Accepted" : "Rejected"}
               </h4>
-              <div className={`text-sm ${
+              <div className={`text-xs sm:text-sm ${
                 request.status === "accepted" ? "text-green-800" : "text-red-800"
               }`}>
-                <p className="mb-1">
-                  <span className="font-medium">"{request.eventId?.title || "Event"}"</span>
+                <p className="mb-1 break-words overflow-wrap-anywhere">
+                  <span className="font-medium break-words">"{request.eventId?.title || "Event"}"</span>
                   {" "}- Your participation request has been {request.status === "accepted" ? "accepted" : "rejected"}.
                 </p>
                 {request.status === "rejected" && request.rejectionReason && (
-                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
+                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200 overflow-hidden">
                     <p className="text-red-900 font-medium text-xs mb-1">Rejection Reason:</p>
-                    <p className="text-red-800 text-sm italic">"{request.rejectionReason}"</p>
+                    <p className="text-red-800 text-xs sm:text-sm italic break-words overflow-wrap-anywhere">"{request.rejectionReason}"</p>
                   </div>
                 )}
                 {request.status === "accepted" && (
-                  <p className="text-green-700 font-medium mt-1">
+                  <p className="text-green-700 font-medium mt-1 break-words">
                     You are now confirmed as a participant for this event!
                   </p>
                 )}
@@ -125,14 +125,14 @@ export const ParticipationRequestBanner: React.FC = () => {
             </div>
             <button
               onClick={() => dismissBanner(request._id)}
-              className={`p-1 rounded-full hover:bg-opacity-20 transition-colors ${
+              className={`p-1 rounded-full hover:bg-opacity-20 transition-colors flex-shrink-0 ${
                 request.status === "accepted" 
                   ? "text-green-600 hover:bg-green-600" 
                   : "text-red-600 hover:bg-red-600"
               }`}
               title="Dismiss notification"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3 h-3 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>

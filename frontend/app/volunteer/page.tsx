@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { ParticipationRequestBanner } from "@/components/ParticipationRequestBanner";
 import { SpecialEventsSection } from "@/components/SpecialEventsSection";
 import { VolunteerEventCard } from "@/components/VolunteerEventCard";
+import { LocationConfirmationDialog } from "@/components/LocationConfirmationDialog";
 import { toast } from "@/hooks/use-toast";
 import Footer from "@/components/Footer";
 import Pagination from "@/components/Pagination";
@@ -79,9 +80,13 @@ const AvailableEventsContent: React.FC = () => {
   );
   const [activeTab, setActiveTab] = useState<'virtual' | 'in-person' | 'community' | 'special'>('virtual');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  // TEMPORARY FIX: Always show all events regardless of user's city
-  const [showAllEvents, setShowAllEvents] = useState(true); // Changed from: !user
+  // Always show all events regardless of user's city (location filtering removed)
+  const [showAllEvents, setShowAllEvents] = useState(true);
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
+  // Location confirmation dialog states
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+  const [pendingEventLocation, setPendingEventLocation] = useState<string>('');
   const [filterType, setFilterType] = useState<'all' | 'joined' | 'shortlisted'>('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -99,6 +104,8 @@ const AvailableEventsContent: React.FC = () => {
   // NGO Status Banner states
   const [myVolunteerEvents, setMyVolunteerEvents] = useState<any[]>([]);
   const [loadingMyEvents, setLoadingMyEvents] = useState(false);
+  const [myCorporateEvents, setMyCorporateEvents] = useState<any[]>([]);
+  const [loadingCorporateEvents, setLoadingCorporateEvents] = useState(false);
   const [dismissedBanners, setDismissedBanners] = useState<{
     rejectedBanner: boolean;
     approvedBanner: boolean;
@@ -184,10 +191,33 @@ const AvailableEventsContent: React.FC = () => {
     }
   };
 
+  // Fetch NGO's CSR opportunities
+  const fetchMyCorporateEvents = async () => {
+    if (!user || user.role !== 'ngo') return;
+    
+    setLoadingCorporateEvents(true);
+    try {
+      const token = localStorage.getItem("auth-token");
+      if (!token) return;
+
+      const res = await api.get<{ success: boolean; events: any[] }>(
+        `/v1/corporate-events/my-events`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setMyCorporateEvents(res.data.events || []);
+    } catch (err) {
+      console.error("Failed to fetch NGO's CSR opportunities", err);
+    } finally {
+      setLoadingCorporateEvents(false);
+    }
+  };
+
   // Fetch NGO's events when user is authenticated
   useEffect(() => {
     if (user?.role === 'ngo') {
       fetchMyVolunteerEvents();
+      fetchMyCorporateEvents();
     }
   }, [user]);
 
@@ -269,7 +299,7 @@ const AvailableEventsContent: React.FC = () => {
       // For other filters, respect the active tab
       const matchesTab = filterType === 'joined' ? true : eventType === activeTab;
       
-      // Filter by type (all, joined, shortlisted)
+      // Filter by type (joined, shortlisted)
       let matchesFilter = true;
       if (filterType === 'joined') {
         const currentUserId = user?._id || "";
@@ -360,6 +390,10 @@ const AvailableEventsContent: React.FC = () => {
     const rejected = myVolunteerEvents.filter(e => e.status === "rejected");
     const approved = myVolunteerEvents.filter(e => e.status === "approved");
     
+    const corporatePending = myCorporateEvents.filter(e => e.status === "pending");
+    const corporateRejected = myCorporateEvents.filter(e => e.status === "rejected");
+    const corporateApproved = myCorporateEvents.filter(e => e.status === "approved");
+    
     // Count approved events by their display status
     const openCount = approved.filter(e => {
       const participantCount = e.participants?.length || 0;
@@ -382,14 +416,23 @@ const AvailableEventsContent: React.FC = () => {
       approved,
       openCount,
       ongoingCount,
-      fullCount
+      fullCount,
+      corporate: {
+        totalEvents: myCorporateEvents.length,
+        pending: corporatePending,
+        rejected: corporateRejected,
+        approved: corporateApproved,
+      }
     };
-  }, [myVolunteerEvents]);
+  }, [myVolunteerEvents, myCorporateEvents]);
 
-  // Count events by type
+  // Count events by type (excluding archived events with shouldHide: true)
   const eventCounts = useMemo(() => {
+    // Filter out archived events (shouldHide: true)
+    const visibleEvents = events.filter(e => !(e as any).shouldHide);
+    
     const currentUserId = user?._id || "";
-    const joinedCount = events.filter(e => 
+    const joinedCount = visibleEvents.filter(e => 
       (e._id && participated[e._id]) || 
       (Array.isArray(e.participants) && 
        e.participants.some((participant: any) => 
@@ -398,10 +441,10 @@ const AvailableEventsContent: React.FC = () => {
     ).length;
     
     return {
-      virtual: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'virtual').length,
-      'in-person': events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'in-person').length,
-      community: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'community').length,
-      special: events.filter(e => (e.eventType?.toLowerCase() || 'community') === 'special').length,
+      virtual: visibleEvents.filter(e => (e.eventType?.toLowerCase() || 'community') === 'virtual').length,
+      'in-person': visibleEvents.filter(e => (e.eventType?.toLowerCase() || 'community') === 'in-person').length,
+      community: visibleEvents.filter(e => (e.eventType?.toLowerCase() || 'community') === 'community').length,
+      special: visibleEvents.filter(e => (e.eventType?.toLowerCase() || 'community') === 'special').length,
       joined: joinedCount,
       completed: 0, // TODO: Implement when completed events tracking is available
       youth: 6, // Static for now
@@ -419,6 +462,29 @@ const AvailableEventsContent: React.FC = () => {
   };
 
   const handleParticipate = async (eventId: string) => {
+    // Check if user is from different location
+    const event = events.find(e => e._id === eventId);
+    if (!event) return;
+    
+    const userCity = user?.city?.toLowerCase().trim();
+    const eventLocationStr = typeof event.location === 'object' 
+      ? (event.location?.city || '') 
+      : (event.location || '');
+    const eventLocation = eventLocationStr.toLowerCase().trim();
+    
+    // If locations are different and not 'global', show confirmation dialog
+    if (userCity && eventLocation && eventLocation !== 'global' && userCity !== eventLocation) {
+      setPendingEventId(eventId);
+      setPendingEventLocation(eventLocationStr);
+      setShowLocationDialog(true);
+      return;
+    }
+    
+    // If locations match or event is global, proceed directly
+    await submitParticipationRequest(eventId);
+  };
+  
+  const submitParticipationRequest = async (eventId: string) => {
     setParticipating((prev) => ({ ...prev, [eventId]: true }));
 
     try {
@@ -432,6 +498,21 @@ const AvailableEventsContent: React.FC = () => {
     } finally {
       setParticipating((prev) => ({ ...prev, [eventId]: false }));
     }
+  };
+  
+  const handleLocationConfirm = async () => {
+    setShowLocationDialog(false);
+    if (pendingEventId) {
+      await submitParticipationRequest(pendingEventId);
+      setPendingEventId(null);
+      setPendingEventLocation('');
+    }
+  };
+  
+  const handleLocationCancel = () => {
+    setShowLocationDialog(false);
+    setPendingEventId(null);
+    setPendingEventLocation('');
   };
 
   const handleCardClick = (eventId: string) => {
@@ -702,6 +783,51 @@ const AvailableEventsContent: React.FC = () => {
                 isDismissed={dismissedBanners.approvedBanner}
               />
             )}
+
+            {/* CSR Opportunities Status Banners */}
+            {myEventStats.corporate.pending.length > 0 && (
+              <StatusBanner
+                type="pending"
+                icon={AlertCircle}
+                count={myEventStats.corporate.pending.length}
+                title={`${myEventStats.corporate.pending.length} CSR Opportunit${myEventStats.corporate.pending.length > 1 ? 'ies' : 'y'} Awaiting Approval`}
+                message={
+                  <>
+                    You have {myEventStats.corporate.pending.length} CSR opportunit{myEventStats.corporate.pending.length > 1 ? 'ies' : 'y'} pending admin approval. 
+                    {myEventStats.corporate.pending.length > 1 ? ' They' : ' It'} will be visible to corporates once approved.
+                    <span className="font-semibold ml-1 underline">View details.</span>
+                  </>
+                }
+                onClick={() => router.push('/managecopertaeevent')}
+              />
+            )}
+
+            {myEventStats.corporate.rejected.length > 0 && (
+              <StatusBanner
+                type="rejected"
+                icon={XCircle}
+                count={myEventStats.corporate.rejected.length}
+                title={`${myEventStats.corporate.rejected.length} CSR Opportunit${myEventStats.corporate.rejected.length > 1 ? 'ies' : 'y'} Rejected`}
+                message={
+                  <div className="space-y-2">
+                    {myEventStats.corporate.rejected.map((event: any, index: number) => (
+                      <div key={event._id} className={index > 0 ? "mt-2 pt-2 border-t border-red-200/50" : ""}>
+                        <p className="font-medium leading-relaxed">
+                          "{event.title}" was rejected by admin
+                          {event.rejectionReason && (
+                            <span className="font-normal"> for: <span className="italic">"{event.rejectionReason}"</span></span>
+                          )}
+                        </p>
+                      </div>
+                    ))}
+                    <p className="font-semibold mt-3 underline">Review your rejected CSR opportunities.</p>
+                  </div>
+                }
+                onClick={() => router.push('/managecopertaeevent')}
+                onDismiss={() => dismissBanner('corporateRejectedBanner')}
+                isDismissed={dismissedBanners.corporateRejectedBanner}
+              />
+            )}
           </div>
         )}
 
@@ -814,10 +940,9 @@ const AvailableEventsContent: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('virtual');
-                setFilterType('all');
               }}
               className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
-                activeTab === 'virtual' && filterType === 'all'
+                activeTab === 'virtual' && filterType !== 'joined' && filterType !== 'shortlisted'
                   ? 'bg-white text-teal-600 border-teal-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
@@ -830,10 +955,9 @@ const AvailableEventsContent: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('in-person');
-                setFilterType('all');
               }}
               className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
-                activeTab === 'in-person' && filterType === 'all'
+                activeTab === 'in-person' && filterType !== 'joined' && filterType !== 'shortlisted'
                   ? 'bg-white text-emerald-600 border-emerald-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
@@ -846,10 +970,9 @@ const AvailableEventsContent: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('community');
-                setFilterType('all');
               }}
               className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
-                activeTab === 'community' && filterType === 'all'
+                activeTab === 'community' && filterType !== 'joined' && filterType !== 'shortlisted'
                   ? 'bg-white text-purple-600 border-purple-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
@@ -862,10 +985,9 @@ const AvailableEventsContent: React.FC = () => {
             <button
               onClick={() => {
                 setActiveTab('special');
-                setFilterType('all');
               }}
               className={`px-3 sm:px-6 py-2 font-medium rounded-lg border-b-2 shadow-sm transition-all text-xs sm:text-sm ${
-                activeTab === 'special' && filterType === 'all'
+                activeTab === 'special' && filterType !== 'joined' && filterType !== 'shortlisted'
                   ? 'bg-white text-amber-600 border-amber-500' 
                   : 'bg-white/70 text-gray-600 border-transparent hover:bg-white'
               }`}
@@ -895,29 +1017,29 @@ const AvailableEventsContent: React.FC = () => {
                 >
                   <div className="flex flex-col p-2">
                     <button
-                      onClick={() => { setActiveTab('virtual'); setFilterType('all'); setMobileMenuOpen(false); }}
-                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'virtual' && filterType === 'all' ? 'font-semibold text-teal-600' : 'text-gray-700'}`}
+                      onClick={() => { setActiveTab('virtual'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'virtual' && filterType !== 'joined' && filterType !== 'shortlisted' ? 'font-semibold text-teal-600' : 'text-gray-700'}`}
                     >
                       💻 Virtual ({eventCounts.virtual})
                     </button>
 
                     <button
-                      onClick={() => { setActiveTab('in-person'); setFilterType('all'); setMobileMenuOpen(false); }}
-                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'in-person' && filterType === 'all' ? 'font-semibold text-emerald-600' : 'text-gray-700'}`}
+                      onClick={() => { setActiveTab('in-person'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'in-person' && filterType !== 'joined' && filterType !== 'shortlisted' ? 'font-semibold text-emerald-600' : 'text-gray-700'}`}
                     >
                       📍 In-Person ({eventCounts['in-person']})
                     </button>
 
                     <button
-                      onClick={() => { setActiveTab('community'); setFilterType('all'); setMobileMenuOpen(false); }}
-                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'community' && filterType === 'all' ? 'font-semibold text-purple-600' : 'text-gray-700'}`}
+                      onClick={() => { setActiveTab('community'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'community' && filterType !== 'joined' && filterType !== 'shortlisted' ? 'font-semibold text-purple-600' : 'text-gray-700'}`}
                     >
                       🌍 Community ({eventCounts.community})
                     </button>
 
                     <button
-                      onClick={() => { setActiveTab('special'); setFilterType('all'); setMobileMenuOpen(false); }}
-                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'special' && filterType === 'all' ? 'font-semibold text-amber-600' : 'text-gray-700'}`}
+                      onClick={() => { setActiveTab('special'); setMobileMenuOpen(false); }}
+                      className={`text-left px-3 py-2 rounded-md hover:bg-gray-50 ${activeTab === 'special' && filterType !== 'joined' && filterType !== 'shortlisted' ? 'font-semibold text-amber-600' : 'text-gray-700'}`}
                     >
                       ✨ Special ({eventCounts.special})
                     </button>
@@ -974,19 +1096,6 @@ const AvailableEventsContent: React.FC = () => {
 
           {/* Filters and Actions */}
           <div className="flex items-center gap-2 sm:gap-3 mb-6 flex-wrap">
-            <button
-              onClick={() => setFilterType('all')}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
-                filterType === 'all' 
-                  ? 'bg-teal-500 text-white border-teal-500' 
-                  : 'bg-white text-gray-700 border-gray-200'
-              }`}
-            >
-              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">All Events ({events.length})</span>
-              <span className="sm:hidden">All ({events.length})</span>
-            </button>
-            
             <button
               onClick={() => setFilterType('joined')}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full border shadow-sm hover:shadow-md transition-all duration-300 font-medium text-xs sm:text-sm ${
@@ -1131,6 +1240,15 @@ const AvailableEventsContent: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Location Confirmation Dialog */}
+      <LocationConfirmationDialog
+        isOpen={showLocationDialog}
+        userCity={user?.city}
+        eventLocation={pendingEventLocation}
+        onConfirm={handleLocationConfirm}
+        onCancel={handleLocationCancel}
+      />
 
       <Footer/>
     </div>
