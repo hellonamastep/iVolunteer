@@ -1097,8 +1097,9 @@ const CreateCSROpportunityForm: React.FC = () => {
                                   value: /^[1-9][0-9]{5}$/, 
                                   message: "Invalid pincode format" 
                                 },
-                                minLength: { value: 6, message: "Pincode must be 6 digits" },
-                                maxLength: { value: 6, message: "Pincode must be 6 digits" }
+                                validate: {
+                                  length: (value) => (value?.trim().length || 0) === 6 || "Pincode must be 6 digits"
+                                }
                               })}
                               type="text"
                               maxLength={6}
@@ -1177,7 +1178,7 @@ const CreateCSROpportunityForm: React.FC = () => {
                         <textarea
                           {...register("proposedSolution", {
                             required: "Proposed solution is required",
-                            minLength: { value: 50, message: "Please provide a detailed solution (min 50 characters)" }
+                            validate: (value) => (value?.trim().length || 0) >= 50 || "Please provide a detailed solution (min 50 characters, excluding spaces)"
                           })}
                           rows={5}
                           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
