@@ -153,7 +153,7 @@ export default function Sponsorshipopp() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="group bg-white text-[#2563eb] px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-3">
                 <Heart className="w-5 h-5" />
-                <Link href="/allsponsorshipevents">
+                <Link href="/allcorporateevents">
                 Explore Opportunities
                 </Link>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

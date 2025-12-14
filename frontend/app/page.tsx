@@ -112,14 +112,14 @@ function NGODashboard() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] relative">
+    <div className="min-h-screen bg-[#E8F8F7] min-w-[350px] w-full relative overflow-x-hidden">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <Header />
       </div>
 
       {/* Main Content - with padding top to account for fixed header */}
-      <div className="pt-16">
+      <div className="pt-16 w-full">
         {/* Decorative background pattern circles */}
         <div className="absolute w-32 h-32 bg-[#5BCCC4] opacity-[0.05] rounded-full top-16 left-16"></div>
         <div className="absolute w-40 h-40 bg-[#8CE27A] opacity-[0.06] rounded-full top-[432px] right-64"></div>
@@ -282,7 +282,7 @@ function NGODashboard() {
               </div> */}
 
               {/* Corporate Interests Section */}
-              <div className="max-w-[1200px] px-4 md:px-8 mt-8">
+              <div className="w-full mt-8">
                 <CorporateInterestsSection />
               </div>
             </div>
@@ -293,7 +293,7 @@ function NGODashboard() {
             </div> */}
           </div>
 
-          <div className="flex md:flex-row flex-col w-full px-4 md:px-8 gap-6 mt-8 max-w-[1200px] mx-auto">
+          <div className="flex flex-col md:flex-row w-full px-4 md:px-8 gap-4 md:gap-6 mt-8 max-w-[1200px] mx-auto">
             <Eventbutton />
             <Donationeventbutton />
             <Corporateeventbutton />

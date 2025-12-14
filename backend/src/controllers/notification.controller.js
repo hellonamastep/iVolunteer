@@ -209,7 +209,7 @@ export const notificationService = {
         type: "event_approved",
         title: "Event Approved",
         message: `Your event "${eventTitle}" has been approved`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId },
       });
     } catch (error) {
@@ -224,7 +224,7 @@ export const notificationService = {
         type: "event_rejected",
         title: "Event Rejected",
         message: `Your event "${eventTitle}" was rejected. Reason: ${reason}`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId },
       });
     } catch (error) {
@@ -240,7 +240,7 @@ export const notificationService = {
         type: "participation_request",
         title: "New Participation Request",
         message: `${volunteerName} has requested to join "${eventTitle}"`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId },
       });
     } catch (error) {
@@ -256,7 +256,7 @@ export const notificationService = {
         type: "volunteer_joined",
         title: "Volunteer Joined Event",
         message: `${volunteerName} has joined "${eventTitle}"`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId },
       });
     } catch (error) {
@@ -469,7 +469,7 @@ export const notificationService = {
         type: "new_corporate_interest",
         title: "New Corporate Interest Received",
         message: `${corporateName} has expressed interest in your corporate event "${eventTitle}"`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId },
       });
       console.log(`[Notification] New interest notification sent to NGO`);

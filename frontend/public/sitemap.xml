@@ -8,7 +8,6 @@
   <!-- Public Pages -->
   <url><loc>https://www.namastep.com/</loc></url>
   <url><loc>https://www.namastep.com/aboutus</loc></url>
-  <url><loc>https://www.namastep.com/activities</loc></url>
   <url><loc>https://www.namastep.com/volunteer</loc></url>
   <url><loc>https://www.namastep.com/donate</loc></url>
   <url><loc>https://www.namastep.com/blogs</loc></url>
@@ -23,7 +22,6 @@
   <url><loc>https://www.namastep.com/forgot-password</loc></url>
 
   <!-- User Dashboard -->
-  <url><loc>https://www.namastep.com/dashboard</loc></url>
   <url><loc>https://www.namastep.com/profile</loc></url>
   <url><loc>https://www.namastep.com/badges</loc></url>
   <url><loc>https://www.namastep.com/rewards</loc></url>
@@ -31,7 +29,6 @@
   <url><loc>https://www.namastep.com/volunteer/my-events</loc></url>
 
   <!-- NGO Dashboard -->
-  <url><loc>https://www.namastep.com/ngo-dashboard</loc></url>
   <url><loc>https://www.namastep.com/add-event</loc></url>
   <url><loc>https://www.namastep.com/donationevent-form</loc></url>
 
@@ -40,9 +37,7 @@
   <url><loc>https://www.namastep.com/corporate/events</loc></url>
 
   <!-- Admin Dashboard -->
-  <url><loc>https://www.namastep.com/admin</loc></url>
   <url><loc>https://www.namastep.com/donationpendingreq</loc></url>
-  <url><loc>https://www.namastep.com/endeventarchive</loc></url>
   <url><loc>https://www.namastep.com/manageblogs</loc></url>
   <url><loc>https://www.namastep.com/pendingrequest</loc></url>
 

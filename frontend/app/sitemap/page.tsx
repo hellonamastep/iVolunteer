@@ -19,7 +19,6 @@ const SitemapPage = () => {
       links: [
         { name: "Home", href: "/" },
         { name: "About Us", href: "/aboutus" },
-        { name: "Activities", href: "/activities" },
         { name: "Volunteer", href: "/volunteer" },
         { name: "Donate", href: "/donate" },
         { name: "Blogs", href: "/blogs" },
@@ -46,7 +45,7 @@ const SitemapPage = () => {
       icon: "👤",
       description: "Volunteer user account sections",
       links: [
-        { name: "Dashboard", href: "/dashboard" },
+        { name: "Dashboard", href: "/" },
         { name: "Profile", href: "/profile" },
         { name: "Badges", href: "/badges" },
         { name: "Rewards", href: "/rewards" },
@@ -60,7 +59,6 @@ const SitemapPage = () => {
       icon: "🤝",
       description: "NGO organization management",
       links: [
-        { name: "NGO Dashboard", href: "/ngo-dashboard" },
         { name: "Add Event", href: "/add-event" },
         { name: "Donation Event Form", href: "/donationevent-form" }
       ]
@@ -228,8 +226,8 @@ const SitemapPage = () => {
             <div className="text-3xl mb-4">🤝</div>
             <h3 className="text-xl font-bold mb-3">Join Events</h3>
             <p className="text-purple-100 mb-6">Find volunteering opportunities that match your interests.</p>
-            <SitemapLink href="/activities" className="inline-flex items-center px-5 py-2.5 bg-white text-purple-600 font-semibold rounded-xl hover:bg-purple-50 transition-colors duration-200">
-              Browse Activities
+            <SitemapLink href="/volunteer" className="inline-flex items-center px-5 py-2.5 bg-white text-purple-600 font-semibold rounded-xl hover:bg-purple-50 transition-colors duration-200">
+              Browse Opportunities
             </SitemapLink>
           </div>
 

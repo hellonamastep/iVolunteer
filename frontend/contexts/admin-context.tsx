@@ -60,6 +60,16 @@ export interface AdminContextType {
     id: string,
     status: "approved" | "rejected"
   ) => Promise<void>;
+
+  pendingCorporateEvents: EventItem[];
+  fetchPendingCorporateEvents: () => Promise<void>;
+  handleApproveCorporateEvent: (
+    id: string,
+    baseCategoryOrPoints: number,
+    difficultyKeyOrMultiplier: number,
+    hoursWorked: number
+  ) => Promise<void>;
+  handleDenyCorporateEvent: (id: string, reason: string) => Promise<void>;
 }
 
 export const basePointsMap = {
