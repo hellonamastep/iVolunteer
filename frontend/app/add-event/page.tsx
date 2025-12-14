@@ -651,8 +651,10 @@ const CreateEventForm: React.FC = () => {
                     <input
                       {...register("title", {
                         required: "Title is required",
-                        minLength: { value: 10, message: "Title must be at least 10 characters" },
-                        maxLength: { value: 100, message: "Title cannot exceed 100 characters" }
+                        validate: {
+                          minLength: (value) => (value?.trim().length || 0) >= 10 || "Title must be at least 10 characters (excluding spaces)",
+                          maxLength: (value) => (value?.trim().length || 0) <= 100 || "Title cannot exceed 100 characters"
+                        }
                       })}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                       placeholder={defaultTitlePlaceholder}
@@ -729,8 +731,10 @@ const CreateEventForm: React.FC = () => {
                         <input
                           {...register("customCategory", {
                             required: (selectedCategory === "Other" || selectedCategory === "other") ? "Please specify the category" : false,
-                            minLength: { value: 3, message: "Category must be at least 3 characters" },
-                            maxLength: { value: 50, message: "Category must be less than 50 characters" }
+                            validate: {
+                              minLength: (value) => !value || (value?.trim().length || 0) >= 3 || "Category must be at least 3 characters (excluding spaces)",
+                              maxLength: (value) => !value || (value?.trim().length || 0) <= 50 || "Category must be less than 50 characters"
+                            }
                           })}
                           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                           placeholder="Enter your category"
@@ -748,8 +752,10 @@ const CreateEventForm: React.FC = () => {
                     <textarea
                       {...register("description", {
                         required: "Description is required",
-                        minLength: { value: 50, message: "Description must be at least 50 characters" },
-                        maxLength: { value: 1000, message: "Description cannot exceed 1000 characters" }
+                        validate: {
+                          minLength: (value) => (value?.trim().length || 0) >= 50 || "Description must be at least 50 characters (excluding spaces)",
+                          maxLength: (value) => (value?.trim().length || 0) <= 1000 || "Description cannot exceed 1000 characters"
+                        }
                       })}
                       rows={5}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
@@ -769,7 +775,10 @@ const CreateEventForm: React.FC = () => {
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
-                        {...register("location", { required: "Location is required" })}
+                        {...register("location", { 
+                          required: "Location is required",
+                          validate: (value) => (value?.trim().length || 0) > 0 || "Location cannot be empty or whitespace only"
+                        })}
                         className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                         placeholder="City name"
                       />

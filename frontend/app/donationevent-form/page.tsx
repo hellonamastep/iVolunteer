@@ -632,7 +632,7 @@ const AddEventForm: React.FC = () => {
                       <input
                         {...register("title", {
                           required: "Title is required",
-                          minLength: { value: 10, message: "Title must be at least 10 characters" },
+                          validate: (value) => (value?.trim().length || 0) >= 10 || "Title must be at least 10 characters (excluding spaces)",
                         })}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                         placeholder="Help Rebuild a Home for Flood Victims"
@@ -666,7 +666,7 @@ const AddEventForm: React.FC = () => {
                           <input
                             {...register("customCategory", {
                               required: selectedCategory === "Other" ? "Please specify the category" : false,
-                              minLength: { value: 3, message: "Category must be at least 3 characters" },
+                              validate: (value) => !value || (value?.trim().length || 0) >= 3 || "Category must be at least 3 characters (excluding spaces)",
                             })}
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all text-sm"
                             placeholder="Enter your category"
@@ -789,7 +789,7 @@ const AddEventForm: React.FC = () => {
                       <textarea
                         {...register("whyRaising", {
                           required: "This field is required",
-                          minLength: { value: 50, message: "Please provide at least 50 characters" },
+                          validate: (value) => (value?.trim().length || 0) >= 50 || "Please provide at least 50 characters (excluding spaces)",
                         })}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all resize-none text-sm"
                         rows={4}
@@ -806,7 +806,7 @@ const AddEventForm: React.FC = () => {
                       <textarea
                         {...register("whoBenefits", {
                           required: "This field is required",
-                          minLength: { value: 30, message: "Please provide at least 30 characters" },
+                          validate: (value) => (value?.trim().length || 0) >= 30 || "Please provide at least 30 characters (excluding spaces)",
                         })}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all resize-none text-sm"
                         rows={3}
@@ -824,7 +824,7 @@ const AddEventForm: React.FC = () => {
                       <textarea
                         {...register("howFundsUsed", {
                           required: "This field is required",
-                          minLength: { value: 50, message: "Please provide at least 50 characters" },
+                          validate: (value) => (value?.trim().length || 0) >= 50 || "Please provide at least 50 characters (excluding spaces)",
                         })}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7DD9A6] focus:border-transparent focus:bg-white transition-all resize-none text-sm font-mono"
                         rows={5}
