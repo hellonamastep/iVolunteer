@@ -14,11 +14,11 @@ export const getVolunteerCertificates = asyncHandler(async (req, res) => {
   // Find the user and populate completed events
   const user = await User.findById(userId)
     .populate({
-      path: "completedEvents.eventId",
-      select: "title eventDate organizationName createdBy",
+      path: "completedEvents",
+      select: "title eventDate organizationName createdBy scoringRule pointsOffered completionApprovedAt",
       populate: {
         path: "createdBy",
-        select: "fullName organizationName",
+        select: "fullName organizationName name",
       },
     })
     .lean();
@@ -32,20 +32,21 @@ export const getVolunteerCertificates = asyncHandler(async (req, res) => {
 
   // Filter and transform completed events into certificates
   const certificates = (user.completedEvents || [])
-    .filter((item) => item.eventId) // Only include events that still exist
-    .map((item) => {
-      const event = item.eventId;
+    .filter((event) => event && event._id) // Only include events that still exist
+    .map((event) => {
       const admin = event.createdBy;
+      const pointsEarned = event.scoringRule?.totalPoints || event.pointsOffered || 0;
 
       return {
         _id: `${userId}_${event._id}`, // Unique certificate ID
+        eventId: event._id,
         eventTitle: event.title || "Volunteer Event",
         eventDate: event.eventDate || new Date(),
-        organizationName: admin?.organizationName || admin?.fullName || "Organization",
-        volunteerName: user.fullName || "Volunteer",
-        adminName: admin?.fullName || "Admin",
-        completedAt: item.completedAt || new Date(),
-        pointsEarned: item.pointsEarned || 0,
+        organizationName: admin?.organizationName || admin?.name || admin?.fullName || "Organization",
+        volunteerName: user.fullName || user.name || "Volunteer",
+        adminName: admin?.fullName || admin?.name || "Admin",
+        completedAt: event.completionApprovedAt || new Date(),
+        pointsEarned: pointsEarned,
       };
     });
 
