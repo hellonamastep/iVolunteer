@@ -1,125 +1,170 @@
 "use client";
-import React, { useState } from "react";
-import { useCorporateEvent, Bid } from "@/contexts/corporateEvent-context";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+import api from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { 
   Calendar, 
-  Clock, 
+  MapPin, 
   Building2, 
   Users, 
-  Tag, 
-  Filter,
-  Award,
-  Mail,
-  Phone,
-  Plus,
+  Target,
+  Eye,
+  Briefcase,
+  ArrowLeft,
+  Search,
+  Heart,
   X,
-  Leaf,
-  Sprout
+  Check,
+  Loader2
 } from "lucide-react";
 
+interface CorporateEvent {
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  city: string;
+  category: string;
+  volunteersNeeded: number;
+  image?: string | { url?: string; caption?: string; publicId?: string };
+  corporatePartner?: string;
+  csrObjectives?: string[];
+  status: string;
+  organizationId?: {
+    _id: string;
+    name: string;
+    organizationType?: string;
+    email?: string;
+  };
+}
+
 const CorporateEventsPage = () => {
-  const { events, loading, error, fetchEvents, placeBid } = useCorporateEvent();
+  const router = useRouter();
+  const eventsRef = useRef<HTMLDivElement>(null);
+  const [events, setEvents] = useState<CorporateEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("All");
+  const [interestStates, setInterestStates] = useState<Record<string, 'none' | 'loading' | 'sent'>>({});
+  const [selectedEvent, setSelectedEvent] = useState<CorporateEvent | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  // Modal state
-  const [bidModalOpen, setBidModalOpen] = useState(false);
-  const [bidEventId, setBidEventId] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchCorporateEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("/v1/event/approved-corporate");
+        const corporateEvents = (response.data as { events?: CorporateEvent[] })?.events || [];
+        setEvents(corporateEvents);
+        
+        // Check interest status for each event
+        const interestPromises = corporateEvents.map(async (event) => {
+          try {
+            const res = await api.get(`/v1/corporate-interest/check/${event._id}`);
+            const data = res.data as { hasInterest?: boolean };
+            return { eventId: event._id, hasInterest: data.hasInterest };
+          } catch {
+            return { eventId: event._id, hasInterest: false };
+          }
+        });
+        
+        const interestResults = await Promise.all(interestPromises);
+        const newInterestStates: Record<string, 'none' | 'loading' | 'sent'> = {};
+        interestResults.forEach(({ eventId, hasInterest }) => {
+          newInterestStates[eventId] = hasInterest ? 'sent' : 'none';
+        });
+        setInterestStates(newInterestStates);
+      } catch (err: any) {
+        console.error("Error fetching corporate events:", err);
+        setError(err.response?.data?.message || "Failed to load events");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [bidForm, setBidForm] = useState<Bid>({
-    corporateName: "",
-    offer: "",
-    contactEmail: "",
-    contactNumber: "",
-  });
+    fetchCorporateEvents();
+  }, []);
 
-  // Extract unique categories for filter
-  const categories = ["All", ...new Set(events.map((event) => event.category))];
-  const difficulties = ["All", "Easy", "Medium", "Hard"];
+  // Auto-scroll to top of page after data loads
+  useEffect(() => {
+    if (!loading) {
+      // Use window.scrollTo to scroll to the top of the page
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [loading]);
 
-  // Filter events based on selected filters
+  const categories = ["All", ...new Set(events.map((event) => event.category).filter(Boolean))];
+
   const filteredEvents = events.filter((event) => {
-    const categoryMatch =
+    const matchesSearch = 
+      searchQuery === "" ||
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.city?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory =
       selectedCategory === "All" || event.category === selectedCategory;
-    const difficultyMatch =
-      selectedDifficulty === "All" || event.difficulty === selectedDifficulty;
-    return categoryMatch && difficultyMatch;
+    
+    return matchesSearch && matchesCategory;
   });
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
+      year: "numeric",
     });
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case "easy": return "bg-blue-100 text-blue-800 border-blue-200";
-      case "medium": return "bg-sky-100 text-sky-800 border-sky-200";
-      case "hard": return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      default: return "bg-blue-100 text-blue-800 border-blue-200";
+  const handleExpressInterest = async (eventId: string) => {
+    if (interestStates[eventId] === 'sent') {
+      toast.info("You have already expressed interest in this event");
+      return;
     }
-  };
-
- const getCategoryColor = (category: string) => {
-  const colors: Record<string, string> = {
-    conference: "bg-blue-100 text-blue-800 border-blue-200",
-    workshop: "bg-sky-100 text-sky-800 border-sky-200",
-    seminar: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    networking: "bg-cyan-100 text-cyan-800 border-cyan-200",
-    training: "bg-violet-100 text-violet-800 border-violet-200",
-    default: "bg-blue-100 text-blue-800 border-blue-200"
-  };
-
-  const key = category?.toLowerCase();
-  // Check if key exists in colors
-  if (key && key in colors) {
-    return colors[key];
-  }
-
-  return colors.default;
-};
-
-  // Open bid modal
-  const openBidModal = (eventId: string) => {
-    setBidEventId(eventId);
-    setBidModalOpen(true);
-  };
-
-  const handleBidChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setBidForm({ ...bidForm, [e.target.name]: e.target.value });
-  };
-
-  const handleBidSubmit = async () => {
-    if (!bidEventId) return;
-
+    
+    setInterestStates(prev => ({ ...prev, [eventId]: 'loading' }));
+    
     try {
-      await placeBid({ ...bidForm, eventId: bidEventId });
-      setBidModalOpen(false);
-      setBidForm({
-        corporateName: "",
-        offer: "",
-        contactEmail: "",
-        contactNumber: "",
-      });
-      fetchEvents(); 
-      toast.success("Bid placed successfully!");
+      await api.post(`/v1/corporate-interest/express-interest/${eventId}`);
+      setInterestStates(prev => ({ ...prev, [eventId]: 'sent' }));
+      toast.success("Interest sent successfully! The NGO will be notified.");
     } catch (err: any) {
-      alert(err.message || "Failed to place bid");
+      setInterestStates(prev => ({ ...prev, [eventId]: 'none' }));
+      toast.error(err.response?.data?.message || "Failed to express interest");
     }
+  };
+
+  const handleViewDetails = (event: CorporateEvent) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  };
+
+  const getImageUrl = (image: string | { url?: string; caption?: string; publicId?: string } | undefined) => {
+    if (!image) return null;
+    // Handle object format with url property
+    if (typeof image === 'object' && image.url) {
+      return image.url;
+    }
+    // Handle string format
+    if (typeof image === 'string') {
+      if (image.startsWith("http")) return image;
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace('/api', '');
+      return `${baseUrl}/${image}`;
+    }
+    return null;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f0f9f8] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-blue-700">Loading events...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#39c2ba] border-t-transparent mx-auto mb-4"></div>
+          <p className="text-[#173043] text-lg">Loading corporate events...</p>
         </div>
       </div>
     );
@@ -127,16 +172,14 @@ const CorporateEventsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-blue-900 mb-2">
-            Error Loading Events
-          </h2>
-          <p className="text-blue-700 mb-4">{error}</p>
+      <div className="min-h-screen bg-[#f0f9f8] flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl p-12 text-center shadow-lg max-w-md">
+          <Building2 className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-[#173043] mb-2">Unable to Load Events</h2>
+          <p className="text-[#173043]/70 mb-6">{error}</p>
           <button
-            onClick={fetchEvents}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 font-semibold"
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors font-semibold"
           >
             Try Again
           </button>
@@ -146,338 +189,316 @@ const CorporateEventsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-50 py-8">
+    <div ref={eventsRef} className="min-h-screen bg-[#f0f9f8] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <div className="bg-blue-600 rounded-xl p-3 mr-4">
-              <Leaf className="h-8 w-8 text-white" />
+        <div className="mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-[#173043] hover:text-[#39c2ba] transition-colors mb-4"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back to Dashboard</span>
+          </button>
+          
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#39c2ba] rounded-xl p-3 shadow-lg">
+                <Briefcase className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#173043]">Corporate Events</h1>
+                <p className="text-[#173043]/70 text-sm">
+                  Explore CSR opportunities
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-blue-900">Corporate Events</h1>
-              <p className="text-blue-700 mt-1">
-                Discover and bid on exclusive corporate events
-              </p>
+            
+            <div className="bg-white rounded-lg px-4 py-2 shadow-md">
+              <div className="text-xl font-bold text-[#39c2ba]">{events.length}</div>
+              <div className="text-xs text-[#173043]/60">Events</div>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
-            <div className="flex items-center">
-              <div className="bg-blue-100 rounded-xl p-3 mr-4">
-                <Building2 className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-600">Total Events</p>
-                <p className="text-2xl font-bold text-blue-900">{events.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
-            <div className="flex items-center">
-              <div className="bg-sky-100 rounded-xl p-3 mr-4">
-                <Users className="h-6 w-6 text-sky-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-600">Active Events</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {events.filter(e => new Date(e.date) >= new Date()).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
-            <div className="flex items-center">
-              <div className="bg-indigo-100 rounded-xl p-3 mr-4">
-                <Tag className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-600">Categories</p>
-                <p className="text-2xl font-bold text-blue-900">{categories.length - 1}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
-            <div className="flex items-center">
-              <div className="bg-cyan-100 rounded-xl p-3 mr-4">
-                <Calendar className="h-6 w-6 text-cyan-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-600">This Month</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {events.filter(e => {
-                    const eventDate = new Date(e.date);
-                    const now = new Date();
-                    return eventDate.getMonth() === now.getMonth() && 
-                           eventDate.getFullYear() === now.getFullYear();
-                  }).length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search and Filters */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#173043]/40" />
               <input
                 type="text"
-                placeholder="Search events by title or category..."
-                value={selectedCategory === "All" ? "" : selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value || "All")}
-                className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50/50"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-[#39c2ba]/20 rounded-lg focus:ring-2 focus:ring-[#39c2ba] focus:border-[#39c2ba] bg-[#f0f9f8]/50 text-[#173043] text-sm"
               />
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50/50"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 border border-[#39c2ba]/20 rounded-lg focus:ring-2 focus:ring-[#39c2ba] bg-[#f0f9f8]/50 text-[#173043] text-sm min-w-[120px]"
               >
-                {difficulties.map((difficulty) => (
-                  <option key={difficulty} value={difficulty}>
-                    {difficulty}
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
                   </option>
                 ))}
               </select>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("All");
+                }}
+                className="px-3 py-2 bg-[#173043]/5 hover:bg-[#173043]/10 text-[#173043] rounded-lg transition-colors text-sm"
+              >
+                Clear
+              </button>
             </div>
           </div>
         </div>
 
         {/* Events Grid */}
         {filteredEvents.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg border border-blue-100 p-16 text-center">
-            <Sprout className="h-20 w-20 text-blue-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-semibold text-blue-600 mb-3">No Events Found</h3>
-            <p className="text-blue-500 mb-8 text-lg">
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <Building2 className="w-16 h-16 text-[#39c2ba]/40 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-[#173043] mb-2">No Events Found</h3>
+            <p className="text-[#173043]/70 mb-4 max-w-md mx-auto text-sm">
               {events.length === 0
-                ? "No events have been created yet. Check back later for new opportunities!"
-                : "No events match your current filters. Try adjusting your selection."}
+                ? "No corporate events are currently available."
+                : "No events match your filters."}
             </p>
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("All");
+              }}
+              className="px-4 py-2 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors text-sm"
+            >
+              Clear Filters
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredEvents.map((event) => (
-              <div
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredEvents.map((event, index) => (
+              <motion.div
                 key={event._id}
-                className="bg-white rounded-2xl shadow-lg border border-blue-100 hover:shadow-2xl transition-all duration-500 overflow-hidden group hover:scale-105"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                onClick={() => handleViewDetails(event)}
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
               >
-                {/* Event Image */}
-                <div className="h-48 bg-gradient-to-br from-blue-500 to-sky-600 relative overflow-hidden">
-                  {event.image ? (
+                {/* Event Image - Smaller */}
+                <div className="relative h-32 w-full bg-gradient-to-br from-[#39c2ba]/20 to-[#8ce27a]/20">
+                  {getImageUrl(event.image) ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.namastep.com'}/${event.image}`}
+                      src={getImageUrl(event.image)!}
                       alt={event.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Building2 className="h-16 w-16 text-white opacity-90" />
+                  ) : null}
+                  <div className={`${getImageUrl(event.image) ? 'hidden' : ''} absolute inset-0 flex items-center justify-center`}>
+                    <Building2 className="w-10 h-10 text-[#39c2ba]/40" />
+                  </div>
+                  {event.category && (
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#f5f8c3] rounded-full text-[10px] font-medium text-[#173043]">
+                      {event.category}
                     </div>
                   )}
-                  <div className="absolute top-4 right-4">
-                    <span className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-medium border ${getCategoryColor(event.category)}`}>
-                      <Tag className="h-3 w-3 mr-1" />
-                      {event.category}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-4 left-4 bg-blue-800/90 text-white px-3 py-1 rounded-lg text-sm font-medium">
-                    {formatDate(event.date)}
-                  </div>
                 </div>
 
-                {/* Event Content */}
-                <div className="p-6">
-                  <h3 className="font-bold text-xl text-blue-900 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors">
-                    {event.title}
-                  </h3>
+                {/* Event Details - Compact */}
+                <div className="p-3 space-y-2">
+                  <h3 className="text-sm font-semibold text-[#173043] line-clamp-1">{event.title}</h3>
                   
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center text-sm text-blue-700">
-                      <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                      {event.time} • {event.duration}h
-                    </div>
-                    <div className="flex items-center text-sm text-blue-700">
-                      <Building2 className="h-4 w-4 mr-2 text-blue-500" />
-                      {event.organizedBy}
-                    </div>
-                    {event.bids && event.bids.length > 0 && (
-                      <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                        <Users className="h-4 w-4 mr-2" />
-                        {event.bids.length} bid{event.bids.length !== 1 ? 's' : ''} received
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="text-blue-600 text-sm mb-6 line-clamp-3 leading-relaxed">
-                    {event.desc}
-                  </p>
-
-                  {/* Selected Bid Info */}
-                  {event.selectedBid && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                      <h4 className="font-semibold text-green-800 mb-2 flex items-center">
-                        <Award className="h-4 w-4 mr-2" />
-                        Selected Bid
-                      </h4>
-                      <p className="text-green-700 text-sm">
-                        <strong>{event.selectedBid.corporateName}</strong> -{" "}
-                        {event.selectedBid.offer}
-                      </p>
-                      <p className="text-green-600 text-xs mt-1">
-                        {event.selectedBid.contactEmail} |{" "}
-                        {event.selectedBid.contactNumber}
-                      </p>
+                  {event.organizationId && (
+                    <div className="flex items-center gap-1.5 text-xs text-[#173043]/70">
+                      <Building2 className="w-3 h-3 text-[#39c2ba]" />
+                      <span className="line-clamp-1">{event.organizationId.name}</span>
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4 border-t border-blue-100">
+                  <div className="flex flex-wrap gap-2 text-[10px] text-[#173043]/60">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDate(event.date)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      <span className="truncate max-w-[80px]">{event.city || event.location}</span>
+                    </div>
+                  </div>
+
+                  {/* Two Buttons */}
+                  <div className="flex gap-2 pt-2">
                     <button
-                      onClick={() => openBidModal(event._id)}
-                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl hover:bg-blue-700 transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-xl"
+                      onClick={(e) => { e.stopPropagation(); handleExpressInterest(event._id); }}
+                      disabled={interestStates[event._id] === 'loading' || interestStates[event._id] === 'sent'}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-colors ${
+                        interestStates[event._id] === 'sent'
+                          ? 'bg-green-100 text-green-700 cursor-default'
+                          : interestStates[event._id] === 'loading'
+                          ? 'bg-gray-100 text-gray-500 cursor-wait'
+                          : 'bg-[#f5f8c3] text-[#173043] hover:bg-[#e8eb8a]'
+                      }`}
                     >
-                      Place Bid
+                      {interestStates[event._id] === 'loading' ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : interestStates[event._id] === 'sent' ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Heart className="w-3 h-3" />
+                      )}
+                      <span>
+                        {interestStates[event._id] === 'sent' ? 'Interested' : 'Interested'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleViewDetails(event); }}
+                      className="flex-1 py-2 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors text-xs font-medium flex items-center justify-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>View Details</span>
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
-
-        {/* Footer Stats */}
-        {filteredEvents.length > 0 && (
-          <div className="mt-12 bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
-                <div className="text-2xl font-bold text-blue-900">{events.length}</div>
-                <div className="text-sm text-blue-600">Total Events</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {events.filter(e => new Date(e.date) >= new Date()).length}
-                </div>
-                <div className="text-sm text-blue-600">Upcoming</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {events.filter(e => new Date(e.date) < new Date()).length}
-                </div>
-                <div className="text-sm text-blue-600">Completed</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {events.reduce((acc, event) => acc + (event.bids?.length || 0), 0)}
-                </div>
-                <div className="text-sm text-blue-600">Total Bids</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Bid Modal */}
-        {bidModalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative border border-blue-100">
-              <button
-                onClick={() => setBidModalOpen(false)}
-                className="absolute top-4 right-4 text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <Plus className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-blue-900">Place Your Bid</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Corporate Name
-                  </label>
-                  <input
-                    type="text"
-                    name="corporateName"
-                    placeholder="Enter your company name"
-                    value={bidForm.corporateName}
-                    onChange={handleBidChange}
-                    className="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-blue-50/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Your Offer
-                  </label>
-                  <textarea
-                    name="offer"
-                    placeholder="Describe your proposal or offer..."
-                    value={bidForm.offer}
-                    onChange={handleBidChange}
-                    rows={3}
-                    className="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-blue-50/50 resize-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Contact Email
-                  </label>
-                  <input
-                    type="email"
-                    name="contactEmail"
-                    placeholder="your@company.com"
-                    value={bidForm.contactEmail}
-                    onChange={handleBidChange}
-                    className="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-blue-50/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Contact Number
-                  </label>
-                  <input
-                    type="text"
-                    name="contactNumber"
-                    placeholder="+1 (555) 123-4567"
-                    value={bidForm.contactNumber}
-                    onChange={handleBidChange}
-                    className="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition bg-blue-50/50"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-blue-100">
-                <button
-                  onClick={() => setBidModalOpen(false)}
-                  className="px-6 py-3 rounded-xl border border-blue-300 text-blue-700 hover:bg-blue-50 transition-all duration-300 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleBidSubmit}
-                  className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
-                >
-                  Submit Bid
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Event Details Modal */}
+      {showModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+          >
+            {/* Modal Header with Image */}
+            <div className="relative h-48 bg-gradient-to-br from-[#39c2ba]/20 to-[#8ce27a]/20">
+              {getImageUrl(selectedEvent.image) ? (
+                <img
+                  src={getImageUrl(selectedEvent.image)!}
+                  alt={selectedEvent.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <Building2 className="w-20 h-20 text-[#39c2ba]/40" />
+                </div>
+              )}
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+              >
+                <X className="w-5 h-5 text-[#173043]" />
+              </button>
+              {selectedEvent.category && (
+                <div className="absolute top-4 left-4 px-3 py-1 bg-[#f5f8c3] rounded-full text-xs font-medium text-[#173043]">
+                  {selectedEvent.category}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
+              <h2 className="text-2xl font-bold text-[#173043] mb-2">{selectedEvent.title}</h2>
+              
+              {selectedEvent.organizationId && (
+                <div className="flex items-center gap-2 text-sm text-[#173043]/70 mb-4">
+                  <Building2 className="w-4 h-4 text-[#39c2ba]" />
+                  <span>Organized by {selectedEvent.organizationId.name}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex items-center gap-2 text-sm text-[#173043]/70">
+                  <Calendar className="w-4 h-4 text-[#39c2ba]" />
+                  <span>{formatDate(selectedEvent.date)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#173043]/70">
+                  <MapPin className="w-4 h-4 text-[#39c2ba]" />
+                  <span>{selectedEvent.city || selectedEvent.location}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#173043]/70">
+                  <Users className="w-4 h-4 text-[#39c2ba]" />
+                  <span>{selectedEvent.volunteersNeeded} volunteers needed</span>
+                </div>
+                {selectedEvent.corporatePartner && (
+                  <div className="flex items-center gap-2 text-sm text-[#173043]/70">
+                    <Target className="w-4 h-4 text-[#39c2ba]" />
+                    <span>{selectedEvent.corporatePartner}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-[#173043] mb-2">Description</h3>
+                <p className="text-sm text-[#173043]/70 leading-relaxed">{selectedEvent.description}</p>
+              </div>
+
+              {selectedEvent.csrObjectives && selectedEvent.csrObjectives.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-semibold text-[#173043] mb-2">CSR Objectives</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEvent.csrObjectives.map((objective, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1 bg-[#f0f9f8] text-[#39c2ba] text-xs rounded-full"
+                      >
+                        {objective}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Actions */}
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => handleExpressInterest(selectedEvent._id)}
+                  disabled={interestStates[selectedEvent._id] === 'loading' || interestStates[selectedEvent._id] === 'sent'}
+                  className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+                    interestStates[selectedEvent._id] === 'sent'
+                      ? 'bg-green-100 text-green-700 cursor-default'
+                      : interestStates[selectedEvent._id] === 'loading'
+                      ? 'bg-gray-100 text-gray-500 cursor-wait'
+                      : 'bg-[#f5f8c3] text-[#173043] hover:bg-[#e8eb8a]'
+                  }`}
+                >
+                  {interestStates[selectedEvent._id] === 'loading' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : interestStates[selectedEvent._id] === 'sent' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Heart className="w-4 h-4" />
+                  )}
+                  <span>
+                    {interestStates[selectedEvent._id] === 'sent' ? 'Interest Sent' : 'Express Interest'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    router.push(`/volunteer/${selectedEvent._id}`);
+                  }}
+                  className="flex-1 py-3 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors font-medium"
+                >
+                  View Full Page
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

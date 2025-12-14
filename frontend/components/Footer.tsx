@@ -32,7 +32,7 @@ const Footer = () => {
                   About Us
                 </Link>
                 <Link 
-                  href="/corporate" 
+                  href="/" 
                   className="text-sm font-medium text-gray-700 hover:text-[#4FC3DC] transition-all duration-300 hover:translate-x-1 flex items-center gap-1 group"
                 >
                   <div className="w-1 h-1 bg-[#4FC3DC] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>

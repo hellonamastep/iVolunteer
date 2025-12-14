@@ -32,11 +32,7 @@ const PendingDonationEventsPage = () => {
   };
 
   const onDeny = async (id: string) => {
-    const reason = denialReasons[id];
-    if (!reason?.trim()) {
-      alert("Please enter a denial reason");
-      return;
-    }
+    const reason = denialReasons[id]?.trim() || "Rejected by admin";
     
     setLoadingAction(id);
     try {

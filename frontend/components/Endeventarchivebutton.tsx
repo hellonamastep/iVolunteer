@@ -3,7 +3,7 @@ import React from 'react'
 
 const Endeventarchivebutton = () => {
   return (
-    <Link href="/endeventarchive">
+    <Link href="/archived-events">
       <button className="
         inline-flex 
         items-center 

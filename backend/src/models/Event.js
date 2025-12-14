@@ -151,7 +151,7 @@ const eventSchema = new mongoose.Schema(
     eventType: {
       type: String,
       enum: {
-        values: ["community", "virtual", "in-person", "special"],
+        values: ["community", "virtual", "in-person", "special", "corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"],
         message: "{VALUE} is not a valid event type",
       },
       required: [true, "Event type is required"],
@@ -269,6 +269,18 @@ sponsorshipContactNumber: {
     },
     
     requirements: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    
+    // Corporate Partnership Fields
+    corporatePartner: {
+      type: String,
+      trim: true,
+    },
+    csrObjectives: [
       {
         type: String,
         trim: true,

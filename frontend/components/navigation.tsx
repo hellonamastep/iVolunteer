@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Heart, IndianRupee, Gift, Building2, LogIn, Shield, Settings } from "lucide-react"
+import { Home, Heart, IndianRupee, Gift, LogIn, Shield, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 export function Navigation() {
@@ -14,16 +14,15 @@ export function Navigation() {
     { href: "/posts", icon: Heart, label: "Posts" },
     { href: "/volunteer", icon: Heart, label: "Volunteer" },
     { href: "/donate", icon: IndianRupee, label: "Donate" },
-    { href: "/activities", icon: Building2, label: "Activities" }, // added Activities
   ]
 
   let navItems = [...baseNavItems]
 
   if (user) {
     if (user.role === "ngo") {
-      navItems.push({ href: "/ngo-dashboard", icon: Settings, label: "Dashboard" })
+      navItems.push({ href: "/", icon: Settings, label: "Dashboard" })
     } else if (user.role === "admin") {
-      navItems.push({ href: "/admin", icon: Shield, label: "Admin" })
+      navItems.push({ href: "/", icon: Shield, label: "Admin" })
     } else if (user.role === "user") {
       navItems.push({ href: "/rewards", icon: Gift, label: "Rewards" })
       navItems.push({ href: "/my-applications", icon: Heart, label: "My Applications" })

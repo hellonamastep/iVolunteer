@@ -75,7 +75,7 @@ export const updateEventApprovalService = async (eventId, status, rejectionReaso
         message: status === 'approved' 
           ? `Your donation campaign "${event.title}" has been approved and is now active.`
           : `Your donation campaign "${event.title}" has been rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
-        actionUrl: `/ngo-dashboard`,
+        actionUrl: `/`,
         metadata: { eventId: event._id },
       };
       

@@ -12,7 +12,7 @@ export default function OAuthCallback() {
 
     const base = process.env.NEXT_PUBLIC_OAUTH_BASE_URL; // e.g. http://localhost:5000/api
     if (!base) {
-      router.replace("/dashboard");
+      router.replace("/");
       return;
     }
 
@@ -43,7 +43,7 @@ export default function OAuthCallback() {
           }
         }
       } finally {
-        router.replace("/dashboard");
+        router.replace("/");
       }
     })();
   }, [router]);

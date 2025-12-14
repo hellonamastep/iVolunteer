@@ -102,7 +102,7 @@ const AdminCorporateEventsPage = () => {
               </div>
             </div>
             <Link
-              href="/addcorporateevent"
+              href="/add-corporate-event"
               className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <Plus className="h-5 w-5 mr-2" />

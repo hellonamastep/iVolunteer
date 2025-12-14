@@ -93,6 +93,22 @@ eventRouter.get(
   ngoEventController.getPendingEvents
 );
 
+// Get all pending corporate events
+eventRouter.get(
+  "/pending-corporate",
+  authMiddleware,
+  authorizeRole("admin"),
+  ngoEventController.getPendingCorporateEvents
+);
+
+// Get all approved corporate events (for corporate dashboard)
+eventRouter.get(
+  "/approved-corporate",
+  authMiddleware,
+  authorizeRole("corporate"),
+  ngoEventController.getApprovedCorporateEvents
+);
+
 // Approve / reject event
 eventRouter.put(
   "/status/:eventId",

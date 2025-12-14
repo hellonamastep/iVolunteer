@@ -48,24 +48,49 @@ export const addEvent = asyncHandler(async (req, res) => {
     organizationName
   );
 
+  // Check if this is a corporate event (created by NGO for corporates)
+  const isCorporateEvent = event.corporatePartner || 
+    ["corporate-partnership", "corporate-csr", "employee-engagement", "community-outreach"].includes(event.eventType);
+
   // Send notification to admins about new event approval request
   try {
     console.log("[AddEvent] Sending notification to admins for event:", event.title);
-    await notificationService.notifyAdminEventApproval(
-      event._id,
-      event.title,
-      organizationName,
-      organizationId
-    );
-    console.log("[AddEvent] Notification sent successfully to admins");
     
-    // Also notify the NGO that their event was submitted
-    await notificationService.notifyNGOEventSubmitted(
-      organizationId,
-      event._id,
-      event.title
-    );
-    console.log("[AddEvent] Confirmation notification sent to NGO");
+    if (isCorporateEvent) {
+      // Corporate event created by NGO - notify admin for approval
+      await notificationService.notifyAdminCorporateEventApproval(
+        event._id,
+        event.title,
+        organizationName,
+        organizationId
+      );
+      console.log("[AddEvent] Corporate event notification sent successfully to admins");
+      
+      // Notify the NGO that their corporate event was submitted for approval
+      await notificationService.notifyNGOEventSubmitted(
+        organizationId,
+        event._id,
+        event.title
+      );
+      console.log("[AddEvent] Confirmation notification sent to NGO for corporate event");
+    } else {
+      // Regular NGO event notifications
+      await notificationService.notifyAdminEventApproval(
+        event._id,
+        event.title,
+        organizationName,
+        organizationId
+      );
+      console.log("[AddEvent] Notification sent successfully to admins");
+      
+      // Also notify the NGO that their event was submitted
+      await notificationService.notifyNGOEventSubmitted(
+        organizationId,
+        event._id,
+        event.title
+      );
+      console.log("[AddEvent] Confirmation notification sent to NGO");
+    }
   } catch (notificationError) {
     console.error("Error sending notification to admins:", notificationError);
     // Don't fail the request if notification fails
@@ -273,6 +298,18 @@ const updateEventStatus = asyncHandler(async (req, res) => {
 // Admin: get all pending events
 const getPendingEvents = asyncHandler(async (req, res) => {
   const events = await ngoEventService.getPendingEvents();
+  res.status(200).json({ success: true, events });
+});
+
+// Get pending corporate events
+const getPendingCorporateEvents = asyncHandler(async (req, res) => {
+  const events = await ngoEventService.getPendingCorporateEvents();
+  res.status(200).json({ success: true, events });
+});
+
+// Get approved corporate events (for corporate dashboard)
+const getApprovedCorporateEvents = asyncHandler(async (req, res) => {
+  const events = await ngoEventService.getApprovedCorporateEvents();
   res.status(200).json({ success: true, events });
 });
 
@@ -620,6 +657,8 @@ export const ngoEventController = {
   getEventsByOrganization,
   updateEventStatus,
   getPendingEvents,
+  getPendingCorporateEvents,
+  getApprovedCorporateEvents,
   getDefaultLocation,
   uploadEventImage,
   updateEvent,

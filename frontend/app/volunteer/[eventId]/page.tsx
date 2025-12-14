@@ -24,6 +24,9 @@ import {
   MapPinIcon,
   Video,
   AlertCircle,
+  Heart,
+  Check,
+  Loader2,
 } from "lucide-react";
 import { useParticipationRequest } from "@/contexts/participation-request-context";
 import {
@@ -61,8 +64,12 @@ const EventDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
+  const [interestState, setInterestState] = useState<'none' | 'loading' | 'sent'>('none');
 
   const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+
+  // Check if this is a corporate event
+  const isCorporateEvent = event?.eventType && ['corporate-partnership', 'corporate-csr', 'employee-engagement', 'community-outreach'].includes(event.eventType);
 
   // Fetch single event with NGO details
   const fetchEventDetails = async () => {
@@ -122,9 +129,49 @@ const EventDetailsPage: React.FC = () => {
     }
   };
 
+  // Check if user has already expressed interest in corporate events
+  const checkCorporateInterest = async () => {
+    if (!eventId) return;
+    try {
+      const res = await api.get(`/v1/corporate-interest/check/${eventId}`);
+      const data = res.data as { hasInterest?: boolean };
+      if (data.hasInterest) {
+        setInterestState('sent');
+      }
+    } catch {
+      // Ignore errors - user might not be logged in or not a corporate user
+    }
+  };
+
+  // Handle expressing interest for corporate events
+  const handleExpressInterest = async () => {
+    if (interestState === 'sent') {
+      toast.info("You have already expressed interest in this event");
+      return;
+    }
+    
+    setInterestState('loading');
+    
+    try {
+      await api.post(`/v1/corporate-interest/express-interest/${eventId}`);
+      setInterestState('sent');
+      toast.success("Interest sent successfully! The NGO will be notified.");
+    } catch (err: any) {
+      setInterestState('none');
+      toast.error(err.response?.data?.message || "Failed to express interest");
+    }
+  };
+
   useEffect(() => {
     fetchEventDetails();
   }, [eventId]);
+
+  // Check corporate interest status when event is loaded
+  useEffect(() => {
+    if (event && ['corporate-partnership', 'corporate-csr', 'employee-engagement', 'community-outreach'].includes(event.eventType)) {
+      checkCorporateInterest();
+    }
+  }, [event]);
 
   useEffect(() => {
     if (event && user) {
@@ -561,6 +608,36 @@ const EventDetailsPage: React.FC = () => {
               </p>
             </div>
           </div>
+        ) : isCorporateEvent ? (
+          // Corporate event - show Interested button
+          <button
+            onClick={handleExpressInterest}
+            disabled={interestState === 'loading' || interestState === 'sent'}
+            className={`w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center transition-all duration-200 shadow-md ${
+              interestState === 'sent'
+                ? 'bg-green-100 text-green-700 cursor-default'
+                : interestState === 'loading'
+                ? 'bg-gray-100 text-gray-500 cursor-wait'
+                : 'bg-gradient-to-r from-[#f5f8c3] to-[#e8eb8a] text-[#173043] hover:from-[#e8eb8a] hover:to-[#dbe07a] hover:shadow-lg'
+            }`}
+          >
+            {interestState === 'loading' ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending Interest...
+              </>
+            ) : interestState === 'sent' ? (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                Interest Sent Successfully
+              </>
+            ) : (
+              <>
+                <Heart className="w-4 h-4 mr-2" />
+                Express Interest
+              </>
+            )}
+          </button>
         ) : (() => {
           const hasRequested = hasRequestedParticipation(event?._id || "");
           const pendingRequest = getPendingRequestForEvent(event?._id || "");
