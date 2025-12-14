@@ -23,6 +23,9 @@ export interface EventData {
   desc: string;
   selectedBid?: Bid | null;
   bids?: Bid[];
+  status?: string; // pending, approved, rejected, etc.
+  rejectionReason?: string;
+  [key: string]: any; // Allow additional properties for CSR opportunities
 }
 
 interface CreateEventResponse {
@@ -97,7 +100,18 @@ export const CorporateEventProvider: React.FC<CorporateEventProviderProps> = ({ 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const res = await api.get<FetchEventsResponse>("/v1/corporate-events/allevents");
+      const token = localStorage.getItem("auth-token");
+      const userStr = localStorage.getItem("auth-user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      // If user is NGO, fetch only their events
+      const endpoint = user?.role === "ngo" 
+        ? "/v1/corporate-events/my-events"
+        : "/v1/corporate-events/allevents";
+      
+      const res = await api.get<FetchEventsResponse>(endpoint, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       setEvents(res.data.events || []);
     } catch (err: any) {
       console.error("Failed to fetch events", err);

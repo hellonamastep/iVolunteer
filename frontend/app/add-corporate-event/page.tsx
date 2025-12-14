@@ -2,75 +2,272 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { toast } from "react-toastify";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { 
   Calendar, Clock, MapPin, Users, Upload, X, CheckCircle, 
-  IndianRupee, Activity, AlertCircle, Save, Trash2, RefreshCw,
-  Briefcase, Building2, Target, TrendingUp, Image as ImageIcon
+  IndianRupee, AlertCircle, Save, Trash2, RefreshCw,
+  Briefcase, Building2, Target, TrendingUp, Image as ImageIcon,
+  FileText, Activity
 } from "lucide-react";
 import Image from "next/image";
 import { useNGO } from "@/contexts/ngo-context";
 import api from "@/lib/api";
+import { indianStatesData } from "@/lib/locationData";
 
-interface CorporateEventFormValues {
-  eventTitle: string;
-  partnerCompany: string;
-  partnerContactEmail: string;
-  partnerContactNumber: string;
-  eventDescription: string;
-  category: string;
-  customCategory?: string;
-  location: string;
-  detailedAddress?: string;
-  date: string;
-  time: string;
-  duration: number;
-  eventType: string;
-  eventStatus: string;
-  maxParticipants: number;
-  budget?: number;
-  csrObjectives: string[];
-  requirements?: string[];
-  eventImage?: any;
-  confirmCheckbox?: boolean;
+// Types for the form
+interface ExpectedImpact {
+  beneficiaries?: number;
+  directImpact?: string;
+  longTermOutcome?: string;
 }
 
-const CreateCorporateEventForm: React.FC = () => {
+interface Timeline {
+  startDate: string;
+  endDate: string;
+}
+
+interface VolunteerDetails {
+  volunteersNeeded: number;
+  skillsRequired: string[];
+  timeCommitmentHours: number;
+}
+
+interface BudgetBreakdown {
+  category: string;
+  amount: number;
+}
+
+interface Budget {
+  totalAmount: number;
+  breakdown: BudgetBreakdown[];
+}
+
+interface LegalCompliance {
+  registrationNumber: string;
+  has12A: boolean;
+  has80G: boolean;
+  hasFCRA?: boolean;
+}
+
+interface ContactPerson {
+  name?: string;
+  role?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface CoverImage {
+  url: string;
+  publicId: string;
+}
+
+interface Location {
+  country: string;
+  state: string;
+  district: string;
+  city: string;
+  pincode: string;
+  googleMapLocation?: string;
+}
+
+interface CSROpportunityFormValues {
+  // Step 1: Basic Info
+  title: string;
+  opportunityType: string;
+  csrModes: string[];
+  location: Location;
+  coverImage?: CoverImage;
+  
+  // Step 2: Project Details
+  problemStatement: string;
+  proposedSolution: string;
+  expectedImpact?: ExpectedImpact;
+  timeline: Timeline;
+  mediaUploads?: File[];
+  
+  // Step 3: Participation
+  participationRequired: string[];
+  volunteerDetails?: VolunteerDetails;
+  budget: Budget;
+  ngoContribution?: string;
+  
+  // Step 4: CSR Goals & Compliance
+  csrActAlignment: string[];
+  sdgMapping?: string[];
+  reportingDocuments: string[];
+  legalCompliance: LegalCompliance;
+  
+  // Step 5: Review & Publish
+  contactPerson?: ContactPerson;
+  termsAccepted: boolean;
+}
+
+const opportunityTypes = [
+  "Infrastructure Development",
+  "Education",
+  "Health & Sanitation",
+  "Environment",
+  "Skill Development",
+  "Women Empowerment",
+  "Rural Development",
+  "Other"
+];
+
+const csrModeOptions = [
+  "Employee Volunteering",
+  "Financial Sponsorship",
+  "Material Donation",
+  "Skill-based Volunteering",
+  "Long-term Partnership"
+];
+
+const participationOptions = [
+  "Funds",
+  "Employees",
+  "Skilled Professionals",
+  "Materials"
+];
+
+const csrActOptions = [
+  "Education",
+  "Rural Development",
+  "Health & Sanitation",
+  "Environmental Sustainability",
+  "Skill Development"
+];
+
+const sdgOptions = [
+  "SDG 1 – No Poverty",
+  "SDG 2 – Zero Hunger",
+  "SDG 3 – Good Health & Well-being",
+  "SDG 4 – Quality Education",
+  "SDG 5 – Gender Equality",
+  "SDG 6 – Clean Water & Sanitation",
+  "SDG 7 – Affordable & Clean Energy",
+  "SDG 8 – Decent Work & Economic Growth",
+  "SDG 10 – Reduced Inequalities",
+  "SDG 11 – Sustainable Cities",
+  "SDG 13 – Climate Action"
+];
+
+const reportingOptions = [
+  "Utilization Certificate",
+  "Impact Report",
+  "Photographic Evidence",
+  "Completion Certificate"
+];
+
+const skillOptions = [
+  "Teaching/Training",
+  "Medical/Healthcare",
+  "Construction/Engineering",
+  "IT/Technology",
+  "Management/Administration",
+  "Legal/Compliance",
+  "Marketing/Communications",
+  "Finance/Accounting",
+  "Design/Creative",
+  "Social Work",
+  "Other"
+];
+
+// Budget Breakdown Table Component
+const BudgetBreakdownTable: React.FC = () => {
+  const [rows, setRows] = useState<{category: string, amount: string}[]>([
+    { category: "", amount: "" }
+  ]);
+
+  const addRow = () => {
+    if (rows.length < 10) {
+      setRows([...rows, { category: "", amount: "" }]);
+    }
+  };
+
+  const removeRow = (index: number) => {
+    if (rows.length > 1) {
+      setRows(rows.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateRow = (index: number, field: 'category' | 'amount', value: string) => {
+    const newRows = [...rows];
+    newRows[index][field] = value;
+    setRows(newRows);
+  };
+
+  const total = rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-600 px-2">
+        <div className="col-span-6">Category</div>
+        <div className="col-span-4">Amount (₹)</div>
+        <div className="col-span-2"></div>
+      </div>
+      {rows.map((row, index) => (
+        <div key={index} className="grid grid-cols-12 gap-2 items-center">
+          <input
+            type="text"
+            value={row.category}
+            onChange={(e) => updateRow(index, 'category', e.target.value)}
+            className="col-span-6 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
+            placeholder="e.g., Materials"
+          />
+          <input
+            type="number"
+            value={row.amount}
+            onChange={(e) => updateRow(index, 'amount', e.target.value)}
+            className="col-span-4 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
+            placeholder="0"
+          />
+          <button
+            type="button"
+            onClick={() => removeRow(index)}
+            className="col-span-2 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30"
+            disabled={rows.length === 1}
+          >
+            <X className="h-4 w-4 mx-auto" />
+          </button>
+        </div>
+      ))}
+      <div className="flex items-center justify-between pt-2">
+        <button
+          type="button"
+          onClick={addRow}
+          disabled={rows.length >= 10}
+          className="text-xs text-[#8B5CF6] hover:text-[#7C3AED] font-medium disabled:opacity-50"
+        >
+          + Add Row
+        </button>
+        {total > 0 && (
+          <span className="text-sm font-medium text-gray-700">
+            Subtotal: ₹{total.toLocaleString()}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const CreateCSROpportunityForm: React.FC = () => {
   const router = useRouter();
-  const { createEvent } = useNGO();
   const [activeStep, setActiveStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
-  const [eventImagePreview, setEventImagePreview] = useState<string | null>(null);
-  const [eventImageFile, setEventImageFile] = useState<File | null>(null);
-  const [requirementInputs, setRequirementInputs] = useState<string[]>([""]);
-  const [csrObjectiveInputs, setCsrObjectiveInputs] = useState<string[]>([""]);
-  const [dateTimeError, setDateTimeError] = useState<string>("");
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<{url: string, type: string, name: string}[]>([]);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
-  // Time picker states
-  const [selectedHour, setSelectedHour] = useState("09");
-  const [selectedMinute, setSelectedMinute] = useState("00");
-  const [selectedPeriod, setSelectedPeriod] = useState("AM");
+  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
 
-  const STORAGE_KEY = "corporateEventFormDraft";
-  const IMAGES_STORAGE_KEY = "corporateEventImages";
-
-  const categories = [
-    "Community Development",
-    "Education & Skill Building",
-    "Healthcare & Wellness",
-    "Environmental Sustainability",
-    "Women Empowerment",
-    "Youth Development",
-    "Digital Literacy",
-    "Infrastructure Development",
-    "Other"
-  ];
+  const STORAGE_KEY = "csrOpportunityFormDraft";
 
   const steps = [
     { number: 1, name: "Basic Info" },
-    { number: 2, name: "Details" },
+    { number: 2, name: "Project Details" },
     { number: 3, name: "Participation" },
     { number: 4, name: "CSR Goals" },
     { number: 5, name: "Review" },
@@ -84,177 +281,333 @@ const CreateCorporateEventForm: React.FC = () => {
     setValue,
     reset,
     trigger,
-  } = useForm<CorporateEventFormValues>({
+    getValues,
+  } = useForm<CSROpportunityFormValues>({
     mode: "onChange",
     defaultValues: {
-      eventStatus: "upcoming",
-      eventType: "corporate-csr",
-      csrObjectives: [],
-      requirements: [],
+      csrModes: [],
+      participationRequired: [],
+      csrActAlignment: [],
+      sdgMapping: [],
+      reportingDocuments: [],
+      budget: {
+        totalAmount: 0,
+        breakdown: []
+      },
+      expectedImpact: {
+        beneficiaries: undefined,
+        directImpact: "",
+        longTermOutcome: ""
+      },
+      volunteerDetails: {
+        volunteersNeeded: 0,
+        skillsRequired: [],
+        timeCommitmentHours: 0
+      },
+      legalCompliance: {
+        registrationNumber: "",
+        has12A: false,
+        has80G: false,
+        hasFCRA: false
+      },
+      contactPerson: {
+        name: "",
+        role: "",
+        email: "",
+        phone: ""
+      },
+      termsAccepted: false,
+      location: {
+        country: "India",
+        state: "",
+        district: "",
+        city: "",
+        pincode: "",
+        googleMapLocation: ""
+      }
     },
   });
 
   const watchedFields = watch();
-  const selectedCategory = watch("category");
-  const budget = watch("budget");
-  const confirmCheckbox = watch("confirmCheckbox");
+  const selectedCsrModes = watch("csrModes") || [];
+  const selectedParticipation = watch("participationRequired") || [];
 
-  // Update time value when time picker changes
+  // Fetch default location from user's profile
   useEffect(() => {
-    if (selectedHour && selectedMinute && selectedPeriod) {
-      let hour24 = parseInt(selectedHour);
-      
-      if (selectedPeriod === "PM" && hour24 !== 12) {
-        hour24 += 12;
-      } else if (selectedPeriod === "AM" && hour24 === 12) {
-        hour24 = 0;
+    const fetchDefaultLocation = async () => {
+      try {
+        const token = localStorage.getItem("auth-token");
+        if (!token) return;
+
+        const response = await api.get("/v1/event/default-location", {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+
+        const data = response.data as { success: boolean; defaultLocation: string };
+        if (data.success && data.defaultLocation) {
+          setValue("location", data.defaultLocation);
+        }
+      } catch (err) {
+        console.error("Failed to fetch default location:", err);
+      } finally {
+        setLoadingLocation(false);
       }
-      
-      const timeString = `${hour24.toString().padStart(2, '0')}:${selectedMinute}`;
-      setValue("time", timeString);
-      
-      const currentDate = watch("date");
-      if (currentDate) {
-        validateDateTime(currentDate, timeString);
-      }
-    }
-  }, [selectedHour, selectedMinute, selectedPeriod, setValue, watch]);
+    };
+
+    fetchDefaultLocation();
+  }, [setValue]);
 
   // Load draft from localStorage
   useEffect(() => {
     const savedDraft = localStorage.getItem(STORAGE_KEY);
-    const savedImages = localStorage.getItem(IMAGES_STORAGE_KEY);
-    
     if (savedDraft) {
       try {
         const draft = JSON.parse(savedDraft);
+        
+        // Handle old format where location was a string or had different structure
+        if (draft.location) {
+          if (typeof draft.location === 'string') {
+            // Old string format - clear it
+            delete draft.location;
+          } else if (typeof draft.location === 'object') {
+            // New object format - set state/district for UI
+            if (draft.location.state) {
+              setSelectedState(draft.location.state);
+            }
+            if (draft.location.district) {
+              setSelectedDistrict(draft.location.district);
+            }
+          }
+        }
+        
+        // Also check for old state/city fields at root level
+        if (draft.state && typeof draft.state === 'string' && !draft.location) {
+          delete draft.state;
+        }
+        if (draft.city && typeof draft.city === 'string' && !draft.location) {
+          delete draft.city;
+        }
+        
         Object.keys(draft).forEach((key) => {
-          if (key !== 'csrObjectives' && key !== 'requirements') {
-            setValue(key as keyof CorporateEventFormValues, draft[key]);
+          if (key !== 'coverImage' && key !== 'mediaUploads') {
+            setValue(key as keyof CSROpportunityFormValues, draft[key], { shouldDirty: true, shouldTouch: true });
           }
         });
-        
-        if (draft.csrObjectives && Array.isArray(draft.csrObjectives)) {
-          setCsrObjectiveInputs(draft.csrObjectives.length > 0 ? draft.csrObjectives : [""]);
-        }
-        
-        if (draft.requirements && Array.isArray(draft.requirements)) {
-          setRequirementInputs(draft.requirements.length > 0 ? draft.requirements : [""]);
-        }
-        
-        if (draft.time) {
-          const [hours, minutes] = draft.time.split(':');
-          const hour24 = parseInt(hours);
-          
-          if (hour24 === 0) {
-            setSelectedHour("12");
-            setSelectedPeriod("AM");
-          } else if (hour24 < 12) {
-            setSelectedHour(hour24.toString().padStart(2, '0'));
-            setSelectedPeriod("AM");
-          } else if (hour24 === 12) {
-            setSelectedHour("12");
-            setSelectedPeriod("PM");
-          } else {
-            setSelectedHour((hour24 - 12).toString().padStart(2, '0'));
-            setSelectedPeriod("PM");
-          }
-          
-          setSelectedMinute(minutes);
-        }
+        toast.info("Draft restored! Please re-select images if needed.", { autoClose: 3000, toastId: "draft-restored" });
       } catch (error) {
         console.error("Error loading draft:", error);
-      }
-    }
-    
-    if (savedImages) {
-      try {
-        const images = JSON.parse(savedImages);
-        if (images.eventImage) {
-          setEventImagePreview(images.eventImage);
-        }
-      } catch (error) {
-        console.error("Error loading images:", error);
+        // Clear corrupted draft
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
   }, [setValue]);
 
-  // Auto-save draft to localStorage
+  // Auto-save draft
   useEffect(() => {
     const timer = setTimeout(() => {
-      const formData = {
-        ...watchedFields,
-        csrObjectives: csrObjectiveInputs.filter(obj => obj.trim() !== ""),
-        requirements: requirementInputs.filter(req => req.trim() !== ""),
-      };
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-      
-      const images = {
-        eventImage: eventImagePreview
-      };
-      localStorage.setItem(IMAGES_STORAGE_KEY, JSON.stringify(images));
-      
+      const formData = getValues();
+      const dataToSave: Record<string, unknown> = {};
+      Object.keys(formData).forEach((key) => {
+        const value = formData[key as keyof CSROpportunityFormValues];
+        if (!(value instanceof FileList) && !(value instanceof File)) {
+          dataToSave[key] = value;
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
       if (Object.keys(watchedFields).some(key => watchedFields[key as keyof typeof watchedFields])) {
         setLastSaved(new Date());
       }
     }, 1000);
-
     return () => clearTimeout(timer);
-  }, [watchedFields, csrObjectiveInputs, requirementInputs, eventImagePreview]);
+  }, [watchedFields, getValues]);
 
-  const validateDateTime = (date: string, time: string): boolean => {
-    if (!date || !time) return true;
-    
-    const selectedDateTime = new Date(`${date}T${time}`);
-    const now = new Date();
-    
-    if (selectedDateTime <= now) {
-      setDateTimeError("Event must be scheduled for a future date and time");
-      return false;
+  // Handle checkbox group changes
+  const handleCheckboxGroupChange = (fieldName: keyof CSROpportunityFormValues, value: string, checked: boolean) => {
+    const currentValues = (watch(fieldName) as string[]) || [];
+    if (checked) {
+      setValue(fieldName, [...currentValues, value] as never);
+    } else {
+      setValue(fieldName, currentValues.filter((v: string) => v !== value) as never);
     }
-    
-    setDateTimeError("");
-    return true;
   };
 
+  // Handle multi-select changes for skills
+  const handleSkillsChange = (value: string, checked: boolean) => {
+    const currentSkills = watch("volunteerDetails.skillsRequired") || [];
+    if (checked) {
+      setValue("volunteerDetails.skillsRequired", [...currentSkills, value]);
+    } else {
+      setValue("volunteerDetails.skillsRequired", currentSkills.filter(s => s !== value));
+    }
+  };
+
+  // Handle cover image upload
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB", { toastId: "cover-size" });
+      return;
+    }
+
+    setCoverImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCoverImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeCoverImage = () => {
+    setCoverImageFile(null);
+    setCoverImagePreview(null);
+  };
+
+  // Handle media upload
+  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles: File[] = [];
+
+    Array.from(files).forEach(file => {
+      if (mediaFiles.length + newFiles.length >= 5) {
+        toast.warning("Maximum 5 files allowed", { toastId: "max-files" });
+        return;
+      }
+
+      const isImage = file.type.startsWith('image/');
+      const isPDF = file.type === 'application/pdf';
+
+      if (!isImage && !isPDF) {
+        toast.error(`${file.name} is not a valid file type. Only images and PDFs are allowed.`, { toastId: "invalid-file" });
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 5MB limit`, { toastId: "file-size" });
+        return;
+      }
+
+      newFiles.push(file);
+      
+      if (isImage) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setMediaPreviews(prev => [...prev, { url: reader.result as string, type: 'image', name: file.name }]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setMediaPreviews(prev => [...prev, { url: '', type: 'pdf', name: file.name }]);
+      }
+    });
+
+    setMediaFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeMedia = (index: number) => {
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
+    setMediaPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Validation for steps
   const handleNext = async () => {
+    if (activeStep === 1) {
+      // Manually validate Step 1 fields - use getValues() for accurate values
+      const formValues = getValues();
+      const title = formValues.title;
+      const opportunityType = formValues.opportunityType;
+      const locationState = formValues.location?.state;
+      const locationDistrict = formValues.location?.district;
+      const locationCity = formValues.location?.city;
+      const locationPincode = formValues.location?.pincode;
+      
+      if (!title || title.trim() === "") {
+        toast.error("Please enter a title", { toastId: "title-required" });
+        return;
+      }
+      
+      if (!opportunityType) {
+        toast.error("Please select an opportunity type", { toastId: "type-required" });
+        return;
+      }
+      
+      if (selectedCsrModes.length === 0) {
+        toast.error("Please select at least one CSR Mode", { toastId: "csr-modes-required" });
+        return;
+      }
+      
+      if (!locationState) {
+        toast.error("Please select a state", { toastId: "state-required" });
+        return;
+      }
+      
+      if (!locationDistrict || locationDistrict.trim() === "") {
+        toast.error("Please enter a district", { toastId: "district-required" });
+        return;
+      }
+      
+      if (!locationCity) {
+        toast.error("Please select a city", { toastId: "city-required" });
+        return;
+      }
+      
+      if (!locationPincode || !/^[1-9][0-9]{5}$/.test(locationPincode)) {
+        toast.error("Please enter a valid 6-digit pincode", { toastId: "pincode-required" });
+        return;
+      }
+      
+      if (!coverImageFile && !coverImagePreview) {
+        toast.error("Please upload a cover image", { toastId: "cover-required" });
+        return;
+      }
+      
+      setActiveStep(activeStep + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    
     let fieldsToValidate: string[] = [];
 
-    if (activeStep === 1) {
-      fieldsToValidate = ["eventTitle", "partnerCompany", "partnerContactEmail", "partnerContactNumber", "category", "eventDescription", "location", "date", "time"];
+    if (activeStep === 2) {
+      fieldsToValidate = ["problemStatement", "proposedSolution", "timeline.startDate", "timeline.endDate"];
       
-      if (selectedCategory === "Other" || selectedCategory === "other") {
-        fieldsToValidate.push("customCategory");
-      }
-      
-      if (!eventImageFile && !eventImagePreview) {
-        toast.error("Please upload an event image before proceeding", { toastId: "image-required" });
+      const startDate = watch("timeline.startDate");
+      const endDate = watch("timeline.endDate");
+      if (startDate && endDate && new Date(endDate) <= new Date(startDate)) {
+        toast.error("End date must be after start date", { toastId: "timeline-error" });
         return;
       }
-      
-      const selectedDate = watch("date");
-      const selectedTime = watch("time");
-      if (!validateDateTime(selectedDate, selectedTime)) {
-        toast.error("Event date and time must be in the future", { toastId: "datetime-validation" });
-        return;
-      }
-    } else if (activeStep === 2) {
-      fieldsToValidate = ["duration", "eventType", "eventStatus", "detailedAddress"];
     } else if (activeStep === 3) {
-      fieldsToValidate = ["maxParticipants"];
+      fieldsToValidate = ["budget.totalAmount"];
+      
+      if (selectedParticipation.length === 0) {
+        toast.error("Please select at least one participation type", { toastId: "participation-required" });
+        return;
+      }
+      
+      if (selectedParticipation.includes("Employees")) {
+        fieldsToValidate.push("volunteerDetails.volunteersNeeded", "volunteerDetails.timeCommitmentHours");
+      }
     } else if (activeStep === 4) {
-      // CSR objectives validation
-      const validObjectives = csrObjectiveInputs.filter(obj => obj.trim() !== "");
-      if (validObjectives.length === 0) {
-        toast.error("Please add at least one CSR objective", { toastId: "csr-required" });
+      fieldsToValidate = ["legalCompliance.registrationNumber"];
+      
+      if ((watch("csrActAlignment") || []).length === 0) {
+        toast.error("Please select at least one CSR Act alignment", { toastId: "csr-act-required" });
+        return;
+      }
+      
+      if ((watch("reportingDocuments") || []).length === 0) {
+        toast.error("Please select at least one reporting document type", { toastId: "reporting-required" });
         return;
       }
     } else if (activeStep === 5) {
-      fieldsToValidate = ["confirmCheckbox"];
+      fieldsToValidate = ["termsAccepted"];
     }
 
-    const result = await trigger(fieldsToValidate as any);
+    const result = await trigger(fieldsToValidate as (keyof CSROpportunityFormValues)[]);
 
     if (result) {
       if (activeStep < 5) {
@@ -294,98 +647,87 @@ const CreateCorporateEventForm: React.FC = () => {
     setShowBackConfirmation(false);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setEventImageFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEventImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error("Error processing image:", error);
-      toast.error("Failed to process image", { toastId: "image-error" });
+  const clearDraft = () => {
+    if (window.confirm("Are you sure you want to clear the draft? This cannot be undone.")) {
+      localStorage.removeItem(STORAGE_KEY);
+      reset();
+      setMediaFiles([]);
+      setMediaPreviews([]);
+      setCoverImageFile(null);
+      setCoverImagePreview(null);
+      setActiveStep(1);
+      setLastSaved(null);
+      toast.info("Draft cleared successfully!", { toastId: "draft-cleared" });
     }
   };
 
-  const removeImage = () => {
-    setEventImagePreview(null);
-    setEventImageFile(null);
-    setValue("eventImage", undefined as any);
-  };
-
-  const onSubmit: SubmitHandler<CorporateEventFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<CSROpportunityFormValues> = async (data) => {
     try {
       setIsSubmitting(true);
-      let imageData: any = null;
 
-      if (eventImageFile) {
+      // Upload cover image
+      let coverImageData: CoverImage | undefined;
+      if (coverImageFile) {
         const formData = new FormData();
-        formData.append("image", eventImageFile);
+        formData.append("image", coverImageFile);
 
-        const response = await api.post(
-          "/v1/upload/single",
-          formData,
-          {
+        const response: { data: { url: string; publicId: string } } = await api.post("/v1/upload/single", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+          },
+        });
+
+        coverImageData = {
+          url: response.data.url,
+          publicId: response.data.publicId
+        };
+      }
+
+      // Upload media files
+      const uploadedMedia: { url: string; publicId: string; type: string }[] = [];
+      if (mediaFiles.length > 0) {
+        for (const file of mediaFiles) {
+          const formData = new FormData();
+          formData.append("image", file);
+
+          const response: { data: { url: string; publicId: string } } = await api.post("/v1/upload/single", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
               Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
             },
-          }
-        );
+          });
 
-        imageData = response.data;
-      }
-
-      let categoryValue: string;
-      if (data.category === "Other" || data.category === "other") {
-        categoryValue = data.customCategory || "other";
-      } else {
-        categoryValue = data.category.toLowerCase().replace(/ /g, '-');
+          uploadedMedia.push({
+            url: response.data.url,
+            publicId: response.data.publicId,
+            type: file.type.startsWith('image/') ? 'image' : 'pdf'
+          });
+        }
       }
 
       const formattedData = {
-        title: data.eventTitle,
-        description: data.eventDescription,
-        location: data.location,
-        detailedAddress: data.detailedAddress || "",
-        date: new Date(`${data.date}T${data.time}`).toISOString(),
-        time: data.time,
-        duration: Number(data.duration),
-        category: categoryValue,
-        maxParticipants: Number(data.maxParticipants),
-        requirements: requirementInputs.filter((req) => req.trim() !== ""),
-        sponsorshipRequired: false,
-        sponsorshipAmount: data.budget || 0,
-        image: imageData ? {
-          url: imageData.url,
-          caption: "Corporate Event Image",
-          publicId: imageData.publicId,
-        } : undefined,
-        eventStatus: data.eventStatus,
-        eventType: "corporate-partnership",
-        participants: [],
-        pointsOffered: 0,
-        sponsorshipContactEmail: data.partnerContactEmail,
-        sponsorshipContactNumber: data.partnerContactNumber,
-        corporatePartner: data.partnerCompany,
-        csrObjectives: csrObjectiveInputs.filter(obj => obj.trim() !== ""),
+        ...data,
+        coverImage: coverImageData,
+        mediaUploads: uploadedMedia,
+        timeline: {
+          startDate: new Date(data.timeline.startDate).toISOString(),
+          endDate: new Date(data.timeline.endDate).toISOString()
+        }
       };
 
-      await createEvent(formattedData);
+      await api.post("/v1/corporate-events", formattedData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth-token")}`,
+        },
+      });
       
       localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(IMAGES_STORAGE_KEY);
       
-      toast.success("Corporate event created successfully!", { toastId: "event-created" });
+      toast.success("CSR Opportunity created successfully!", { toastId: "event-created" });
       
-      // Show additional info about admin approval
       setTimeout(() => {
-        toast.info("Your event request has been sent to admin for approval. Once approved, it will appear in the Explore Opportunities section on Corporate Dashboard.", { 
+        toast.info("Your opportunity has been sent to admin for approval.", { 
           toastId: "admin-approval-info",
           autoClose: 6000 
         });
@@ -393,69 +735,21 @@ const CreateCorporateEventForm: React.FC = () => {
       
       reset();
       setActiveStep(1);
-      setEventImagePreview(null);
-      setEventImageFile(null);
-      setRequirementInputs([""]);
-      setCsrObjectiveInputs([""]);
+      setMediaFiles([]);
+      setMediaPreviews([]);
+      setCoverImageFile(null);
+      setCoverImagePreview(null);
       setLastSaved(null);
       
       setTimeout(() => {
         router.push('/');
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submit error:', err);
-      toast.error(err.response?.data?.message || "Failed to create corporate event", { toastId: "create-event-error" });
+      const errorMessage = err instanceof Error ? err.message : "Failed to create CSR opportunity";
+      toast.error(errorMessage, { toastId: "create-event-error" });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const clearDraft = () => {
-    if (window.confirm("Are you sure you want to clear the draft? This cannot be undone.")) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(IMAGES_STORAGE_KEY);
-      reset();
-      setEventImagePreview(null);
-      setEventImageFile(null);
-      setRequirementInputs([""]);
-      setCsrObjectiveInputs([""]);
-      setActiveStep(1);
-      setLastSaved(null);
-      toast.info("Draft cleared successfully!", { toastId: "draft-cleared" });
-    }
-  };
-
-  const addRequirement = () => {
-    setRequirementInputs([...requirementInputs, ""]);
-  };
-
-  const updateRequirement = (index: number, value: string) => {
-    const newInputs = [...requirementInputs];
-    newInputs[index] = value;
-    setRequirementInputs(newInputs);
-  };
-
-  const removeRequirement = (index: number) => {
-    if (requirementInputs.length > 1) {
-      const newInputs = requirementInputs.filter((_, i) => i !== index);
-      setRequirementInputs(newInputs);
-    }
-  };
-
-  const addCSRObjective = () => {
-    setCsrObjectiveInputs([...csrObjectiveInputs, ""]);
-  };
-
-  const updateCSRObjective = (index: number, value: string) => {
-    const newInputs = [...csrObjectiveInputs];
-    newInputs[index] = value;
-    setCsrObjectiveInputs(newInputs);
-  };
-
-  const removeCSRObjective = (index: number) => {
-    if (csrObjectiveInputs.length > 1) {
-      const newInputs = csrObjectiveInputs.filter((_, i) => i !== index);
-      setCsrObjectiveInputs(newInputs);
     }
   };
 
@@ -466,7 +760,7 @@ const CreateCorporateEventForm: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
             <h3 className="text-xl font-semibold text-gray-800 mb-3">
-              Leave Corporate Event Creation?
+              Leave CSR Opportunity Creation?
             </h3>
             <p className="text-gray-600 mb-6">
               Your progress has been auto-saved. You can continue where you left off when you return.
@@ -504,8 +798,8 @@ const CreateCorporateEventForm: React.FC = () => {
               </button>
             </div>
             <div className="text-center flex-1 justify-center">
-              <h1 className="text-xl font-semibold text-gray-700">Create Corporate Event</h1>
-              <p className="text-sm text-gray-600 mt-1">Partner with us for impactful CSR initiatives</p>
+              <h1 className="text-xl font-semibold text-gray-700">Create CSR Opportunity</h1>
+              <p className="text-sm text-gray-600 mt-1">Partner with corporates for impactful CSR initiatives</p>
             </div>
             <div className="flex-1"></div>
           </div>
@@ -551,7 +845,7 @@ const CreateCorporateEventForm: React.FC = () => {
 
       {/* Auto-save indicator */}
       {lastSaved && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
           <div className="flex items-center justify-between text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <Save className="h-3 w-3" />
@@ -576,647 +870,1035 @@ const CreateCorporateEventForm: React.FC = () => {
           <div className="lg:col-span-3">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
-              
-              {/* Step 1: Basic Info */}
-              {activeStep === 1 && (
-                <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <Briefcase className="w-5 h-5 text-[#8B5CF6]" />
-                      Step 1: Basic Info
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">Tell us about your corporate event</p>
-                  </div>
-
-                  <div className="space-y-5">
-                    {/* Event Title */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Corporate Event Title <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        {...register("eventTitle", {
-                          required: "Event title is required",
-                          minLength: { value: 10, message: "Title must be at least 10 characters" },
-                          maxLength: { value: 100, message: "Title cannot exceed 100 characters" }
-                        })}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                        placeholder="Skills Development Workshop for Underprivileged Youth"
-                      />
-                      {errors.eventTitle && <p className="text-red-500 text-xs mt-1">{errors.eventTitle.message}</p>}
+            
+                {/* Step 1: Basic Info */}
+                {activeStep === 1 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <Briefcase className="w-5 h-5 text-[#8B5CF6]" />
+                        Step 1: Basic Info
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Provide basic details about your CSR opportunity</p>
                     </div>
 
-                    {/* Partner Company */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Corporate Partner Name <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          {...register("partnerCompany", {
-                            required: "Partner company name is required",
-                            minLength: { value: 2, message: "Company name must be at least 2 characters" }
-                          })}
-                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="TechCorp Solutions Pvt Ltd"
-                        />
-                      </div>
-                      {errors.partnerCompany && <p className="text-red-500 text-xs mt-1">{errors.partnerCompany.message}</p>}
-                    </div>
-
-                    {/* Contact Details Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-5">
+                      {/* Opportunity Title */}
                       <div>
                         <label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Contact Email <span className="text-red-500">*</span>
+                          Opportunity Title <span className="text-red-500">*</span>
                         </label>
                         <input
-                          type="email"
-                          {...register("partnerContactEmail", {
-                            required: "Contact email is required",
-                            pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" }
+                          {...register("title", {
+                            required: "Opportunity title is required",
+                            maxLength: { value: 80, message: "Title cannot exceed 80 characters" }
                           })}
                           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="csr@company.com"
+                          placeholder="Rural Government School Renovation – Nashik"
+                          maxLength={80}
                         />
-                        {errors.partnerContactEmail && <p className="text-red-500 text-xs mt-1">{errors.partnerContactEmail.message}</p>}
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Contact Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="tel"
-                          {...register("partnerContactNumber", {
-                            required: "Contact number is required",
-                            pattern: { value: /^[0-9]{10}$/, message: "Must be a 10-digit number" }
-                          })}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="9876543210"
-                        />
-                        {errors.partnerContactNumber && <p className="text-red-500 text-xs mt-1">{errors.partnerContactNumber.message}</p>}
-                      </div>
-                    </div>
-
-                    {/* Event Image */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Event Image <span className="text-red-500">*</span>
-                      </label>
-                      {eventImagePreview ? (
-                        <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
-                          <Image
-                            src={eventImagePreview}
-                            alt="Event preview"
-                            fill
-                            className="object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={removeImage}
-                            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                        <div className="flex justify-between mt-1">
+                          {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
+                          <p className="text-xs text-gray-500 ml-auto">{watch("title")?.length || 0}/80</p>
                         </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#8B5CF6] transition-all bg-gray-50">
-                          <div className="flex flex-col items-center justify-center py-6">
-                            <Upload className="h-10 w-10 text-gray-400 mb-3" />
-                            <p className="text-sm text-gray-600 font-medium">Click to upload event image</p>
-                            <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                          </div>
-                          <input
-                            type="file"
-                            onChange={handleImageUpload}
-                            accept="image/*"
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                      {!eventImagePreview && !eventImageFile && (
-                        <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          Image is required to proceed to next step
-                        </p>
-                      )}
-                    </div>
+                      </div>
 
-                    {/* Category */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        CSR Focus Area <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register("category", { required: "Category is required" })}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
-                      >
-                        <option value="">Select CSR focus area</option>
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                      {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
-                      
-                      {/* Custom Category Input */}
-                      {(selectedCategory === "Other" || selectedCategory === "other") && (
-                        <div className="mt-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Please specify focus area <span className="text-red-500">*</span>
+                      {/* Cover Image */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Cover Image <span className="text-red-500">*</span>
+                        </label>
+                        {coverImagePreview ? (
+                          <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-gray-200">
+                            <Image
+                              src={coverImagePreview}
+                              alt="Cover preview"
+                              fill
+                              className="object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={removeCoverImage}
+                              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#8B5CF6] transition-all bg-gray-50">
+                            <div className="flex flex-col items-center justify-center py-6">
+                              <Upload className="h-10 w-10 text-gray-400 mb-3" />
+                              <p className="text-sm text-gray-600 font-medium">Click to upload cover image</p>
+                              <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                            </div>
+                            <input
+                              type="file"
+                              onChange={handleCoverImageUpload}
+                              accept="image/*"
+                              className="hidden"
+                            />
                           </label>
-                          <input
-                            {...register("customCategory", {
-                              required: (selectedCategory === "Other" || selectedCategory === "other") ? "Please specify the category" : false,
-                              minLength: { value: 3, message: "Category must be at least 3 characters" },
-                              maxLength: { value: 50, message: "Category must be less than 50 characters" }
-                            })}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                            placeholder="Enter your category"
-                          />
-                          {errors.customCategory && <p className="text-red-500 text-xs mt-1">{errors.customCategory.message}</p>}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Event Description <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        {...register("eventDescription", {
-                          required: "Description is required",
-                          minLength: { value: 50, message: "Description must be at least 50 characters" },
-                          maxLength: { value: 1000, message: "Description cannot exceed 1000 characters" }
-                        })}
-                        rows={5}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
-                        placeholder="Describe the corporate event, its purpose, and expected outcomes..."
-                      />
-                      <div className="flex justify-between mt-1">
-                        {errors.eventDescription && <p className="text-red-500 text-xs">{errors.eventDescription.message}</p>}
-                        <p className="text-xs text-gray-500 ml-auto">{watch("eventDescription")?.length || 0}/1000</p>
-                      </div>
-                    </div>
-
-                    {/* Location */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Location <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          {...register("location", { required: "Location is required" })}
-                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="City name"
-                        />
-                      </div>
-                      {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location.message}</p>}
-                    </div>
-
-                    {/* Date and Time */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Date <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <input
-                            type="date"
-                            {...register("date", { required: "Date is required" })}
-                            min={new Date().toISOString().split("T")[0]}
-                            onChange={(e) => {
-                              setValue("date", e.target.value);
-                              const currentTime = watch("time");
-                              if (currentTime) {
-                                validateDateTime(e.target.value, currentTime);
-                              }
-                            }}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          />
-                        </div>
-                        {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>}
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                          Time <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex gap-2">
-                          <select
-                            value={selectedHour}
-                            onChange={(e) => setSelectedHour(e.target.value)}
-                            className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          >
-                            {Array.from({ length: 12 }, (_, i) => {
-                              const hour = (i + 1).toString().padStart(2, '0');
-                              return <option key={hour} value={hour}>{hour}</option>;
-                            })}
-                          </select>
-
-                          <select
-                            value={selectedMinute}
-                            onChange={(e) => setSelectedMinute(e.target.value)}
-                            className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          >
-                            {Array.from({ length: 60 }, (_, i) => {
-                              const minute = i.toString().padStart(2, '0');
-                              return <option key={minute} value={minute}>{minute}</option>;
-                            })}
-                          </select>
-
-                          <select
-                            value={selectedPeriod}
-                            onChange={(e) => setSelectedPeriod(e.target.value)}
-                            className="w-20 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          >
-                            <option value="AM">AM</option>
-                            <option value="PM">PM</option>
-                          </select>
-                        </div>
-                        {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time.message}</p>}
-                        {dateTimeError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3" />{dateTimeError}</p>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Details */}
-              {activeStep === 2 && (
-                <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Step 2: Event Details</h2>
-                    <p className="text-sm text-gray-500 mt-1">Provide additional information</p>
-                  </div>
-
-                  <div className="space-y-5">
-                    {/* Duration */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Duration (hours) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        {...register("duration", {
-                          required: "Duration is required",
-                          min: { value: 1, message: "Duration must be at least 1 hour" },
-                          max: { value: 12, message: "Duration cannot exceed 12 hours" }
-                        })}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                        placeholder="3"
-                      />
-                      {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration.message}</p>}
-                    </div>
-
-                    {/* Event Type */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Event Type <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register("eventType", { required: "Event type is required" })}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
-                      >
-                        <option value="corporate-csr">Corporate CSR Initiative</option>
-                        <option value="corporate-partnership">Corporate Partnership</option>
-                        <option value="employee-engagement">Employee Engagement Activity</option>
-                        <option value="community-outreach">Community Outreach Program</option>
-                      </select>
-                      {errors.eventType && <p className="text-red-500 text-xs mt-1">{errors.eventType.message}</p>}
-                    </div>
-
-                    {/* Event Status */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Event Status <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        {...register("eventStatus", { required: "Event status is required" })}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
-                      >
-                        <option value="upcoming">Upcoming</option>
-                        <option value="ongoing">Ongoing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="postponed">Postponed</option>
-                      </select>
-                      {errors.eventStatus && <p className="text-red-500 text-xs mt-1">{errors.eventStatus.message}</p>}
-                    </div>
-
-                    {/* Detailed Address */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Detailed Address <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        {...register("detailedAddress", {
-                          required: "Detailed address is required"
-                        })}
-                        rows={3}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
-                        placeholder="Street address, building name, landmarks..."
-                      />
-                      {errors.detailedAddress && <p className="text-red-500 text-xs mt-1">{errors.detailedAddress.message}</p>}
-                    </div>
-
-                    {/* Budget (Optional) */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Event Budget (₹) <span className="text-gray-400 text-xs">(Optional)</span>
-                      </label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="number"
-                          {...register("budget", {
-                            min: { value: 0, message: "Budget must be positive" }
-                          })}
-                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="50000"
-                        />
-                      </div>
-                      {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget.message}</p>}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Participation */}
-              {activeStep === 3 && (
-                <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Step 3: Participation Info</h2>
-                    <p className="text-sm text-gray-500 mt-1">Set capacity and requirements</p>
-                  </div>
-
-                  <div className="space-y-5">
-                    {/* Max Participants */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Maximum Participants <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="number"
-                          {...register("maxParticipants", {
-                            required: "Maximum participants is required",
-                            min: { value: 1, message: "Must allow at least 1 participant" },
-                            max: { value: 1000, message: "Cannot exceed 1000 participants" }
-                          })}
-                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                          placeholder="50"
-                        />
-                      </div>
-                      {errors.maxParticipants && <p className="text-red-500 text-xs mt-1">{errors.maxParticipants.message}</p>}
-                    </div>
-
-                    {/* Requirements */}
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Participant Requirements <span className="text-gray-400 text-xs">(Optional)</span>
-                      </label>
-                      <div className="space-y-3">
-                        {requirementInputs.map((req, index) => (
-                          <div key={index} className="flex gap-2">
-                            <input
-                              type="text"
-                              value={req}
-                              onChange={(e) => updateRequirement(index, e.target.value)}
-                              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                              placeholder={`Requirement ${index + 1}`}
-                            />
-                            {requirementInputs.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeRequirement(index)}
-                                className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                              >
-                                <X className="h-5 w-5" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={addRequirement}
-                          className="text-sm text-[#8B5CF6] hover:text-[#7C3AED] font-medium flex items-center gap-1"
-                        >
-                          + Add Requirement
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: CSR Objectives */}
-              {activeStep === 4 && (
-                <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <Target className="w-5 h-5 text-[#8B5CF6]" />
-                      Step 4: CSR Goals & Objectives
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">Define your corporate social responsibility goals</p>
-                  </div>
-
-                  <div className="space-y-5">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        CSR Objectives <span className="text-red-500">*</span>
-                      </label>
-                      <div className="space-y-3">
-                        {csrObjectiveInputs.map((obj, index) => (
-                          <div key={index} className="flex gap-2">
-                            <input
-                              type="text"
-                              value={obj}
-                              onChange={(e) => updateCSRObjective(index, e.target.value)}
-                              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
-                              placeholder={`CSR Objective ${index + 1} (e.g., "Provide skill training to 100 youth")`}
-                            />
-                            {csrObjectiveInputs.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCSRObjective(index)}
-                                className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                              >
-                                <X className="h-5 w-5" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={addCSRObjective}
-                          className="text-sm text-[#8B5CF6] hover:text-[#7C3AED] font-medium flex items-center gap-1"
-                        >
-                          <TrendingUp className="h-4 w-4" />
-                          Add CSR Objective
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">Add at least one measurable CSR objective for this event</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Review */}
-              {activeStep === 5 && (
-                <div className="space-y-6">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h2 className="text-lg font-semibold text-gray-800">Step 5: Review & Submit</h2>
-                    <p className="text-sm text-gray-500 mt-1">Review your corporate event details</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Summary Card */}
-                    <div className="bg-gradient-to-br from-[#E8F5FF] to-[#D4BBF7] rounded-xl p-6 space-y-4">
-                      <div className="flex items-start gap-3">
-                        <Briefcase className="w-6 h-6 text-[#8B5CF6] flex-shrink-0 mt-1" />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-800">{watch("eventTitle") || "Corporate Event Title"}</h3>
-                          <p className="text-sm text-gray-600 mt-1">Partner: {watch("partnerCompany") || "Not specified"}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600 font-medium">CSR Focus Area</p>
-                          <p className="text-gray-800">{watch("category") || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Location</p>
-                          <p className="text-gray-800">{watch("location") || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Date</p>
-                          <p className="text-gray-800">{watch("date") ? new Date(watch("date")).toLocaleDateString() : "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Time</p>
-                          <p className="text-gray-800">{watch("time") || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Duration</p>
-                          <p className="text-gray-800">{watch("duration") || "0"} hours</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Max Participants</p>
-                          <p className="text-gray-800">{watch("maxParticipants") || "0"} people</p>
-                        </div>
-                      </div>
-
-                      {watch("eventDescription") && (
-                        <div>
-                          <p className="text-gray-600 font-medium text-sm">Description</p>
-                          <p className="text-gray-800 text-sm mt-1 line-clamp-3">{watch("eventDescription")}</p>
-                        </div>
-                      )}
-
-                      {csrObjectiveInputs.filter(obj => obj.trim() !== "").length > 0 && (
-                        <div className="pt-4 border-t border-gray-300/50">
-                          <p className="text-gray-600 font-medium text-sm mb-2 flex items-center gap-1">
-                            <Target className="h-4 w-4" />
-                            CSR Objectives
+                        )}
+                        {!coverImagePreview && !coverImageFile && (
+                          <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Cover image is required to proceed
                           </p>
-                          <ul className="list-disc list-inside space-y-1">
-                            {csrObjectiveInputs.filter(obj => obj.trim() !== "").map((obj, idx) => (
-                              <li key={idx} className="text-gray-800 text-sm">{obj}</li>
+                        )}
+                      </div>
+
+                      {/* Opportunity Type */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Opportunity Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          {...register("opportunityType", { required: "Opportunity type is required" })}
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm text-gray-600"
+                        >
+                          <option value="">Select opportunity type</option>
+                          {opportunityTypes.map((type) => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                        {errors.opportunityType && <p className="text-red-500 text-xs mt-1">{errors.opportunityType.message}</p>}
+                      </div>
+
+                      {/* CSR Modes - Checkbox Group */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          CSR Mode <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Select all applicable CSR modes for this opportunity</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {csrModeOptions.map((mode) => (
+                            <label 
+                              key={mode} 
+                              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                selectedCsrModes.includes(mode)
+                                  ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedCsrModes.includes(mode)}
+                                onChange={(e) => handleCheckboxGroupChange("csrModes", mode, e.target.checked)}
+                                className="w-4 h-4 text-[#8B5CF6] rounded border-gray-300 focus:ring-[#8B5CF6]"
+                              />
+                              <span className="text-sm text-gray-700">{mode}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {selectedCsrModes.length === 0 && (
+                          <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Please select at least one CSR mode
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Location Section */}
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <label className="text-sm font-semibold text-gray-800 mb-3 block flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-[#8B5CF6]" />
+                          Location Details
+                        </label>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Country Field */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              Country <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              {...register("location.country", { required: "Country is required" })}
+                              defaultValue="India"
+                              readOnly
+                              className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm cursor-not-allowed"
+                            />
+                          </div>
+
+                          {/* State Field */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              State <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              {...register("location.state", { required: "State is required" })}
+                              onChange={(e) => {
+                                setSelectedState(e.target.value);
+                                setValue("location.district", "");
+                                setValue("location.city", "");
+                                setSelectedDistrict("");
+                              }}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm appearance-none"
+                            >
+                              <option value="">Select State</option>
+                              {Object.keys(indianStatesData)
+                                .sort()
+                                .map((state) => (
+                                  <option key={state} value={state}>
+                                    {state}
+                                  </option>
+                                ))}
+                            </select>
+                            {errors.location?.state && <p className="text-red-500 text-xs mt-1">{errors.location.state.message}</p>}
+                          </div>
+
+                          {/* District Field */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              District <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              {...register("location.district", { required: "District is required" })}
+                              disabled={!selectedState}
+                              onChange={(e) => {
+                                setSelectedDistrict(e.target.value);
+                                setValue("location.city", "");
+                              }}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              placeholder="Enter district name"
+                            />
+                            {errors.location?.district && <p className="text-red-500 text-xs mt-1">{errors.location.district.message}</p>}
+                          </div>
+
+                          {/* City Field */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              City <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              {...register("location.city", { required: "City is required" })}
+                              disabled={!selectedState}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            >
+                              <option value="">Select City</option>
+                              {selectedState &&
+                                indianStatesData[selectedState]?.map((city) => (
+                                  <option key={city} value={city}>
+                                    {city}
+                                  </option>
+                                ))}
+                            </select>
+                            {errors.location?.city && <p className="text-red-500 text-xs mt-1">{errors.location.city.message}</p>}
+                          </div>
+
+                          {/* Pincode Field */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              Pincode <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              {...register("location.pincode", { 
+                                required: "Pincode is required",
+                                pattern: { 
+                                  value: /^[1-9][0-9]{5}$/, 
+                                  message: "Invalid pincode format" 
+                                },
+                                minLength: { value: 6, message: "Pincode must be 6 digits" },
+                                maxLength: { value: 6, message: "Pincode must be 6 digits" }
+                              })}
+                              type="text"
+                              maxLength={6}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="Enter 6-digit pincode"
+                              onKeyPress={(e) => {
+                                if (!/[0-9]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            />
+                            {errors.location?.pincode && <p className="text-red-500 text-xs mt-1">{errors.location.pincode.message}</p>}
+                          </div>
+
+                          {/* Google Map Location - Optional */}
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              Google Map Location <span className="text-gray-400">(Optional)</span>
+                            </label>
+                            <input
+                              {...register("location.googleMapLocation")}
+                              type="url"
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="Paste Google Maps link (e.g., https://maps.google.com/...)"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Share a Google Maps link to help people find your exact location</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PART_4_PLACEHOLDER */}
+
+                {/* Step 2: Project Details */}
+                {activeStep === 2 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-[#8B5CF6]" />
+                        Step 2: Project Details
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Describe the project, its impact, and timeline</p>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* Problem Statement */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Problem Statement <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-2">Describe the problem or need this project addresses</p>
+                        <textarea
+                          {...register("problemStatement", {
+                            required: "Problem statement is required",
+                            maxLength: { value: 500, message: "Problem statement cannot exceed 500 characters" }
+                          })}
+                          rows={4}
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
+                          placeholder="Example: The government school in Sinnar village has deteriorating infrastructure with broken windows, damaged roofs, and lack of basic sanitation facilities affecting 500+ students..."
+                          maxLength={500}
+                        />
+                        <div className="flex justify-between mt-1">
+                          {errors.problemStatement && <p className="text-red-500 text-xs">{errors.problemStatement.message}</p>}
+                          <p className="text-xs text-gray-500 ml-auto">{watch("problemStatement")?.length || 0}/500</p>
+                        </div>
+                      </div>
+
+                      {/* Proposed Solution */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Proposed Solution <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-2">Describe your proposed solution and approach</p>
+                        <textarea
+                          {...register("proposedSolution", {
+                            required: "Proposed solution is required",
+                            minLength: { value: 50, message: "Please provide a detailed solution (min 50 characters)" }
+                          })}
+                          rows={5}
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
+                          placeholder="Example: We plan to renovate the school building including: 1) Roof repair and waterproofing 2) Window and door replacement 3) Construction of new toilets 4) Painting and beautification..."
+                        />
+                        {errors.proposedSolution && <p className="text-red-500 text-xs mt-1">{errors.proposedSolution.message}</p>}
+                      </div>
+
+                      {/* Expected Impact - OPTIONAL */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <Target className="w-4 h-4 text-[#8B5CF6]" />
+                          Expected Impact <span className="text-gray-400 text-xs">(Optional)</span>
+                        </label>
+                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Number of Beneficiaries</label>
+                            <div className="relative">
+                              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <input
+                                type="number"
+                                {...register("expectedImpact.beneficiaries", { 
+                                  valueAsNumber: true
+                                })}
+                                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                                placeholder="500"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Direct Impact</label>
+                            <input
+                              {...register("expectedImpact.directImpact")}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                              placeholder="Improved learning environment for 500+ students"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Long-term Outcome</label>
+                            <input
+                              {...register("expectedImpact.longTermOutcome")}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                              placeholder="Increased attendance and improved academic performance"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Project Timeline */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-[#8B5CF6]" />
+                          Project Timeline <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Start Date <span className="text-red-500">*</span></label>
+                            <input
+                              type="date"
+                              {...register("timeline.startDate", { required: "Start date is required" })}
+                              min={new Date().toISOString().split("T")[0]}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            />
+                            {errors.timeline?.startDate && <p className="text-red-500 text-xs mt-1">{errors.timeline.startDate.message}</p>}
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">End Date <span className="text-red-500">*</span></label>
+                            <input
+                              type="date"
+                              {...register("timeline.endDate", { required: "End date is required" })}
+                              min={watch("timeline.startDate") || new Date().toISOString().split("T")[0]}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                            />
+                            {errors.timeline?.endDate && <p className="text-red-500 text-xs mt-1">{errors.timeline.endDate.message}</p>}
+                          </div>
+                        </div>
+                        {watch("timeline.startDate") && watch("timeline.endDate") && (
+                          <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Duration: {Math.ceil((new Date(watch("timeline.endDate")).getTime() - new Date(watch("timeline.startDate")).getTime()) / (1000 * 60 * 60 * 24))} days
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Supporting Media */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Supporting Media <span className="text-gray-400">(Optional)</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Upload images or PDFs to support your proposal (max 5 files, 5MB each)</p>
+                        
+                        {mediaPreviews.length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                            {mediaPreviews.map((preview, index) => (
+                              <div key={index} className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                                {preview.type === 'image' ? (
+                                  <div className="h-24 relative">
+                                    <Image
+                                      src={preview.url}
+                                      alt={`Preview ${index + 1}`}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-24 flex flex-col items-center justify-center p-2">
+                                    <FileText className="w-8 h-8 text-red-500 mb-1" />
+                                    <p className="text-xs text-gray-600 truncate w-full text-center">{preview.name}</p>
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeMedia(index)}
+                                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
                             ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {budget && Number(budget) > 0 && (
-                        <div className="pt-4 border-t border-gray-300/50">
-                          <p className="text-gray-600 font-medium text-sm mb-1">Event Budget</p>
-                          <p className="text-gray-800 text-lg font-semibold">₹{Number(budget).toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Confirmation Checkbox */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          {...register("confirmCheckbox", {
-                            required: "You must confirm the details are correct"
-                          })}
-                          className="mt-1 h-4 w-4 text-[#8B5CF6] focus:ring-[#8B5CF6] border-gray-300 rounded"
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">I confirm that all details are correct</p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            By submitting, you agree that the information provided is accurate and complies with our terms of service.
-                          </p>
-                        </div>
-                      </label>
-                      {errors.confirmCheckbox && <p className="text-red-500 text-xs mt-2">{errors.confirmCheckbox.message}</p>}
-                    </div>
-
-                    {/* Info Note */}
-                    <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-yellow-800">
-                        <p className="font-medium">Review Period</p>
-                        <p className="mt-1">Your corporate event will be reviewed by our team and published within 24 hours.</p>
+                          </div>
+                        )}
+                        
+                        {mediaPreviews.length < 5 && (
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-[#8B5CF6] transition-all bg-gray-50">
+                            <div className="flex flex-col items-center justify-center py-4">
+                              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                              <p className="text-sm text-gray-600 font-medium">Click to upload files</p>
+                              <p className="text-xs text-gray-500 mt-1">Images (PNG, JPG) or PDFs</p>
+                            </div>
+                            <input
+                              type="file"
+                              onChange={handleMediaUpload}
+                              accept="image/*,application/pdf"
+                              multiple
+                              className="hidden"
+                            />
+                          </label>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between gap-4">
-              {activeStep > 1 && (
-                <button
-                  type="button"
-                  onClick={handlePrevious}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all"
-                >
-                  Previous
-                </button>
-              )}
-              
-              {activeStep < 5 ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="ml-auto px-6 py-3 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#7C3AED] font-medium transition-all"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !confirmCheckbox}
-                  className="ml-auto px-6 py-3 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#7C3AED] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Submit Corporate Event
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+                {/* Step 3: Participation */}
+                {activeStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-[#8B5CF6]" />
+                        Step 3: Participation
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Define corporate participation requirements and budget</p>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* Corporate Participation Required */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          Corporate Participation Required <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Select what kind of participation you need from corporates</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {participationOptions.map((option) => (
+                            <label 
+                              key={option} 
+                              className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                                selectedParticipation.includes(option)
+                                  ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedParticipation.includes(option)}
+                                onChange={(e) => handleCheckboxGroupChange("participationRequired", option, e.target.checked)}
+                                className="w-4 h-4 text-[#8B5CF6] rounded border-gray-300 focus:ring-[#8B5CF6]"
+                              />
+                              <span className="text-sm text-gray-700">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {selectedParticipation.length === 0 && (
+                          <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Please select at least one participation type
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Volunteer Details - Conditional */}
+                      {selectedParticipation.includes("Employees") && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                            <Users className="w-4 h-4 text-blue-600" />
+                            Volunteer Details
+                          </label>
+                          <p className="text-xs text-gray-500 mb-4">Since you selected &quot;Employees&quot;, please provide volunteer requirements</p>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">Volunteers Needed <span className="text-red-500">*</span></label>
+                              <input
+                                type="number"
+                                {...register("volunteerDetails.volunteersNeeded", { 
+                                  required: selectedParticipation.includes("Employees") ? "Number of volunteers is required" : false,
+                                  min: { value: 1, message: "At least 1 volunteer required" },
+                                  valueAsNumber: true
+                                })}
+                                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                                placeholder="20"
+                              />
+                              {errors.volunteerDetails?.volunteersNeeded && <p className="text-red-500 text-xs mt-1">{errors.volunteerDetails.volunteersNeeded.message}</p>}
+                            </div>
+                            
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">Time Commitment (Hours) <span className="text-red-500">*</span></label>
+                              <input
+                                type="number"
+                                {...register("volunteerDetails.timeCommitmentHours", { 
+                                  required: selectedParticipation.includes("Employees") ? "Time commitment is required" : false,
+                                  min: { value: 1, message: "At least 1 hour required" },
+                                  valueAsNumber: true
+                                })}
+                                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                                placeholder="8"
+                              />
+                              {errors.volunteerDetails?.timeCommitmentHours && <p className="text-red-500 text-xs mt-1">{errors.volunteerDetails.timeCommitmentHours.message}</p>}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <label className="text-xs text-gray-600 mb-2 block">Skills Required <span className="text-gray-400">(Optional)</span></label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {skillOptions.map((skill) => (
+                                <label 
+                                  key={skill} 
+                                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all text-xs ${
+                                    (watch("volunteerDetails.skillsRequired") || []).includes(skill)
+                                      ? "border-blue-400 bg-blue-100"
+                                      : "border-gray-200 bg-white hover:border-gray-300"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={(watch("volunteerDetails.skillsRequired") || []).includes(skill)}
+                                    onChange={(e) => handleSkillsChange(skill, e.target.checked)}
+                                    className="w-3 h-3 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                  />
+                                  <span className="text-gray-700">{skill}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estimated Budget */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <IndianRupee className="w-4 h-4 text-[#8B5CF6]" />
+                          Estimated Budget <span className="text-red-500">*</span>
+                        </label>
+                        
+                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Total Amount (₹) <span className="text-red-500">*</span></label>
+                            <div className="relative">
+                              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                              <input
+                                type="number"
+                                {...register("budget.totalAmount", { 
+                                  required: "Total budget amount is required",
+                                  min: { value: 1000, message: "Minimum budget is ₹1,000" },
+                                  valueAsNumber: true
+                                })}
+                                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                                placeholder="500000"
+                              />
+                            </div>
+                            {errors.budget?.totalAmount && <p className="text-red-500 text-xs mt-1">{errors.budget.totalAmount.message}</p>}
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-2 block">Budget Breakdown <span className="text-gray-400">(Optional)</span></label>
+                            <BudgetBreakdownTable />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* NGO Contribution - OPTIONAL */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          NGO Contribution <span className="text-gray-400">(Optional)</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-2">Describe what your NGO will contribute to this project</p>
+                        <textarea
+                          {...register("ngoContribution")}
+                          rows={4}
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm resize-none"
+                          placeholder="Example: Our NGO will provide project management, local coordination, community mobilization, and monitoring support. We will deploy 5 staff members full-time for the project duration..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: CSR Goals & Compliance */}
+                {activeStep === 4 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-[#8B5CF6]" />
+                        Step 4: CSR Goals & Compliance
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Align with CSR Act and provide legal compliance details</p>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* CSR Act Alignment */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          CSR Act Alignment (Schedule VII) <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Select applicable areas under Companies Act 2013, Schedule VII</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {csrActOptions.map((option) => (
+                            <label 
+                              key={option} 
+                              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                (watch("csrActAlignment") || []).includes(option)
+                                  ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(watch("csrActAlignment") || []).includes(option)}
+                                onChange={(e) => handleCheckboxGroupChange("csrActAlignment", option, e.target.checked)}
+                                className="w-4 h-4 text-[#8B5CF6] rounded border-gray-300 focus:ring-[#8B5CF6]"
+                              />
+                              <span className="text-sm text-gray-700">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {(watch("csrActAlignment") || []).length === 0 && (
+                          <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Please select at least one CSR Act alignment
+                          </p>
+                        )}
+                      </div>
+
+                      {/* UN SDG Alignment - Optional */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          UN SDG Alignment <span className="text-gray-400">(Optional)</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Select UN Sustainable Development Goals this project aligns with</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {sdgOptions.map((option) => (
+                            <label 
+                              key={option} 
+                              className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                                (watch("sdgMapping") || []).includes(option)
+                                  ? "border-green-400 bg-green-50"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(watch("sdgMapping") || []).includes(option)}
+                                onChange={(e) => handleCheckboxGroupChange("sdgMapping", option, e.target.checked)}
+                                className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                              />
+                              <span className="text-xs text-gray-700">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Reporting & Documentation */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          Reporting & Documentation <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Select documents you will provide to corporates</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {reportingOptions.map((option) => (
+                            <label 
+                              key={option} 
+                              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                (watch("reportingDocuments") || []).includes(option)
+                                  ? "border-[#8B5CF6] bg-[#8B5CF6]/5"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(watch("reportingDocuments") || []).includes(option)}
+                                onChange={(e) => handleCheckboxGroupChange("reportingDocuments", option, e.target.checked)}
+                                className="w-4 h-4 text-[#8B5CF6] rounded border-gray-300 focus:ring-[#8B5CF6]"
+                              />
+                              <span className="text-sm text-gray-700">{option}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {(watch("reportingDocuments") || []).length === 0 && (
+                          <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Please select at least one reporting document type
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Legal Compliance */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#8B5CF6]" />
+                          Tax & Legal Information <span className="text-red-500">*</span>
+                        </label>
+                        
+                        <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">NGO Registration Number <span className="text-red-500">*</span></label>
+                            <input
+                              {...register("legalCompliance.registrationNumber", { 
+                                required: "Registration number is required"
+                              })}
+                              className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent transition-all text-sm"
+                              placeholder="MH/2020/12345"
+                            />
+                            {errors.legalCompliance?.registrationNumber && <p className="text-red-500 text-xs mt-1">{errors.legalCompliance.registrationNumber.message}</p>}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                              watch("legalCompliance.has12A")
+                                ? "border-green-400 bg-green-50"
+                                : "border-gray-200 bg-white hover:border-gray-300"
+                            }`}>
+                              <input
+                                type="checkbox"
+                                {...register("legalCompliance.has12A")}
+                                className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                              />
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">12A Certificate</span>
+                                <p className="text-xs text-gray-500">Tax exemption</p>
+                              </div>
+                            </label>
+                            
+                            <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                              watch("legalCompliance.has80G")
+                                ? "border-green-400 bg-green-50"
+                                : "border-gray-200 bg-white hover:border-gray-300"
+                            }`}>
+                              <input
+                                type="checkbox"
+                                {...register("legalCompliance.has80G")}
+                                className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                              />
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">80G Certificate</span>
+                                <p className="text-xs text-gray-500">Donor tax benefit</p>
+                              </div>
+                            </label>
+                            
+                            <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                              watch("legalCompliance.hasFCRA")
+                                ? "border-green-400 bg-green-50"
+                                : "border-gray-200 bg-white hover:border-gray-300"
+                            }`}>
+                              <input
+                                type="checkbox"
+                                {...register("legalCompliance.hasFCRA")}
+                                className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                              />
+                              <div>
+                                <span className="text-sm font-medium text-gray-700">FCRA</span>
+                                <p className="text-xs text-gray-500">Foreign contribution</p>
+                              </div>
+                            </label>
+                          </div>
+                          
+                          <p className="text-xs text-gray-500 mt-2">
+                            Note: 12A and 80G certificates are typically required for CSR partnerships
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Review & Publish */}
+                {activeStep === 5 && (
+                  <div className="space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                      <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-[#8B5CF6]" />
+                        Step 5: Review & Publish
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Review your opportunity and optionally provide contact details</p>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* Internal NGO Contact - OPTIONAL */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-[#8B5CF6]" />
+                          Internal NGO Contact <span className="text-gray-400">(Optional)</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">Optionally provide contact details for the person managing this opportunity</p>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Contact Name</label>
+                            <input
+                              {...register("contactPerson.name")}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="John Doe"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Role/Designation</label>
+                            <input
+                              {...register("contactPerson.role")}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="Program Manager"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Email</label>
+                            <input
+                              type="email"
+                              {...register("contactPerson.email", { 
+                                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" }
+                              })}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="john@ngo.org"
+                            />
+                            {errors.contactPerson?.email && <p className="text-red-500 text-xs mt-1">{errors.contactPerson.email.message}</p>}
+                          </div>
+                          
+                          <div>
+                            <label className="text-xs text-gray-600 mb-1 block">Contact Number</label>
+                            <input
+                              type="tel"
+                              {...register("contactPerson.phone", { 
+                                pattern: { value: /^[0-9]*$/, message: "Only numbers are allowed" }
+                              })}
+                              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent focus:bg-white transition-all text-sm"
+                              placeholder="9876543210"
+                              maxLength={10}
+                              onKeyPress={(e) => {
+                                if (!/[0-9]/.test(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            />
+                            {errors.contactPerson?.phone && <p className="text-red-500 text-xs mt-1">{errors.contactPerson.phone.message}</p>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Summary Review */}
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">
+                          Opportunity Summary
+                        </label>
+                        <div className="bg-gradient-to-br from-[#E8F5FF] to-[#D4BBF7] rounded-xl p-5 space-y-4">
+                          {/* Title & Type */}
+                          <div className="flex items-start gap-3">
+                            <Briefcase className="w-6 h-6 text-[#8B5CF6] flex-shrink-0 mt-1" />
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-800">{watch("title") || "Opportunity Title"}</h3>
+                              <p className="text-sm text-gray-600">{watch("opportunityType") || "Type not selected"}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Location & Timeline */}
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-gray-500" />
+                              <span className="text-gray-700">
+                                {watch("location.city") && watch("location.state") ? `${watch("location.city")}, ${watch("location.district")}, ${watch("location.state")} - ${watch("location.pincode")}` : "Location not set"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500" />
+                              <span className="text-gray-700">
+                                {watch("timeline.startDate") ? new Date(watch("timeline.startDate")).toLocaleDateString() : "Start"} - {watch("timeline.endDate") ? new Date(watch("timeline.endDate")).toLocaleDateString() : "End"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* CSR Modes */}
+                          {selectedCsrModes.length > 0 && (
+                            <div>
+                              <p className="text-xs text-gray-600 mb-2">CSR Modes:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedCsrModes.map((mode, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-white/70 rounded-full text-xs text-gray-700">{mode}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Budget & Beneficiaries */}
+                          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-300/30">
+                            <div>
+                              <p className="text-xs text-gray-600">Estimated Budget</p>
+                              <p className="text-lg font-bold text-[#8B5CF6]">₹{(watch("budget.totalAmount") || 0).toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Expected Beneficiaries</p>
+                              <p className="text-lg font-bold text-[#8B5CF6]">{(watch("expectedImpact.beneficiaries") || 0).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Legal Compliance Badges */}
+                          <div className="flex gap-2 pt-3 border-t border-gray-300/30">
+                            {watch("legalCompliance.has12A") && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">12A ✓</span>
+                            )}
+                            {watch("legalCompliance.has80G") && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">80G ✓</span>
+                            )}
+                            {watch("legalCompliance.hasFCRA") && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">FCRA ✓</span>
+                            )}
+                            {watch("legalCompliance.registrationNumber") && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Reg: {watch("legalCompliance.registrationNumber")}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Terms Confirmation */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            {...register("termsAccepted", {
+                              required: "You must accept the terms to submit"
+                            })}
+                            className="mt-1 h-5 w-5 text-[#8B5CF6] focus:ring-[#8B5CF6] border-gray-300 rounded"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              I confirm that the information provided is accurate and will be used for CSR collaboration
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              By submitting, you agree to our terms of service and confirm that all details are correct. 
+                              Your opportunity will be reviewed by the admin team before being published.
+                            </p>
+                          </div>
+                        </label>
+                        {errors.termsAccepted && <p className="text-red-500 text-xs mt-2 ml-8">{errors.termsAccepted.message}</p>}
+                      </div>
+
+                      {/* Info Note */}
+                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-yellow-800">
+                          <p className="font-medium">Review Period</p>
+                          <p className="mt-1">Your CSR opportunity will be reviewed by our team and published within 24-48 hours. You will receive a notification once approved.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between gap-4">
+                {activeStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-all"
+                  >
+                    Previous
+                  </button>
+                )}
+                
+                {activeStep < 5 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="ml-auto px-6 py-3 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#7C3AED] font-medium transition-all"
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="ml-auto px-6 py-3 bg-[#8B5CF6] text-white rounded-lg hover:bg-[#7C3AED] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Submit Opportunity
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
 
           {/* Live Preview Column - Sticky */}
           <div className="hidden lg:block lg:col-span-2">
@@ -1228,62 +1910,54 @@ const CreateCorporateEventForm: React.FC = () => {
                   <h3 className="text-xl font-semibold text-white">Live Preview</h3>
                 </div>
                 <p className="text-sm text-white/90">
-                  See how your corporate event will appear
+                  See how your opportunity will appear to corporates
                 </p>
               </div>
 
               {/* Preview Card */}
               <div className="bg-white p-6 w-full">
                 <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-                  {/* Event Image */}
+                  {/* Cover Image */}
                   <div className="h-48 bg-gradient-to-br from-[#E8F5FF] to-[#D4BBF7] relative overflow-hidden flex items-center justify-center">
-                    {eventImagePreview ? (
-                      <img src={eventImagePreview} alt="Event preview" className="w-full h-full object-cover" />
+                    {coverImagePreview ? (
+                      <img src={coverImagePreview} alt="Cover preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-center">
                         <ImageIcon className="w-12 h-12 text-white/50 mx-auto mb-2" />
-                        <p className="text-sm text-white/70">Event image preview</p>
+                        <p className="text-sm text-white/70">Cover image preview</p>
                       </div>
                     )}
                   </div>
 
                   {/* Content */}
                   <div className="p-5 space-y-4">
-                    {/* Category Badge */}
-                    {watch("category") && (
+                    {/* Type Badge */}
+                    {watch("opportunityType") && (
                       <span className="inline-block px-3 py-1 bg-[#8B5CF6] text-white text-xs font-medium rounded-full">
-                        {(watch("category") === "Other" || watch("category") === "other") && watch("customCategory") 
-                          ? watch("customCategory") 
-                          : watch("category")}
+                        {watch("opportunityType")}
                       </span>
                     )}
 
                     {/* Title */}
                     <h4 className="text-lg font-bold text-gray-800 line-clamp-2">
-                      {watch("eventTitle") || "Corporate Event Title"}
+                      {watch("title") || "Your Opportunity Title"}
                     </h4>
 
-                    {/* Partner Badge */}
-                    {watch("partnerCompany") && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Building2 className="w-4 h-4 text-[#8B5CF6]" />
-                        <span className="font-medium">{watch("partnerCompany")}</span>
-                      </div>
-                    )}
-
-                    {/* Description */}
+                    {/* Problem Statement Preview */}
                     <p className="text-sm text-gray-600 line-clamp-3">
-                      {watch("eventDescription") || "Your corporate event description will appear here..."}
+                      {watch("problemStatement") || "Your problem statement will appear here..."}
                     </p>
 
-                    {/* Event Details Grid */}
+                    {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-gray-400" />
                         <div>
                           <p className="text-xs text-gray-500">Location</p>
                           <p className="text-sm font-medium text-gray-800">
-                            {watch("location") || "City"}
+                            {watch("location.city") && watch("location.state") 
+                              ? `${watch("location.city")}, ${watch("location.state")}` 
+                              : "City, State"}
                           </p>
                         </div>
                       </div>
@@ -1291,19 +1965,19 @@ const CreateCorporateEventForm: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <div>
-                          <p className="text-xs text-gray-500">Date</p>
+                          <p className="text-xs text-gray-500">Timeline</p>
                           <p className="text-sm font-medium text-gray-800">
-                            {watch("date") ? new Date(watch("date")).toLocaleDateString() : "TBD"}
+                            {watch("timeline.startDate") ? new Date(watch("timeline.startDate")).toLocaleDateString() : "TBD"}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
+                        <IndianRupee className="w-4 h-4 text-gray-400" />
                         <div>
-                          <p className="text-xs text-gray-500">Time</p>
+                          <p className="text-xs text-gray-500">Budget</p>
                           <p className="text-sm font-medium text-gray-800">
-                            {watch("time") || "TBD"}
+                            ₹{(watch("budget.totalAmount") || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -1311,56 +1985,35 @@ const CreateCorporateEventForm: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-400" />
                         <div>
-                          <p className="text-xs text-gray-500">Max Participants</p>
+                          <p className="text-xs text-gray-500">Beneficiaries</p>
                           <p className="text-sm font-medium text-gray-800">
-                            {watch("maxParticipants") || "0"}
+                            {(watch("expectedImpact.beneficiaries") || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Duration */}
-                    {watch("duration") && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 pt-2">
-                        <Activity className="w-4 h-4" />
-                        <span>{watch("duration")} hours</span>
-                      </div>
-                    )}
-
-                    {/* Budget Badge */}
-                    {budget && Number(budget) > 0 && (
+                    {/* CSR Modes */}
+                    {selectedCsrModes.length > 0 && (
                       <div className="pt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-sm">
-                          <IndianRupee className="w-4 h-4 text-[#8B5CF6]" />
-                          <span className="font-medium text-[#8B5CF6]">Budget: ₹{Number(budget).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* CSR Objectives */}
-                    {csrObjectiveInputs.filter(obj => obj.trim() !== "").length > 0 && (
-                      <div className="pt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                          <Target className="w-4 h-4 text-[#8B5CF6]" />
-                          <span className="font-medium text-gray-700">CSR Goals</span>
-                        </div>
-                        <ul className="list-disc list-inside space-y-1">
-                          {csrObjectiveInputs.filter(obj => obj.trim() !== "").slice(0, 2).map((obj, idx) => (
-                            <li key={idx} className="text-xs text-gray-600 line-clamp-1">{obj}</li>
+                        <p className="text-xs text-gray-500 mb-2">CSR Modes:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedCsrModes.slice(0, 3).map((mode, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">{mode}</span>
                           ))}
-                          {csrObjectiveInputs.filter(obj => obj.trim() !== "").length > 2 && (
-                            <li className="text-xs text-gray-500">+{csrObjectiveInputs.filter(obj => obj.trim() !== "").length - 2} more</li>
+                          {selectedCsrModes.length > 3 && (
+                            <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">+{selectedCsrModes.length - 3}</span>
                           )}
-                        </ul>
+                        </div>
                       </div>
                     )}
 
-                    {/* Join Button */}
+                    {/* Action Button */}
                     <button
                       type="button"
                       className="w-full bg-[#8B5CF6] text-white py-2.5 rounded-lg font-medium hover:bg-[#7C3AED] transition-colors text-sm"
                     >
-                      Join Event
+                      Express Interest
                     </button>
                   </div>
                 </div>
@@ -1374,19 +2027,19 @@ const CreateCorporateEventForm: React.FC = () => {
 };
 
 // Main component with Suspense wrapper
-const CreateCorporateEventPage: React.FC = () => {
+const CreateCSROpportunityPage: React.FC = () => {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-[#E8F5FF] via-[#FFFFFF] to-[#D4BBF7] flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin text-[#8B5CF6] mx-auto mb-4" />
-          <p className="text-gray-600">Loading corporate event form...</p>
+          <p className="text-gray-600">Loading CSR opportunity form...</p>
         </div>
       </div>
     }>
-      <CreateCorporateEventForm />
+      <CreateCSROpportunityForm />
     </Suspense>
   );
 };
 
-export default CreateCorporateEventPage;
+export default CreateCSROpportunityPage;

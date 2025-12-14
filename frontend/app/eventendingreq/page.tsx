@@ -41,7 +41,11 @@ const EndEventRequestsPage = () => {
         _id: req._id,
         title: req.title,
         date: req.date,
-        location: req.location,
+        location: typeof req.location === 'object' 
+          ? (req.location?.city && req.location?.state 
+            ? `${req.location.city}, ${req.location.state}` 
+            : 'N/A')
+          : (req.location || 'N/A'),
         status: req.completionStatus as EventStatus,
         requestedAt: req.updatedAt,
         proofUrl: req.completionProof?.url || req.images?.[0] || "",

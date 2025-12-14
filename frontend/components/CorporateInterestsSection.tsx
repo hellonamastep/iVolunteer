@@ -9,7 +9,9 @@ import {
   Briefcase,
   Loader2,
   Users,
+  AlertCircle,
 } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 interface CorporateInterest {
   _id: string;
@@ -30,29 +32,63 @@ interface CorporateInterest {
 
 const CorporateInterestsSection = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [interests, setInterests] = useState<CorporateInterest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchInterests();
-  }, []);
+    // Only fetch if user is authenticated and is an NGO
+    if (user && user.role === "ngo") {
+      fetchInterests();
+    } else if (user && user.role !== "ngo") {
+      // User is authenticated but not an NGO - don't show error, just don't load
+      setLoading(false);
+    } else {
+      // User not authenticated yet - wait
+      setLoading(true);
+    }
+  }, [user]);
 
   const fetchInterests = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // Check if auth token exists
+      const token = localStorage.getItem("auth-token");
+      if (!token) {
+        setError("Authentication required. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
       const response = await api.get("/v1/corporate-interest/ngo-interests");
       const data = response.data as { interests?: CorporateInterest[] };
       setInterests(data.interests || []);
+      setError(null);
     } catch (err: any) {
       console.error("Error fetching corporate interests:", err);
-      setError(err.response?.data?.message || "Failed to load interests");
+      
+      // Handle different error types
+      if (err.response?.status === 403) {
+        setError("Access denied. This feature is only available for NGO accounts.");
+      } else if (err.response?.status === 401) {
+        setError("Your session has expired. Please log in again.");
+      } else {
+        setError(err.response?.data?.message || "Failed to load interests");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const pendingCount = interests.filter(i => i.status === "pending").length;
+
+  // Don't render for non-NGO users
+  if (user && user.role !== "ngo") {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -66,12 +102,16 @@ const CorporateInterestsSection = () => {
 
   if (error) {
     return (
-      <div className="w-full bg-gradient-to-br from-[#39c2ba]/10 via-[#8ce27a]/10 to-[#f5f8c3]/50 rounded-3xl p-6 md:p-8 lg:p-12">
-        <div className="text-center py-6">
-          <p className="text-red-500 text-sm mb-3">{error}</p>
+      <div className="w-full bg-gradient-to-br from-red-50 to-red-100/50 rounded-3xl p-6 md:p-8 border-2 border-red-200">
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <p className="text-red-600 font-medium mb-2">Unable to load Corporate Interests</p>
+          <p className="text-red-500 text-sm mb-4 max-w-md">{error}</p>
           <button
             onClick={fetchInterests}
-            className="px-4 py-2 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors text-sm"
+            className="px-6 py-2 bg-[#39c2ba] text-white rounded-lg hover:bg-[#2da59e] transition-colors text-sm font-medium shadow-md"
           >
             Try Again
           </button>

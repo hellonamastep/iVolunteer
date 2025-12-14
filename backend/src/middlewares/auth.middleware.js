@@ -65,8 +65,28 @@ export const authentication = async (req, res, next) => {
   }
 };
 
-export const authorizeRole = (...roles) => (req, _res, next) => {
-  if (!roles.includes(req.user.role)) throw new ApiError(403, "Forbidden: Access denied");
+export const authorizeRole = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ 
+      success: false, 
+      message: "Authentication required" 
+    });
+  }
+  
+  if (!roles.includes(req.user.role)) {
+    logger.warn("Access denied: User role not authorized", {
+      userId: req.user._id,
+      userRole: req.user.role,
+      requiredRoles: roles,
+      endpoint: req.originalUrl
+    });
+    
+    return res.status(403).json({ 
+      success: false, 
+      message: `Access denied. This feature requires ${roles.join(' or ')} role. Your current role is ${req.user.role}.` 
+    });
+  }
+  
   next();
 };
 

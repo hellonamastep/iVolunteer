@@ -5,7 +5,7 @@ import { Gift, Coins, Zap } from "lucide-react";
 const rewards = [
   {
     id: 1,
-    title: "$25 Gift Card",
+    title: "₹25 Gift Card",
     coins: 500,
     image: "/images/coupon1.jpg",
     popular: false
@@ -19,7 +19,7 @@ const rewards = [
   },
   {
     id: 3,
-    title: "$50 Gift Card",
+    title: "₹50 Gift Card",
     coins: 1000,
     image: "/images/coupon1.jpg",
     popular: false

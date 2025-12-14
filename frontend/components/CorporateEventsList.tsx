@@ -50,10 +50,50 @@ export default function CorporateEventsList() {
     const fetchCorporateEvents = async () => {
       try {
         setLoading(true);
-        // Use dedicated endpoint for approved corporate events
-        const response = await api.get("/v1/event/approved-corporate");
-        const corporateEvents = (response.data as { events?: CorporateEvent[] })?.events || [];
-        setEvents(corporateEvents);
+        
+        // Fetch from both endpoints - regular corporate events and CSR opportunities
+        const [regularEventsRes, csrOpportunitiesRes] = await Promise.all([
+          api.get("/v1/event/approved-corporate").catch((err) => {
+            console.log("Regular corporate events fetch error:", err);
+            return { data: { events: [] } };
+          }),
+          api.get("/v1/corporate-events/approved").catch((err) => {
+            console.log("CSR opportunities fetch error:", err);
+            return { data: { events: [] } };
+          })
+        ]);
+        
+        const regularEvents = (regularEventsRes.data as { events?: CorporateEvent[] })?.events || [];
+        const csrEvents = (csrOpportunitiesRes.data as { events?: any[] })?.events || [];
+        
+        // Map CSR opportunities to match CorporateEvent interface
+        const mappedCsrEvents: CorporateEvent[] = csrEvents.map((e: any) => ({
+          _id: e._id,
+          title: e.title,
+          description: e.description || e.problemStatement || '',
+          date: e.timeline?.startDate || e.createdAt,
+          location: typeof e.location === 'object' 
+            ? (e.location?.city && e.location?.state ? `${e.location.city}, ${e.location.state}` : '')
+            : (e.location || ''),
+          city: typeof e.location === 'object' 
+            ? (e.location?.city || '')
+            : (e.location || ''),
+          category: e.opportunityType || 'CSR Partnership',
+          volunteersNeeded: 0,
+          image: e.coverImage?.url || e.coverImage,
+          corporatePartner: '',
+          csrObjectives: e.csrModes || [],
+          status: e.status,
+          createdBy: {
+            name: e.ngoId?.organizationName || e.ngoId?.name || 'NGO',
+            organizationName: e.ngoId?.organizationName || e.ngoId?.name
+          },
+          bids: []
+        }));
+        
+        // Combine both event types
+        const allCorporateEvents = [...regularEvents, ...mappedCsrEvents];
+        setEvents(allCorporateEvents);
       } catch (err: any) {
         console.error("Error fetching corporate events:", err);
         setError(err.response?.data?.message || "Failed to load events");

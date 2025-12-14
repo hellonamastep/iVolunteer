@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useAdmin, DonationEventItem } from "@/contexts/admin-context";
-import { Gift, Building, Calendar, Target, CheckCircle, XCircle, ArrowRight, Sparkles, Users, IndianRupee } from "lucide-react";
+import { Gift, Building, Calendar, Target, CheckCircle, XCircle, ArrowRight, Sparkles, Users, IndianRupee, Eye } from "lucide-react";
+import Link from "next/link";
 
 const PendingDonationEventsPage = () => {
   const { 
@@ -208,6 +209,16 @@ const PendingDonationEventsPage = () => {
                   
                   {/* Actions - Better Alignment */}
                   <div className="lg:w-72 space-y-3 flex flex-col mt-10 ">
+                    {/* View Full Detail Button */}
+                    <Link
+                      href={`/donate/${event._id}`}
+                      className="group relative w-full flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Full Detail
+                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    </Link>
+
                     {/* Approve Button */}
                     <button
                       onClick={() => setShowApproveConfirm(event._id)}

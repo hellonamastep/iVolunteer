@@ -44,8 +44,8 @@ export default function RewardsPage() {
     },
     {
       id: "gift-card-25",
-      title: "$25 Gift Card",
-      description: "Redeem for a $25 gift card to popular retailers",
+      title: "₹25 Gift Card",
+      description: "Redeem for a ₹25 gift card to popular retailers",
       icon: Gift,
       cost: 500,
       category: "Gift Cards",

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { LucideIcon, X as CloseIcon } from "lucide-react";
 
 interface StatusBannerProps {
-  type: "pending" | "rejected" | "approved-volunteer" | "approved-donation";
+  type: "pending" | "rejected" | "approved-volunteer" | "approved-donation" | "approved-corporate";
   title: string;
   message: string | React.ReactNode;
   icon: LucideIcon;
@@ -68,6 +68,16 @@ const StatusBanner: React.FC<StatusBannerProps> = ({
       textColor: "text-purple-800",
       closeHoverBg: "hover:bg-purple-100",
       closeIconColor: "text-purple-400 group-hover:text-purple-600",
+    },
+    "approved-corporate": {
+      gradient: "from-blue-50 to-indigo-50",
+      border: "border-blue-200/60",
+      iconBg: "bg-blue-100",
+      iconColor: "text-blue-600",
+      titleColor: "text-blue-900",
+      textColor: "text-blue-800",
+      closeHoverBg: "hover:bg-blue-100",
+      closeIconColor: "text-blue-400 group-hover:text-blue-600",
     },
   };
 

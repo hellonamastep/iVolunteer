@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, AlertCircle, XCircle, Edit2, Trash2, X as CloseIcon, Heart } from "lucide-react";
+import { CheckCircle, Clock, Users, ChevronDown, Search, Filter, Calendar, AlertCircle, XCircle, Edit2, Trash2, X as CloseIcon, Heart, Briefcase } from "lucide-react";
 import api from "@/lib/api"; // your axios instance
 import { toast } from "react-toastify";
 import Link from "next/link";
@@ -35,6 +35,9 @@ interface EventItem {
   isDonationEvent?: boolean; // New field to distinguish donation events
   goalAmount?: number; // For donation events
   collectedAmount?: number; // For donation events
+  isCorporateEvent?: boolean; // For CSR opportunities
+  opportunityType?: string; // For CSR opportunities
+  csrModes?: string[]; // For CSR opportunities
 }
 
 const Ngoeventtable = () => {
@@ -58,10 +61,12 @@ const Ngoeventtable = () => {
     rejectedBanner: boolean;
     volunteerStatusBanner: boolean;
     donationStatusBanner: boolean;
+    corporateStatusBanner: boolean;
   }>({
     rejectedBanner: false,
     volunteerStatusBanner: false,
     donationStatusBanner: false,
+    corporateStatusBanner: false,
   });
 
   // Load dismissed banners from localStorage on mount
@@ -77,7 +82,7 @@ const Ngoeventtable = () => {
   }, []);
 
   // Function to dismiss a banner
-  const dismissBanner = (bannerType: 'rejectedBanner' | 'volunteerStatusBanner' | 'donationStatusBanner') => {
+  const dismissBanner = (bannerType: 'rejectedBanner' | 'volunteerStatusBanner' | 'donationStatusBanner' | 'corporateStatusBanner') => {
     const newDismissedState = {
       ...dismissedBanners,
       [bannerType]: true,
@@ -103,8 +108,8 @@ const Ngoeventtable = () => {
       // Add cache-busting parameter to prevent 304 responses
       const timestamp = new Date().getTime();
       
-      // Fetch both volunteer events and donation events
-      const [volunteerRes, donationRes] = await Promise.all([
+      // Fetch volunteer events, donation events, and corporate events
+      const [volunteerRes, donationRes, corporateRes] = await Promise.all([
         api.get<{ success: boolean; events: any[] }>(
           `/v1/event/organization?_t=${timestamp}`,
           {
@@ -126,6 +131,19 @@ const Ngoeventtable = () => {
           }
         ).catch((err) => {
           console.log("Donation events fetch error:", err);
+          return { data: { events: [] } };
+        }), // Gracefully handle if endpoint doesn't exist
+        api.get<{ success: boolean; events: any[] }>(
+          `/v1/corporate-events/my-events?_t=${timestamp}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          }
+        ).catch((err) => {
+          console.log("Corporate events fetch error:", err);
           return { data: { events: [] } };
         }) // Gracefully handle if endpoint doesn't exist
       ]);
@@ -156,7 +174,11 @@ const Ngoeventtable = () => {
           _id: e._id,
           title: e.title,
           date: e.date, // Keep raw date for editing
-          location: e.location,
+          location: typeof e.location === 'object' 
+            ? (e.location?.city && e.location?.state 
+              ? `${e.location.city}, ${e.location.state}` 
+              : (e.location || 'N/A'))
+            : (e.location || 'N/A'),
           filled: participantCount,
           maxParticipants: e.maxParticipants,
           status: e.status, // pending, approved, or rejected
@@ -205,7 +227,11 @@ const Ngoeventtable = () => {
           _id: e._id,
           title: e.title,
           date: e.startDate, // Use start date for donation events
-          location: e.location || "N/A",
+          location: typeof e.location === 'object' 
+            ? (e.location?.city && e.location?.state 
+              ? `${e.location.city}, ${e.location.state}` 
+              : 'N/A')
+            : (e.location || "N/A"),
           filled: collectedAmount,
           maxParticipants: goalAmount,
           status: approvalStatus, // Use approvalStatus for donation events
@@ -221,8 +247,46 @@ const Ngoeventtable = () => {
         };
       }) || [];
 
-      // Combine both event types
-      const allEvents = [...mappedVolunteerEvents, ...mappedDonationEvents];
+      // Map corporate events (CSR opportunities)
+      const mappedCorporateEvents = corporateRes.data.events?.map((e: any) => {
+        // CSR opportunities don't have participants like volunteer events
+        const progress = 0;
+        
+        // Use status directly for corporate events
+        const eventStatus = e.status || "pending";
+        
+        // CSR opportunities are either pending, approved, or rejected - no Open/Ongoing/Full
+        let displayStatus: "Open" | "Ongoing" | "Full" = "Open";
+        if (eventStatus === "approved") {
+          displayStatus = "Open"; // CSR opportunities are always "Open" once approved
+        }
+        
+        return {
+          _id: e._id,
+          title: e.title,
+          date: e.createdAt, // Use creation date for CSR opportunities
+          location: typeof e.location === 'object' 
+            ? (e.location?.city && e.location?.state 
+              ? `${e.location.city}, ${e.location.state}` 
+              : 'N/A')
+            : (e.location || "N/A"),
+          filled: 0,
+          maxParticipants: 0,
+          status: eventStatus,
+          displayStatus: displayStatus,
+          progress: progress,
+          eventStatus: eventStatus,
+          description: e.description,
+          category: e.opportunityType,
+          rejectionReason: e.rejectionReason,
+          isCorporateEvent: true,
+          opportunityType: e.opportunityType,
+          csrModes: e.csrModes
+        };
+      }) || [];
+
+      // Combine all event types
+      const allEvents = [...mappedVolunteerEvents, ...mappedDonationEvents, ...mappedCorporateEvents];
       setEvents(allEvents);
     } catch (err) {
       console.error("Failed to fetch events", err);
@@ -332,6 +396,8 @@ const Ngoeventtable = () => {
       // Determine endpoint based on event type
       const endpoint = editedEvent.isDonationEvent 
         ? `/v1/donation-event/${editedEvent._id}`
+        : editedEvent.isCorporateEvent
+        ? `/v1/corporate-events/${editedEvent._id}`
         : `/v1/event/${editedEvent._id}`;
 
       // Prepare event data for update
@@ -381,6 +447,8 @@ const Ngoeventtable = () => {
       const token = localStorage.getItem("auth-token");
       const endpoint = selectedEvent.isDonationEvent 
         ? `/v1/donation-event/${selectedEvent._id}`
+        : selectedEvent.isCorporateEvent
+        ? `/v1/corporate-events/${selectedEvent._id}`
         : `/v1/event/${selectedEvent._id}`;
       
       await api.delete(endpoint, {
@@ -424,6 +492,8 @@ const Ngoeventtable = () => {
       const token = localStorage.getItem("auth-token");
       const endpoint = selectedEvent.isDonationEvent 
         ? `/v1/donation-event/${selectedEvent._id}`
+        : selectedEvent.isCorporateEvent
+        ? `/v1/corporate-events/${selectedEvent._id}`
         : `/v1/event/${selectedEvent._id}`;
       
       await api.delete(endpoint, {
@@ -442,12 +512,14 @@ const Ngoeventtable = () => {
 
   const pendingCount = events.filter(e => e.status === "pending").length;
   const rejectedEvents = events.filter(e => e.status === "rejected");
-  const pendingVolunteerEvents = events.filter(e => e.status === "pending" && !e.isDonationEvent).length;
+  const pendingVolunteerEvents = events.filter(e => e.status === "pending" && !e.isDonationEvent && !e.isCorporateEvent).length;
   const pendingDonationEvents = events.filter(e => e.status === "pending" && e.isDonationEvent).length;
+  const pendingCorporateEvents = events.filter(e => e.status === "pending" && e.isCorporateEvent).length;
 
   // Approved events stats
-  const approvedVolunteerEvents = events.filter(e => e.status === "approved" && !e.isDonationEvent);
+  const approvedVolunteerEvents = events.filter(e => e.status === "approved" && !e.isDonationEvent && !e.isCorporateEvent);
   const approvedDonationEvents = events.filter(e => e.status === "approved" && e.isDonationEvent);
+  const approvedCorporateEvents = events.filter(e => e.status === "approved" && e.isCorporateEvent);
   
   const volunteerOpenCount = approvedVolunteerEvents.filter(e => e.displayStatus === "Open").length;
   const volunteerOngoingCount = approvedVolunteerEvents.filter(e => e.displayStatus === "Ongoing").length;
@@ -513,15 +585,13 @@ const Ngoeventtable = () => {
           message={
             <>
               You have {pendingCount} event{pendingCount > 1 ? 's' : ''} pending admin approval
-              {pendingVolunteerEvents > 0 && pendingDonationEvents > 0 && (
-                <span> ({pendingVolunteerEvents} volunteer event{pendingVolunteerEvents > 1 ? 's' : ''}, {pendingDonationEvents} donation event{pendingDonationEvents > 1 ? 's' : ''})</span>
-              )}
-              {pendingVolunteerEvents > 0 && pendingDonationEvents === 0 && (
-                <span> (volunteer event{pendingVolunteerEvents > 1 ? 's' : ''})</span>
-              )}
-              {pendingVolunteerEvents === 0 && pendingDonationEvents > 0 && (
-                <span> (donation event{pendingDonationEvents > 1 ? 's' : ''})</span>
-              )}
+              {(() => {
+                const parts = [];
+                if (pendingVolunteerEvents > 0) parts.push(`${pendingVolunteerEvents} volunteer event${pendingVolunteerEvents > 1 ? 's' : ''}`);
+                if (pendingDonationEvents > 0) parts.push(`${pendingDonationEvents} donation event${pendingDonationEvents > 1 ? 's' : ''}`);
+                if (pendingCorporateEvents > 0) parts.push(`${pendingCorporateEvents} CSR opportunit${pendingCorporateEvents > 1 ? 'ies' : 'y'}`);
+                return parts.length > 0 ? <span> ({parts.join(', ')})</span> : null;
+              })()}
               . {pendingCount > 1 ? ' They' : ' It'} will be visible once approved.
               <span className="font-semibold ml-1 underline">Click to view details.</span>
             </>
@@ -623,6 +693,35 @@ const Ngoeventtable = () => {
           onClick={() => handleBannerClick("approved")}
           onDismiss={() => dismissBanner('donationStatusBanner')}
           isDismissed={dismissedBanners.donationStatusBanner}
+        />
+      )}
+
+      {/* CSR Opportunities Status Banner */}
+      {(pendingCorporateEvents > 0 || approvedCorporateEvents.length > 0) && (
+        <StatusBanner
+          type="approved-corporate"
+          icon={Briefcase}
+          count={pendingCorporateEvents + approvedCorporateEvents.length}
+          title={`${pendingCorporateEvents + approvedCorporateEvents.length} CSR Opportunit${(pendingCorporateEvents + approvedCorporateEvents.length) > 1 ? 'ies' : 'y'}`}
+          message={
+            <>
+              Your CSR opportunities status: 
+              {pendingCorporateEvents > 0 && (
+                <span className="font-semibold ml-1 text-amber-600">
+                  {pendingCorporateEvents} Pending Approval
+                </span>
+              )}
+              {approvedCorporateEvents.length > 0 && (
+                <span className="font-semibold ml-1 text-green-600">
+                  {pendingCorporateEvents > 0 && ', '}{approvedCorporateEvents.length} Active
+                </span>
+              )}
+              <span className="font-semibold ml-1 underline">. Click to view details.</span>
+            </>
+          }
+          onClick={() => handleBannerClick("all")}
+          onDismiss={() => dismissBanner('corporateStatusBanner')}
+          isDismissed={dismissedBanners.corporateStatusBanner}
         />
       )}
       
@@ -932,6 +1031,26 @@ const Ngoeventtable = () => {
                 </div>
               )}
 
+              {selectedEvent.isCorporateEvent && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4 mb-4 md:mb-6">
+                  <div className="flex items-start gap-2">
+                    <Briefcase className="w-4 h-4 md:w-5 md:h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-900 mb-1 text-sm md:text-base">CSR Opportunity</h4>
+                      <p className="text-xs md:text-sm text-blue-800 mb-2">
+                        This is a Corporate Social Responsibility opportunity. For detailed management and editing, please visit the dedicated CSR management page.
+                      </p>
+                      <Link 
+                        href="/managecopertaeevent"
+                        className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-blue-700 hover:text-blue-800 underline"
+                      >
+                        Go to CSR Management →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Title */}
                 <div className="md:col-span-2">
@@ -1017,127 +1136,130 @@ const Ngoeventtable = () => {
                   )}
                 </div>
 
-                {/* Detailed Address - Hidden on mobile when not in edit mode */}
-                <div className={!isEditMode ? "hidden md:block" : ""}>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Detailed Address</label>
-                  {isEditMode ? (
-                    <input
-                      type="text"
-                      value={editedEvent?.detailedAddress || ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, detailedAddress: e.target.value })}
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    />
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.detailedAddress || "N/A"}</p>
-                  )}
-                </div>
+                {/* Volunteer Event Fields - Hide for CSR opportunities */}
+                {!selectedEvent.isCorporateEvent && !selectedEvent.isDonationEvent && (
+                  <>
+                    {/* Detailed Address - Hidden on mobile when not in edit mode */}
+                    <div className={!isEditMode ? "hidden md:block" : ""}>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Detailed Address</label>
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={editedEvent?.detailedAddress || ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, detailedAddress: e.target.value })}
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        />
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{selectedEvent.detailedAddress || "N/A"}</p>
+                      )}
+                    </div>
 
-                {/* Date */}
-                <div>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Date</label>
-                  {isEditMode ? (
-                    <input
-                      type="date"
-                      value={editedEvent?.date ? new Date(editedEvent.date).toISOString().split('T')[0] : ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, date: e.target.value })}
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    />
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{new Date(selectedEvent.date).toLocaleDateString()}</p>
-                  )}
-                </div>
+                    {/* Date */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Date</label>
+                      {isEditMode ? (
+                        <input
+                          type="date"
+                          value={editedEvent?.date ? new Date(editedEvent.date).toISOString().split('T')[0] : ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, date: e.target.value })}
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        />
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                      )}
+                    </div>
 
-                {/* Time */}
-                <div>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Time</label>
-                  {isEditMode ? (
-                    <input
-                      type="time"
-                      value={editedEvent?.time || ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, time: e.target.value })}
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    />
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.time || "N/A"}</p>
-                  )}
-                </div>
+                    {/* Time */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Time</label>
+                      {isEditMode ? (
+                        <input
+                          type="time"
+                          value={editedEvent?.time || ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, time: e.target.value })}
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        />
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{selectedEvent.time || "N/A"}</p>
+                      )}
+                    </div>
 
-                {/* Duration - Hidden on mobile when not in edit mode */}
-                <div className={!isEditMode ? "hidden md:block" : ""}>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Duration (hours)</label>
-                  {isEditMode ? (
-                    <input
-                      type="number"
-                      value={editedEvent?.duration || ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, duration: Number(e.target.value) })}
-                      min="1"
+                    {/* Duration - Hidden on mobile when not in edit mode */}
+                    <div className={!isEditMode ? "hidden md:block" : ""}>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Duration (hours)</label>
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={editedEvent?.duration || ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, duration: Number(e.target.value) })}
+                          min="1"
                       max="12"
                       className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     />
                   ) : (
                     <p className="text-gray-700 text-sm md:text-base">{selectedEvent.duration || "N/A"} hours</p>
                   )}
-                </div>
+                    </div>
 
-                {/* Max Participants */}
-                <div>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Max Participants</label>
-                  {isEditMode ? (
-                    <input
-                      type="number"
-                      value={editedEvent?.maxParticipants || ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, maxParticipants: Number(e.target.value) })}
-                      min="1"
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    />
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.maxParticipants}</p>
-                  )}
-                </div>
+                    {/* Max Participants */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Max Participants</label>
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={editedEvent?.maxParticipants || ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, maxParticipants: Number(e.target.value) })}
+                          min="1"
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        />
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{selectedEvent.maxParticipants}</p>
+                      )}
+                    </div>
 
-                {/* Current Participants */}
-                <div>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Current Participants</label>
-                  <p className="text-gray-700 text-sm md:text-base">{selectedEvent.filled} / {selectedEvent.maxParticipants}</p>
-                </div>
+                    {/* Current Participants */}
+                    <div>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Current Participants</label>
+                      <p className="text-gray-700 text-sm md:text-base">{selectedEvent.filled} / {selectedEvent.maxParticipants}</p>
+                    </div>
 
-                {/* Points Offered - Hidden on mobile when not in edit mode */}
-                <div className={!isEditMode ? "hidden md:block" : ""}>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Points Offered</label>
-                  {isEditMode ? (
-                    <input
-                      type="number"
-                      value={editedEvent?.pointsOffered || ""}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, pointsOffered: Number(e.target.value) })}
-                      min="0"
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    />
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.pointsOffered || 0} points</p>
-                  )}
-                </div>
+                    {/* Points Offered - Hidden on mobile when not in edit mode */}
+                    <div className={!isEditMode ? "hidden md:block" : ""}>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Points Offered</label>
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={editedEvent?.pointsOffered || ""}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, pointsOffered: Number(e.target.value) })}
+                          min="0"
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        />
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{selectedEvent.pointsOffered || 0} points</p>
+                      )}
+                    </div>
 
-                {/* Sponsorship Required - Hidden on mobile when not in edit mode */}
-                <div className={!isEditMode ? "hidden md:block" : ""}>
-                  <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Required</label>
-                  {isEditMode ? (
-                    <select
-                      value={editedEvent?.sponsorshipRequired ? "yes" : "no"}
-                      onChange={(e) => setEditedEvent({ ...editedEvent!, sponsorshipRequired: e.target.value === "yes" })}
-                      className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    >
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </select>
-                  ) : (
-                    <p className="text-gray-700 text-sm md:text-base">{selectedEvent.sponsorshipRequired ? "Yes" : "No"}</p>
-                  )}
-                </div>
+                    {/* Sponsorship Required - Hidden on mobile when not in edit mode */}
+                    <div className={!isEditMode ? "hidden md:block" : ""}>
+                      <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Required</label>
+                      {isEditMode ? (
+                        <select
+                          value={editedEvent?.sponsorshipRequired ? "yes" : "no"}
+                          onChange={(e) => setEditedEvent({ ...editedEvent!, sponsorshipRequired: e.target.value === "yes" })}
+                          className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        >
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-700 text-sm md:text-base">{selectedEvent.sponsorshipRequired ? "Yes" : "No"}</p>
+                      )}
+                    </div>
 
-                {/* Sponsorship Amount */}
-                {(isEditMode ? editedEvent?.sponsorshipRequired : selectedEvent.sponsorshipRequired) && (
-                  <div className={!isEditMode ? "hidden md:block" : ""}>
-                    <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Amount</label>
+                    {/* Sponsorship Amount */}
+                    {(isEditMode ? editedEvent?.sponsorshipRequired : selectedEvent.sponsorshipRequired) && (
+                      <div className={!isEditMode ? "hidden md:block" : ""}>
+                        <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1 md:mb-2">Sponsorship Amount</label>
                     {isEditMode ? (
                       <input
                         type="number"
@@ -1147,15 +1269,17 @@ const Ngoeventtable = () => {
                         className="w-full px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                       />
                     ) : (
-                      <p className="text-gray-700 text-sm md:text-base">${selectedEvent.sponsorshipAmount || 0}</p>
-                    )}
-                  </div>
+                        <p className="text-gray-700 text-sm md:text-base">${selectedEvent.sponsorshipAmount || 0}</p>
+                      )}
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
 
               {/* Action Buttons */}
               <div className="mt-6 md:mt-8 flex flex-wrap gap-2 md:gap-3 justify-end border-t border-gray-200 pt-4 md:pt-6">
-                {selectedEvent.status === "pending" && (
+                {selectedEvent.status === "pending" && !selectedEvent.isCorporateEvent && (
                   <>
                     {!isEditMode ? (
                       <>
@@ -1194,6 +1318,17 @@ const Ngoeventtable = () => {
                       </>
                     )}
                   </>
+                )}
+
+                {/* CSR Opportunity withdraw button */}
+                {selectedEvent.status === "pending" && selectedEvent.isCorporateEvent && (
+                  <button
+                    onClick={handleWithdrawRequest}
+                    className="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium text-sm md:text-base"
+                  >
+                    <XCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    Withdraw
+                  </button>
                 )}
 
                 {/* End Event button - Only show for approved volunteer events (not donation events) */}

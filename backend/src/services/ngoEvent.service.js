@@ -264,7 +264,9 @@ const getEventById = async (eventId) => {
     );
 
   if (!event) {
-    throw new Error("Event not found");
+    const error = new Error("Event not found");
+    error.statusCode = 404;
+    throw error;
   }
 
   return event;

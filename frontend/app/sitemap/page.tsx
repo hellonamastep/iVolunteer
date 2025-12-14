@@ -114,7 +114,7 @@ const SitemapPage = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
             <span className="text-3xl">🗺️</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Site Map
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">

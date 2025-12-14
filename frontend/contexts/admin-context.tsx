@@ -23,6 +23,41 @@ export interface EventItem {
   date: string;
   time: string;
   status: "pending" | "approved" | "rejected";
+  description?: string;
+  location?: string;
+  duration?: number;
+  category?: string;
+  imageUrl?: string;
+  // CSR-specific fields
+  ngoId?: {
+    _id?: string;
+    name?: string;
+    organizationName?: string;
+    email?: string;
+  };
+  organizationId?: {
+    _id?: string;
+    name?: string;
+    organizationName?: string;
+    email?: string;
+  };
+  opportunityType?: string;
+  coverImage?: {
+    url?: string;
+    publicId?: string;
+  };
+  problemStatement?: string;
+  timeline?: {
+    startDate?: string;
+    endDate?: string;
+  };
+  budget?: {
+    totalAmount?: number;
+    breakdown?: any[];
+  };
+  csrModes?: string[];
+  csrActAlignment?: string[];
+  csrObjectives?: string[];
   [key: string]: any;
 }
 
@@ -210,7 +245,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Corporate events
+  // Corporate events (CSR Opportunities)
   const fetchPendingCorporateEvents = async () => {
     if (!isAdmin) return;
     const token = localStorage.getItem("auth-token");
@@ -218,7 +253,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const res = await api.get<{ success: boolean; events: EventItem[] }>(
-        "/v1/event/pending-corporate",
+        "/v1/corporate-events/pending",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -240,12 +275,8 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       await api.put(
-        `/v1/event/admin/approve-with-scoring/${id}`,
-        {
-          baseCategory: baseCategoryOrPoints,
-          difficulty: difficultyKeyOrMultiplier,
-          hoursWorked: hoursWorked || 0,
-        },
+        `/v1/corporate-events/approve/${id}`,
+        {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -260,9 +291,8 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     const token = localStorage.getItem("auth-token");
     try {
       await api.put(
-        `/v1/event/status/${id}`,
+        `/v1/corporate-events/reject/${id}`,
         {
-          status: "rejected",
           rejectionReason: reason || "",
         },
         { headers: { Authorization: `Bearer ${token}` } }

@@ -69,7 +69,8 @@ const EventDetailsPage: React.FC = () => {
   const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
 
   // Check if this is a corporate event
-  const isCorporateEvent = event?.eventType && ['corporate-partnership', 'corporate-csr', 'employee-engagement', 'community-outreach'].includes(event.eventType);
+  const isCorporateEvent = event?._isCsrOpportunity || (event?.eventType && ['corporate-partnership', 'corporate-csr', 'employee-engagement', 'community-outreach'].includes(event.eventType));
+  const isCsrOpportunity = event?._isCsrOpportunity === true;
 
   // Fetch single event with NGO details
   const fetchEventDetails = async () => {
@@ -98,7 +99,58 @@ const EventDetailsPage: React.FC = () => {
           return;
         }
       } catch (singleEventError) {
-        console.log('Single event endpoint failed, trying all events endpoint');
+        console.log('Single event endpoint failed, trying CSR opportunities');
+        
+        // Try fetching from CorporateEvent model (CSR opportunities)
+        try {
+          const csrResponse = await api.get(`/v1/corporate-events/${eventId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            withCredentials: true,
+          });
+
+          const csrData = csrResponse.data as any;
+          if (csrData.success && csrData.event) {
+            console.log('CSR opportunity found:', csrData.event);
+            // Map CSR event structure to regular event structure for compatibility
+            const mappedEvent = {
+              _id: csrData.event._id,
+              title: csrData.event.title,
+              description: csrData.event.description || csrData.event.problemStatement || '',
+              date: csrData.event.timeline?.startDate || csrData.event.createdAt,
+              time: csrData.event.timeline?.startDate || '',
+              location: typeof csrData.event.location === 'object' 
+                ? (csrData.event.location?.city && csrData.event.location?.state 
+                  ? `${csrData.event.location.city}, ${csrData.event.location.state}` 
+                  : '')
+                : (csrData.event.location || ''),
+              city: typeof csrData.event.location === 'object' 
+                ? (csrData.event.location?.city || '')
+                : (csrData.event.location || ''),
+              category: csrData.event.opportunityType || 'CSR Partnership',
+              volunteersNeeded: 0,
+              image: csrData.event.coverImage,
+              organizationId: csrData.event.ngoId ? {
+                _id: csrData.event.ngoId._id || '',
+                name: csrData.event.ngoId.organizationName || csrData.event.ngoId.name || 'NGO',
+                organizationType: 'NGO',
+                email: csrData.event.ngoId.email || '',
+                city: csrData.event.ngoId.city || '',
+                contactNumber: csrData.event.ngoId.contactNumber || '',
+                address: csrData.event.ngoId.address || ''
+              } : undefined,
+              csrObjectives: csrData.event.csrModes || [],
+              eventType: 'corporate-csr',
+              status: csrData.event.status,
+              // Add original CSR fields for reference
+              _isCsrOpportunity: true,
+              _originalData: csrData.event
+            };
+            setEvent(mappedEvent);
+            return;
+          }
+        } catch (csrError) {
+          console.log('CSR opportunity endpoint failed, trying all events endpoint');
+        }
         
         // Fallback to fetching all events
         const allEventsResponse = await api.get("/v1/event/all-event", {
@@ -244,7 +296,11 @@ const EventDetailsPage: React.FC = () => {
     return (
       <>
         {/* <Header /> */}
-        <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6] flex items-center justify-center">
+        <div className={`min-h-screen flex items-center justify-center ${
+          isCorporateEvent 
+            ? "bg-gradient-to-br from-[#f0f9f8] via-white to-[#39c2ba]/20"
+            : "bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6]"
+        }`}>
           <div className="text-center">
             <img
               src="/mascots/video_mascots/mascot_walking_video.gif"
@@ -315,19 +371,113 @@ const EventDetailsPage: React.FC = () => {
   const leftColumnContent = (
     <>
       <DetailColumnHeader 
-        title="Event Details"
-        subtitle="Learn more about this volunteer opportunity"
+        title={isCsrOpportunity ? "CSR Opportunity Details" : "Event Details"}
+        subtitle={isCsrOpportunity ? "Explore this corporate partnership opportunity" : "Learn more about this volunteer opportunity"}
       />
       
       {/* Description */}
-      <DetailSection title="About This Event" icon="📋">
+      <DetailSection title={isCsrOpportunity ? "About This Opportunity" : "About This Event"} icon={isCsrOpportunity ? "🤝" : "📋"}>
         <DetailDescription 
-          text={event.description || "No description available for this event."}
+          text={event.description || (isCsrOpportunity ? "No description available for this opportunity." : "No description available for this event.")}
         />
       </DetailSection>
 
+      {/* CSR Objectives for CSR opportunities */}
+      {isCsrOpportunity && event.csrObjectives && event.csrObjectives.length > 0 && (
+        <DetailSection title="CSR Modes & Impact Areas" icon="🎯">
+          <div className="flex flex-wrap gap-2">
+            {event.csrObjectives.map((objective: string, index: number) => (
+              <span
+                key={index}
+                className="px-3 py-1.5 bg-gradient-to-r from-[#39c2ba]/10 to-[#4FC3DC]/10 text-[#173043] text-xs rounded-full font-medium border border-[#39c2ba]/20"
+              >
+                {objective}
+              </span>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* CSR-specific details */}
+      {isCsrOpportunity && event._originalData && (
+        <>
+          {/* Problem Statement */}
+          {event._originalData.problemStatement && (
+            <DetailSection title="Problem Statement" icon="⚠️">
+              <DetailDescription text={event._originalData.problemStatement} />
+            </DetailSection>
+          )}
+
+          {/* Proposed Solution */}
+          {event._originalData.proposedSolution && (
+            <DetailSection title="Proposed Solution" icon="💡">
+              <DetailDescription text={event._originalData.proposedSolution} />
+            </DetailSection>
+          )}
+
+          {/* Expected Impact */}
+          {event._originalData.expectedImpact && (
+            <DetailSection title="Expected Impact" icon="📊">
+              <div className="space-y-2 text-sm text-gray-700">
+                {event._originalData.expectedImpact.directImpact && (
+                  <p><strong>Direct Impact:</strong> {event._originalData.expectedImpact.directImpact}</p>
+                )}
+                {event._originalData.expectedImpact.longTermOutcome && (
+                  <p><strong>Long-term Outcome:</strong> {event._originalData.expectedImpact.longTermOutcome}</p>
+                )}
+                {event._originalData.expectedImpact.beneficiaries && (
+                  <p><strong>Beneficiaries:</strong> {event._originalData.expectedImpact.beneficiaries}</p>
+                )}
+              </div>
+            </DetailSection>
+          )}
+
+          {/* Budget */}
+          {event._originalData.budget?.totalAmount && (
+            <DetailSection title="Budget" icon="💰">
+              <div className="text-sm text-gray-700">
+                <p className="font-semibold text-lg text-[#39c2ba]">₹{event._originalData.budget.totalAmount.toLocaleString()}</p>
+                {event._originalData.budget.breakdown && event._originalData.budget.breakdown.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {event._originalData.budget.breakdown.map((item: any, idx: number) => (
+                      <p key={idx}>{item.item}: ₹{item.amount.toLocaleString()}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </DetailSection>
+          )}
+
+          {/* Participation Required */}
+          {event._originalData.participationRequired && event._originalData.participationRequired.length > 0 && (
+            <DetailSection title="Participation Required" icon="🤝">
+              <div className="flex flex-wrap gap-2">
+                {event._originalData.participationRequired.map((item: string, idx: number) => (
+                  <span key={idx} className="px-3 py-1 bg-[#f0f9f8] text-[#173043] text-xs rounded-full border border-[#39c2ba]/20">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </DetailSection>
+          )}
+
+          {/* SDG Mapping */}
+          {event._originalData.sdgMapping && event._originalData.sdgMapping.length > 0 && (
+            <DetailSection title="SDG Alignment" icon="🌍">
+              <div className="flex flex-wrap gap-2">
+                {event._originalData.sdgMapping.map((sdg: string, idx: number) => (
+                  <span key={idx} className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
+                    {sdg}
+                  </span>
+                ))}
+              </div>
+            </DetailSection>
+          )}
+        </>
+      )}
+
       {/* Event Information */}
-      <DetailSection title="Event Information" icon="ℹ️">
+      <DetailSection title={isCsrOpportunity ? "Opportunity Information" : "Event Information"} icon="ℹ️">
         <div className="space-y-2">
           {/* Event Type */}
           {event.eventType && (
@@ -437,7 +587,7 @@ const EventDetailsPage: React.FC = () => {
 
       {/* NGO Information */}
       {event.organizationId && typeof event.organizationId === 'object' && (
-        <DetailSection title="About the Organization" icon="🏢">
+        <DetailSection title={isCsrOpportunity ? "About the NGO Partner" : "About the Organization"} icon={isCsrOpportunity ? "🤝" : "🏢"}>
           <div className="space-y-3">
             <div className="flex items-start space-x-2">
               <Building className="h-4 w-4 text-[#7DD9A6] mt-0.5 flex-shrink-0" />
@@ -552,57 +702,110 @@ const EventDetailsPage: React.FC = () => {
         </DetailSection>
       )}
 
-      {/* Participation Progress */}
-      <DetailSection title="Participation" icon="👥">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-gray-700">
-            <div className="flex items-center">
-              <Users className="h-3 w-3 text-[#7DD9A6] mr-1" />
-              <span className="text-xs font-semibold">
-                {currentParticipants} / {maxParticipants === Infinity ? "∞" : maxParticipants} participants
-              </span>
+      {/* Participation Progress - Only for non-CSR events */}
+      {!isCsrOpportunity && (
+        <DetailSection title="Participation" icon="👥">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-gray-700">
+              <div className="flex items-center">
+                <Users className="h-3 w-3 text-[#7DD9A6] mr-1" />
+                <span className="text-xs font-semibold">
+                  {currentParticipants} / {maxParticipants === Infinity ? "∞" : maxParticipants} participants
+                </span>
+              </div>
+              {maxParticipants !== Infinity && (
+                <span className="text-xs font-bold text-[#6BC794]">{progress}%</span>
+              )}
             </div>
+
+            {/* Progress Bar */}
             {maxParticipants !== Infinity && (
-              <span className="text-xs font-bold text-[#6BC794]">{progress}%</span>
+              <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
+                <div
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    eventFull ? "bg-gradient-to-r from-red-400 to-red-500" : 
+                    progress > 75 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" : 
+                    "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]"
+                  }`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            )}
+
+            {/* Spots Remaining */}
+            {maxParticipants !== Infinity && !eventFull && (
+              <div className="text-center bg-[#E8F5A5]/30 px-3 py-2 rounded-lg border border-[#D4E7B8]">
+                <p className="text-xs text-gray-700 font-semibold">
+                  🎯 <span className="text-[#6BC794]">{maxParticipants - currentParticipants}</span> spots remaining
+                </p>
+              </div>
             )}
           </div>
-
-          {/* Progress Bar */}
-          {maxParticipants !== Infinity && (
-            <div className="w-full bg-gray-200 rounded-full h-2 shadow-inner">
-              <div
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  eventFull ? "bg-gradient-to-r from-red-400 to-red-500" : 
-                  progress > 75 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" : 
-                  "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]"
-                }`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
-
-          {/* Spots Remaining */}
-          {maxParticipants !== Infinity && !eventFull && (
-            <div className="text-center bg-[#E8F5A5]/30 px-3 py-2 rounded-lg border border-[#D4E7B8]">
-              <p className="text-xs text-gray-700 font-semibold">
-                🎯 <span className="text-[#6BC794]">{maxParticipants - currentParticipants}</span> spots remaining
-              </p>
-            </div>
-          )}
-        </div>
-      </DetailSection>
+        </DetailSection>
+      )}
 
       {/* Participation Actions */}
-      <div className="border-2 border-[#D4E7B8] rounded-lg p-5 space-y-3">
-        {isEventCreator ? (
+      <div className={`border-2 rounded-lg p-5 space-y-3 ${
+        isCsrOpportunity 
+          ? "border-[#39c2ba]/30 bg-[#f0f9f8]/30"
+          : "border-[#D4E7B8]"
+      }`}>
+        {isCsrOpportunity && user?.role === 'corporate' ? (
           <div className="space-y-3">
-            <div className="bg-gradient-to-r from-[#7DD9A6] to-[#6BC794] rounded-lg p-4">
+            <button
+              onClick={handleExpressInterest}
+              disabled={interestState === 'loading' || interestState === 'sent'}
+              className={`w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center transition-all duration-200 ${
+                interestState === 'sent'
+                  ? 'bg-green-100 text-green-700 cursor-default'
+                  : interestState === 'loading'
+                  ? 'bg-gray-100 text-gray-500 cursor-wait'
+                  : 'bg-gradient-to-r from-[#39c2ba] to-[#4FC3DC] text-white hover:from-[#2da59e] hover:to-[#3aa8c0] shadow-md hover:shadow-lg'
+              }`}
+            >
+              {interestState === 'loading' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Sending Interest...
+                </>
+              ) : interestState === 'sent' ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Interest Sent Successfully
+                </>
+              ) : (
+                <>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Express Interest in Partnership
+                </>
+              )}
+            </button>
+            <div className={`rounded-lg p-3 text-xs ${
+              isCsrOpportunity
+                ? "bg-[#39c2ba]/5 border border-[#39c2ba]/20 text-[#173043]"
+                : "bg-[#E8F5A5]/30 border border-[#D4E7B8] text-gray-700"
+            }`}>
+              <p className="font-medium mb-1">💡 Partnership Opportunity</p>
+              <p>Express your interest to connect with the NGO and explore how your organization can support this initiative through CSR partnerships.</p>
+            </div>
+          </div>
+        ) : isEventCreator ? (
+          <div className="space-y-3">
+            <div className={`rounded-lg p-4 ${
+              isCsrOpportunity
+                ? "bg-gradient-to-r from-[#39c2ba] to-[#4FC3DC]"
+                : "bg-gradient-to-r from-[#7DD9A6] to-[#6BC794]"
+            }`}>
               <div className="flex items-center justify-center space-x-2 text-white">
                 <Building className="h-5 w-5" />
-                <span className="font-bold text-base">You Created This Event</span>
+                <span className="font-bold text-base">{isCsrOpportunity ? "You Created This Opportunity" : "You Created This Event"}</span>
               </div>
             </div>
-            <div className="bg-[#E8F5A5]/30 border border-[#D4E7B8] rounded-lg p-3">
+            <div className={`rounded-lg p-3 ${
+              isCsrOpportunity
+                ? "bg-[#39c2ba]/5 border border-[#39c2ba]/20"
+                : "bg-[#E8F5A5]/30 border border-[#D4E7B8]"
+            }`}>
               <p className="text-xs text-center text-gray-700 font-medium">
                 ℹ️ As the event creator, you can manage participants below
               </p>
@@ -800,13 +1003,13 @@ const EventDetailsPage: React.FC = () => {
     <>
       <DetailPageLayout
         loading={loading}
-        loadingMessage="Loading event details..."
+        loadingMessage={isCsrOpportunity ? "Loading CSR opportunity details..." : "Loading event details..."}
         loadingSubtext="Please wait while we fetch the details! 🎉"
         error={error}
-        errorTitle={error ? "Error" : "Event Not Found"}
-        backButtonText="Back to Events"
-        pageTitle="Volunteer Event"
-        pageSubtitle="Join us and make a difference"
+        errorTitle={error ? "Error" : (isCsrOpportunity ? "Opportunity Not Found" : "Event Not Found")}
+        backButtonText={isCsrOpportunity ? "Back to CSR Opportunities" : "Back to Events"}
+        pageTitle={isCsrOpportunity ? "CSR Partnership Opportunity" : "Volunteer Event"}
+        pageSubtitle={isCsrOpportunity ? "Corporate Social Responsibility Initiative" : "Join us and make a difference"}
         coverImage={event.image?.url}
         coverImageAlt={event.image?.caption || event.title}
         title={event.title}
@@ -816,8 +1019,8 @@ const EventDetailsPage: React.FC = () => {
         rightColumn={rightColumnContent}
       />
       
-      {/* Event Participants Manager - Only visible to creator */}
-      {!loading && !error && event && isEventCreator && (
+      {/* Event Participants Manager - Only visible to creator and NOT for CSR opportunities */}
+      {!loading && !error && event && isEventCreator && !isCsrOpportunity && (
         <div className="min-h-screen bg-gradient-to-br from-[#E8F5A5] via-white to-[#7DD9A6]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <EventParticipantsManager 

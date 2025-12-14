@@ -52,11 +52,13 @@ export type EventData = {
 export type NGOContextType = {
   events: EventData[];
   organizationEvents: EventData[];
+  corporateEvents: EventData[]; // CSR opportunities created by this NGO
   loading: boolean;
   error: string | null;
   createEvent: (data: EventData) => Promise<void>;
   fetchAvailableEvents: (showAll?: boolean) => Promise<void>;
   fetchOrganizationEvents: () => Promise<void>;
+  fetchCorporateEvents: () => Promise<void>; // Fetch NGO's CSR opportunities
   participateInEvent: (eventId: string) => Promise<boolean>;
   leaveEvent: (eventId: string) => Promise<boolean>;
   getUserParticipatedEvents: () => Promise<void>;
@@ -69,6 +71,7 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<EventData[]>([]);
   const [organizationEvents, setOrganizationEvents] = useState<EventData[]>([]);
+  const [corporateEvents, setCorporateEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,18 +103,17 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // --- Fetch All Published Events ---
+  // --- Fetch All Published Events (now always fetches all events regardless of location) ---
   const fetchAvailableEvents = async (showAll = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      const showAllParam = showAll ? '?showAll=true' : '';
-      // console.log('[NGO Context] Fetching events from:', api.defaults.baseURL);
-      // console.log('[NGO Context] Full URL:', `${api.defaults.baseURL}/v1/event/all-event${showAllParam}`);
+      // No longer using showAll parameter - backend now always returns all events
+      // console.log('[NGO Context] Fetching ALL events (location filtering removed)');
       
       const res = await api.get<{ success: boolean; events: EventData[] }>(
-        `/v1/event/all-event${showAllParam}`,
+        `/v1/event/all-event`,
         { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
       );
 
@@ -245,16 +247,38 @@ export const NGOProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Fetch NGO's CSR opportunities
+  const fetchCorporateEvents = async () => {
+    try {
+      if (!token) throw new Error("No auth token found");
+      if (user?.role !== "ngo") return;
+
+      const res = await api.get("/v1/corporate-events/my-events", {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
+
+      setCorporateEvents((res.data as any).events || []);
+    } catch (err: any) {
+      console.error("Failed to fetch corporate events:", err);
+      toast.error(
+        err.response?.data?.message || "Failed to fetch CSR opportunities"
+      );
+    }
+  };
+
   return (
     <NGOContext.Provider
       value={{
         events,
         organizationEvents,
+        corporateEvents,
         loading,
         error,
         createEvent,
         fetchAvailableEvents,
         fetchOrganizationEvents,
+        fetchCorporateEvents,
         participateInEvent,
         leaveEvent,
         getUserParticipatedEvents,

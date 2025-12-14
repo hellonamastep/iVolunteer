@@ -41,24 +41,49 @@ const AdminCorporateEventsPage = () => {
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors = {
+  const getCategoryColor = (category: string | undefined) => {
+    if (!category) return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    
+    const colors: Record<string, string> = {
       conference: "bg-emerald-100 text-emerald-800 border-emerald-200",
       workshop: "bg-green-100 text-green-800 border-green-200",
       seminar: "bg-teal-100 text-teal-800 border-teal-200",
       networking: "bg-lime-100 text-lime-800 border-lime-200",
       training: "bg-cyan-100 text-cyan-800 border-cyan-200",
+      // CSR Opportunity Types
+      'skill-based': "bg-blue-100 text-blue-800 border-blue-200",
+      'financial': "bg-purple-100 text-purple-800 border-purple-200",
+      'in-kind': "bg-pink-100 text-pink-800 border-pink-200",
+      'infrastructure': "bg-orange-100 text-orange-800 border-orange-200",
+      'awareness': "bg-yellow-100 text-yellow-800 border-yellow-200",
       default: "bg-emerald-100 text-emerald-800 border-emerald-200"
     };
-      
+    return colors[category.toLowerCase()] || colors.default;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusStyles: Record<string, string> = {
+      pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      approved: "bg-green-100 text-green-800 border-green-300",
+      rejected: "bg-red-100 text-red-800 border-red-300",
+      active: "bg-blue-100 text-blue-800 border-blue-300",
+      completed: "bg-gray-100 text-gray-800 border-gray-300",
+      archived: "bg-gray-100 text-gray-600 border-gray-300"
+    };
+    return statusStyles[status] || statusStyles.pending;
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
   };
 
   const getUniqueCategories = () => {
@@ -99,6 +124,17 @@ const AdminCorporateEventsPage = () => {
                 <p className="text-emerald-700 mt-1">
                   Manage all corporate events and track bids from partners
                 </p>
+                <div className="flex gap-3 mt-2">
+                  <span className="text-sm px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full border border-yellow-200">
+                    Pending: {events.filter((e: any) => e.status === 'pending').length}
+                  </span>
+                  <span className="text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full border border-green-200">
+                    Approved: {events.filter((e: any) => e.status === 'approved').length}
+                  </span>
+                  <span className="text-sm px-2 py-1 bg-red-100 text-red-800 rounded-full border border-red-200">
+                    Rejected: {events.filter((e: any) => e.status === 'rejected').length}
+                  </span>
+                </div>
               </div>
             </div>
             <Link
@@ -232,7 +268,7 @@ const AdminCorporateEventsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredEvents.map((event) => (
+            {filteredEvents.map((event: any) => (
               <div
                 key={event._id}
                 className="bg-white rounded-2xl shadow-lg border border-emerald-100 hover:shadow-2xl transition-all duration-500 overflow-hidden group hover:scale-105"
@@ -250,14 +286,19 @@ const AdminCorporateEventsPage = () => {
                       <Building2 className="h-16 w-16 text-white opacity-90" />
                     </div>
                   )}
-                  <div className="absolute top-4 right-4">
-                    <span className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-medium border ${getCategoryColor(event.category)}`}>
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                    <span className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-medium border ${getCategoryColor(event.opportunityType || event.category)}`}>
                       <Tag className="h-3 w-3 mr-1" />
-                      {event.category}
+                      {event.opportunityType || event.category || 'CSR'}
                     </span>
+                    {event.status && (
+                      <span className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-bold border ${getStatusBadge(event.status)}`}>
+                        {event.status.toUpperCase()}
+                      </span>
+                    )}
                   </div>
                   <div className="absolute bottom-4 left-4 bg-emerald-800/90 text-white px-3 py-1 rounded-lg text-sm font-medium">
-                    {formatDate(event.date)}
+                    {formatDate((event as any).timeline?.startDate || event.date || event.createdAt)}
                   </div>
                 </div>
 
@@ -268,14 +309,18 @@ const AdminCorporateEventsPage = () => {
                   </h3>
                   
                   <div className="space-y-3 mb-4">
-                    <div className="flex items-center text-sm text-emerald-700">
-                      <Calendar className="h-4 w-4 mr-2 text-emerald-500" />
-                      {event.time} • {event.duration}h
-                    </div>
-                    <div className="flex items-center text-sm text-emerald-700">
-                      <Building2 className="h-4 w-4 mr-2 text-emerald-500" />
-                      {event.organizedBy}
-                    </div>
+                    {(event.time || event.duration) && (
+                      <div className="flex items-center text-sm text-emerald-700">
+                        <Calendar className="h-4 w-4 mr-2 text-emerald-500" />
+                        {event.time && `${event.time} • `}{event.duration && `${event.duration}h`}
+                      </div>
+                    )}
+                    {(event.organizedBy || (event as any).ngoId?.organizationName) && (
+                      <div className="flex items-center text-sm text-emerald-700">
+                        <Building2 className="h-4 w-4 mr-2 text-emerald-500" />
+                        {event.organizedBy || (event as any).ngoId?.organizationName || (event as any).ngoId?.name}
+                      </div>
+                    )}
                     {event.bids && event.bids.length > 0 && (
                       <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-3 py-2 rounded-lg">
                         <Users className="h-4 w-4 mr-2" />
@@ -285,8 +330,16 @@ const AdminCorporateEventsPage = () => {
                   </div>
 
                   <p className="text-emerald-600 text-sm mb-6 line-clamp-3 leading-relaxed">
-                    {event.desc}
+                    {event.desc || (event as any).description || (event as any).problemStatement || 'No description available'}
                   </p>
+
+                  {/* Rejection Reason */}
+                  {event.status === 'rejected' && event.rejectionReason && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs font-semibold text-red-700 mb-1">Rejection Reason:</p>
+                      <p className="text-sm text-red-600">{event.rejectionReason}</p>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-4 border-t border-emerald-100">
@@ -321,13 +374,19 @@ const AdminCorporateEventsPage = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold text-emerald-900">
-                  {events.filter(e => new Date(e.date) >= new Date()).length}
+                  {events.filter(e => {
+                    const eventDate = (e as any).timeline?.startDate || e.date || e.createdAt;
+                    return eventDate && new Date(eventDate) >= new Date();
+                  }).length}
                 </div>
                 <div className="text-sm text-emerald-600">Upcoming</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-emerald-900">
-                  {events.filter(e => new Date(e.date) < new Date()).length}
+                  {events.filter(e => {
+                    const eventDate = (e as any).timeline?.startDate || e.date || e.createdAt;
+                    return eventDate && new Date(eventDate) < new Date();
+                  }).length}
                 </div>
                 <div className="text-sm text-emerald-600">Completed</div>
               </div>
