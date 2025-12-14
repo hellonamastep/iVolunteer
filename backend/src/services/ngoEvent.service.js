@@ -602,11 +602,24 @@ const reviewEventCompletion = async (eventId, decision, adminId) => {
       ? event.attendedParticipants
       : event.participants; // Fallback to all participants if no attendance was marked
 
-    for (const userId of participantsToReward) {
-      const user = await mongoose.model("User").findById(userId);
+    for (const participantId of participantsToReward) {
+      const user = await mongoose.model("User").findById(participantId);
       if (user) {
+        // Award points
         user.points += totalPoints;
+        
+        // Add to completedEvents array for certificate generation
+        // Check if event is not already in completedEvents
+        const alreadyCompleted = user.completedEvents.some(
+          (eventRef) => eventRef.toString() === event._id.toString()
+        );
+        if (!alreadyCompleted) {
+          user.completedEvents.push(event._id);
+        }
+        
         await user.save();
+        
+        console.log(`[CERTIFICATE] Added event ${event._id} to user ${user._id} completedEvents. Total completed: ${user.completedEvents.length}`);
       }
     }
   } else if (decision === "rejected") {
