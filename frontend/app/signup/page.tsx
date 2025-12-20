@@ -376,12 +376,22 @@ export default function SignupPage() {
     setActiveStep(2);
   };
 
-  // Check for corporate parameter in URL on mount
+  // Check for role parameter in URL on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("type") === "corporate") {
-      setValue("role", "corporate");
-      setActiveStep(2);
+    const roleParam = params.get("role") || params.get("type");
+    
+    if (roleParam) {
+      if (roleParam === "user" || roleParam === "volunteer") {
+        setValue("role", "user");
+        setActiveStep(2);
+      } else if (roleParam === "corporate") {
+        setValue("role", "corporate");
+        setActiveStep(2);
+      } else if (roleParam === "ngo") {
+        setValue("role", "ngo");
+        setActiveStep(2);
+      }
     }
   }, []);
 

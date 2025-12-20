@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { useSearchParams } from "next/navigation";
 
-import Coinsystem from "@/components/Coinsystem";
+import ChooseYourPath from "@/components/ChooseYourPath";
 import Faq from "@/components/Faq";
 import Footer from "@/components/Footer";
 import Gamified from "@/components/Gamified";
@@ -591,9 +591,9 @@ function LandingPage() {
     <div className="min-w-[350px]">
       <Header />
       <Hero />
-      <Gamified />
       <Howitworks />
-      <Coinsystem />
+      <ChooseYourPath />
+      <Gamified />
       <Faq />
       <Footer />
     </div>

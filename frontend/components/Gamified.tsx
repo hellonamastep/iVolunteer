@@ -1,158 +1,134 @@
+"use client";
 import React from "react";
-import { Award } from "lucide-react";
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Coins, Award, Trophy, Users } from "lucide-react";
 
-const rewards = [
-  { id: 1, name: "Community Champion" },
-  { id: 2, name: "Event Enthusiast" },
-  { id: 3, name: "Volunteer Veteran" },
-  { id: 4, name: "Social Star" },
-];
-
-// ✅ Strongly typed animation variants
-const container: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15 },
+const features = [
+  {
+    icon: Coins,
+    text: "Earn for every activity",
+    color: "text-yellow-500",
   },
-};
-
-const item: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
+  {
+    icon: Award,
+    text: "Unlock achievement badges",
+    color: "text-green-500",
+  },
+  {
+    icon: Trophy,
+    text: "Climb the leaderboard",
+    color: "text-purple-500",
+  },
+];
 
 const Gamified = () => {
   return (
-    <section className="relative w-full bg-[#EFF396] py-16 sm:py-20 md:py-24 lg:py-28 overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-start">
+    <section className="relative w-full bg-[#F8F9FA] py-16 sm:py-20 md:py-24 overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* Left Side - Content */}
           <motion.div
-            className="space-y-8 sm:space-y-10 md:space-y-12"
+            className="order-2 lg:order-1"
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            {/* Heading */}
             <h2
-              className="font-medium text-[32px] sm:text-[40px] md:text-[48px] leading-[1.5] text-[#0F1729] text-justify"
+              className="text-gray-900 text-2xl sm:text-3xl md:text-4xl font-semibold mb-4"
               style={{ fontFamily: "Satoshi, sans-serif" }}
             >
               Get Gamified Rewards
             </h2>
-
-            {/* Mascot below heading in mobile view */}
-            <motion.div
-              className="flex lg:hidden items-center justify-center -mt-8"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+            <p
+              className="text-gray-500 text-base sm:text-lg mb-8 max-w-lg"
+              style={{ fontFamily: "Satoshi, sans-serif" }}
             >
-              <div className="relative">
-                <div className="relative w-[280px] h-[420px] sm:w-[320px] sm:h-[480px]">
-                  {/* Background Vector */}
-                  <div className="absolute inset-0">
-                    <img
-                      src="/gamifiedVector.svg"
-                      alt="Background shape"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+              Earn KarmaCoins by participating. Use them to unlock badges, appear on the leaderboard, and gain community recognition — purely for fun and engagement.
+            </p>
 
-                  {/* Mascot on top */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <img
-                      src="/gamifiedMascot.svg"
-                      alt="Rewards illustration"
-                      className="w-[260px] h-[325px] sm:w-[290px] sm:h-[362px] object-contain z-10 transform -translate-y-14 -translate-x-5"
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Reward Badges Grid */}
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-y-5 lg:gap-x-16 max-w-[280px] sm:max-w-2xl lg:max-w-3xl mx-auto"
-              variants={container}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-            >
-              {rewards.map((reward) => (
-                <motion.div
-                  key={reward.id}
-                  className="relative flex items-center gap-2 sm:gap-3 h-[78px] sm:h-[82px] md:h-[86px] px-4 sm:px-8 bg-[#59B4C3] rounded-[40px] sm:rounded-[44px] shadow-[0px_6px_0px_#E1E7EF] min-w-[240px] sm:min-w-[280px] md:min-w-[320px] lg:min-w-[310px]"
-                  variants={item}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  {/* Icon */}
-                  <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-[#6FC380] rounded-full shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] flex items-center justify-center">
-                    <Award className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.5]" />
-                  </div>
-
-                  {/* Text */}
-                  <span
-                    className="font-medium text-[16px] sm:text-[18px] leading-[1.2] sm:leading-[1.56] text-white whitespace-normal sm:whitespace-nowrap text-justify"
-                    style={{ fontFamily: "Satoshi, sans-serif" }}
+            {/* Features List */}
+            <div className="space-y-4 mb-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={index}
+                    className="flex items-center gap-4"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
                   >
-                    {reward.name}
-                  </span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Description */}
-            <div className="space-y-6">
-              <h3
-                className="font-medium text-[28px] sm:text-[32px] md:text-[36px] leading-[1.11] text-[#0F1729] text-justify"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
-              >
-                Earn Coins & Badges
-              </h3>
-              <p
-                className="font-normal text-[18px] sm:text-[20px] leading-[1.6] text-[#65758B] max-w-2xl mx-auto text-justify"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
-              >
-                Your efforts are recognized and rewarded. Collect coins for
-                every activity and exchange them for coupons & gifts. Unlock
-                exclusive badges to showcase your achievements.
-              </p>
+                    <div className={`w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center ${feature.color}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <span className="text-gray-700 font-medium text-base sm:text-lg">
+                      {feature.text}
+                    </span>
+                  </motion.div>
+                );
+              })}
             </div>
+
+            {/* CTA Button */}
+            <Link href="/rewards">
+              <motion.button
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[#4FC3DC] text-[#4FC3DC] font-medium text-sm sm:text-base rounded-full hover:bg-[#4FC3DC] hover:text-white transition-all duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                How KarmaCoins Work
+              </motion.button>
+            </Link>
           </motion.div>
 
-          {/* Right Side - Mascot (Desktop Only) */}
+          {/* Right Side - Illustration */}
           <motion.div
-            className="hidden lg:flex items-center justify-center"
+            className="order-1 lg:order-2 flex justify-center lg:justify-end"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="relative">
-              <div className="relative w-[280px] h-[420px] sm:w-[320px] sm:h-[480px] md:w-[350px] md:h-[525px]">
-                {/* Background Vector */}
-                <div className="absolute inset-0">
-                  <img
-                    src="/gamifiedVector.svg"
-                    alt="Background shape"
-                    className="w-full h-full object-contain"
-                  />
+              {/* Main circular container */}
+              <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] md:w-[380px] md:h-[380px]">
+                {/* Background gradient circle */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#8CE27A]/30 to-[#4FC3DC]/30" />
+                
+                {/* Inner circle */}
+                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#8CE27A] to-[#5BCCC4] flex items-center justify-center">
+                  {/* Coin icons floating */}
+                  <motion.div
+                    className="absolute top-8 right-8 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Coins className="w-6 h-6 text-yellow-700" />
+                  </motion.div>
+                  
+                  <motion.div
+                    className="absolute bottom-12 left-8 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg"
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  >
+                    <Coins className="w-5 h-5 text-yellow-700" />
+                  </motion.div>
+
+                  {/* Center mascot placeholder or icon */}
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-white rounded-full shadow-lg flex items-center justify-center">
+                    <Users className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-[#4FC3DC]" />
+                  </div>
                 </div>
 
-                {/* Mascot on top */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img
-                    src="/gamifiedMascot.svg"
-                    alt="Rewards illustration"
-                    className="w-[260px] h-[325px] sm:w-[290px] sm:h-[362px] md:w-[320px] md:h-[400px] object-contain z-10 transform -translate-y-14 -translate-x-5"
-                  />
-                </div>
+                {/* Decorative ring */}
+                <motion.div
+                  className="absolute -inset-4 border-2 border-dashed border-[#4FC3DC]/30 rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                />
               </div>
             </div>
           </motion.div>

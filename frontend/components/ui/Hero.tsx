@@ -2,105 +2,136 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { Users, Building2, Heart } from "lucide-react";
 
 const Hero = () => {
   return (
-    <section className="relative bg-white font-inter isolate overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero rows */}
-        <div className="relative mt-8 sm:mt-12 md:mt-16 min-h-[60vh] sm:min-h-[65vh] md:min-h-[70vh] flex items-center justify-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-center justify-items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20 2xl:gap-24 max-w-7xl w-full py-8 sm:py-10 md:py-12">
-            {/* Left: Mascot with the bg yellow blob */}
+    <section className="relative bg-gradient-to-br from-[#E8F5E9] via-[#E0F2F1] to-[#E8F5E9] font-inter isolate overflow-hidden min-h-[85vh]">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-[#4FC3DC]/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-40 right-20 w-40 h-40 bg-[#8CE27A]/10 rounded-full blur-2xl"></div>
+        <div className="absolute top-1/2 left-1/3 w-24 h-24 bg-[#FFC857]/10 rounded-full blur-xl"></div>
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="relative pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-8 flex items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16 max-w-7xl w-full mx-auto">
+            
+            {/* Left: Mascot with animated rings */}
             <motion.div
-              className="relative flex justify-center items-center order-1 lg:order-1"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              className="relative flex justify-center items-center order-1 lg:order-1 h-[320px] sm:h-[380px] md:h-[440px] lg:h-[500px]"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
             >
-              {/* Yellow Ellipse - Large with 50% opacity */}
-              <div className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] md:w-[550px] md:h-[550px] lg:w-[615px] lg:h-[615px] rounded-full bg-[#EFF396] opacity-50 z-0"></div>
-
-              {/* Yellow Ellipse - Smaller with 100% opacity */}
-              <div className="absolute w-[310px] h-[310px] sm:w-[420px] sm:h-[420px] md:w-[480px] md:h-[480px] lg:w-[540px] lg:h-[540px] rounded-full bg-[#EFF396] z-[2]"></div>
-
-              {/* Mascot */}
+              {/* Outer ring - animated rotation */}
+              <motion.div 
+                className="absolute w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] md:w-[400px] md:h-[400px] lg:w-[450px] lg:h-[450px] rounded-full border-[3px] border-[#4FC3DC]/30"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Middle ring with gradient */}
+              <div className="absolute w-[240px] h-[240px] sm:w-[290px] sm:h-[290px] md:w-[340px] md:h-[340px] lg:w-[380px] lg:h-[380px] rounded-full bg-gradient-to-br from-[#4FC3DC]/20 to-[#8CE27A]/20 backdrop-blur-sm" />
+              
+              {/* Inner solid circle - background for mascot */}
+              <div className="absolute w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-[280px] md:h-[280px] lg:w-[310px] lg:h-[310px] rounded-full bg-gradient-to-br from-[#4FC3DC] to-[#5BCCC4] shadow-lg" />
+              
+              {/* Mascot Image */}
               <motion.img
                 src="/mascott 1.svg"
-                alt="Hero Mascot"
-                className="relative z-10 w-[280px] h-[357px] sm:w-[330px] sm:h-[421px] md:w-[380px] md:h-[485px] lg:w-[430px] lg:h-[548px] max-w-full"
+                alt="NAMASTEP Mascot"
+                className="relative z-20 w-[180px] h-[230px] sm:w-[220px] sm:h-[280px] md:w-[260px] md:h-[330px] lg:w-[300px] lg:h-[382px] object-contain"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
             </motion.div>
 
-            {/* Right: Headlines and btns */}
+            {/* Right: Headlines and CTAs */}
             <motion.div
-              className="flex flex-col items-center justify-center text-center w-full max-w-xl gap-6 sm:gap-7 md:gap-8 order-2 lg:order-2"
-              initial={{ opacity: 0, x: 50 }}
+              className="flex flex-col items-center lg:items-start text-center lg:text-left w-full max-w-xl mx-auto lg:mx-0 order-2 lg:order-2 px-4 sm:px-0"
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
             >
               <h1
-                className="font-normal text-[#0F1729] leading-[150%] text-[28px] sm:text-[32px] md:text-[40px] lg:text-[48px] text-center px-4 sm:px-0"
+                className="font-semibold text-[#1a1a1a] leading-[1.2] text-[26px] sm:text-[32px] md:text-[38px] lg:text-[44px] mb-4"
                 style={{ fontFamily: "Satoshi, sans-serif" }}
               >
-                <span className="block">Make Doing Good Fun,</span>
-                <span className="block">Rewarding &amp; Impactful</span>
+                Make Doing Good Fun, Rewarding & Impactful
               </h1>
 
-              <div className="flex flex-col items-center justify-center w-full gap-3 sm:gap-4 mt-2 px-4 sm:px-6 md:px-0">
-                <Link href="/signup" className="w-full max-w-[496px]">
+              <p className="text-gray-600 text-base sm:text-lg mb-6 max-w-md">
+                One place to find volunteering opportunities, run CSR projects, and manage NGO events. Earn KarmaCoins for your contributions.
+              </p>
+
+              {/* Primary CTA */}
+              <Link href="/signup?role=user" className="w-full sm:w-auto mb-4">
+                <motion.button
+                  className="w-full sm:w-auto px-8 py-3.5 bg-[#4FC3DC] text-white font-semibold text-base sm:text-lg rounded-full shadow-md hover:shadow-lg transition-all"
+                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  whileHover={{ scale: 1.02, backgroundColor: "#3db5ce" }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Get Started — I'm a Volunteer
+                </motion.button>
+              </Link>
+
+              {/* Role Selection Buttons */}
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3 mt-2">
+                <Link href="/signup?role=user">
                   <motion.button
-                    className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-[#59B4C3] text-white font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#499373] sm:shadow-[0px_8px_0px_#499373] transition-colors"
-                    style={{ fontFamily: "Satoshi, sans-serif" }}
-                    whileHover={{
-                      scale: 1.02,
-                      backgroundColor: "#4a9fb0",
-                    }}
-                    whileTap={{
-                      scale: 0.95,
-                      y: 2,
-                      boxShadow: "0px 4px 0px #499373",
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium text-sm rounded-full shadow-sm hover:shadow-md hover:border-[#4FC3DC] transition-all"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    GET STARTED
+                    <Users className="w-4 h-4 text-[#4FC3DC]" />
+                    I am a Volunteer
                   </motion.button>
                 </Link>
 
-                <Link href="/login" className="w-full max-w-[496px]">
+                <Link href="/signup?role=corporate">
                   <motion.button
-                    className="w-full h-12 sm:h-14 px-4 sm:px-6 bg-white text-[#59B4C3] font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-[140%] rounded-[12px] sm:rounded-[15px] shadow-[0px_6px_0px_#E5E5E5] sm:shadow-[0px_8px_0px_#E5E5E5] transition-colors"
-                    style={{ fontFamily: "Satoshi, sans-serif" }}
-                    whileHover={{
-                      scale: 1.02,
-                      backgroundColor: "#f9fafb",
-                    }}
-                    whileTap={{
-                      scale: 0.95,
-                      y: 2,
-                      boxShadow: "0px 4px 0px #E5E5E5",
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium text-sm rounded-full shadow-sm hover:shadow-md hover:border-[#4FC3DC] transition-all"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    I ALREADY HAVE AN ACCOUNT
+                    <Building2 className="w-4 h-4 text-[#4FC3DC]" />
+                    I'm with a Company (CSR)
+                  </motion.button>
+                </Link>
+
+                <Link href="/signup?role=ngo">
+                  <motion.button
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium text-sm rounded-full shadow-sm hover:shadow-md hover:border-[#4FC3DC] transition-all"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Heart className="w-4 h-4 text-[#4FC3DC]" />
+                    I'm an NGO
                   </motion.button>
                 </Link>
               </div>
             </motion.div>
           </div>
         </div>
-
-        {/* Spacing before wave */}
-        <div className="h-12 sm:h-16 md:h-20 lg:h-24"></div>
       </div>
 
-      {/* Wave SVG  */}
-      <div className="absolute bottom-[-2px] left-0 right-0 w-full overflow-hidden leading-[0]">
-        <img
-          src="/wave.svg"
-          alt="Wave divider"
-          className="w-full h-[120px] sm:h-[120px] md:h-[140px] lg:h-[160px] block object-cover object-bottom"
-          style={{ display: "block", verticalAlign: "bottom" }}
-        />
+      {/* Bottom wave decoration */}
+      <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden">
+        <svg
+          viewBox="0 0 1440 120"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-[60px] sm:h-[80px] md:h-[100px]"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 65C840 70 960 80 1080 85C1200 90 1320 90 1380 90L1440 90V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z"
+            fill="#4FC3DC"
+          />
+        </svg>
       </div>
     </section>
   );
