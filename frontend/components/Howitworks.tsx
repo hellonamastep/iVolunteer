@@ -1,158 +1,96 @@
 "use client";
-import Image from "next/image";
 import React from "react";
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
+import { Search, UserPlus, Coins } from "lucide-react";
 
 const steps = [
   {
-    step: 1,
-    title: "Discover",
-    desc: "Explore a wide range of volunteering opportunities, community events, and charitable causes.",
+    icon: Search,
+    title: "Discover Opportunities",
+    desc: "Search and filter events that match your interests",
   },
   {
-    step: 2,
-    title: "Participate",
-    desc: "Engage in activities that match your interests and contribute your time & skills.",
+    icon: UserPlus,
+    title: "Sign Up & Join",
+    desc: "Choose your role and participate in activities",
   },
   {
-    step: 3,
-    title: "Get Rewarded",
-    desc: "Earn recognition, badges, and rewards for your valuable contributions.",
+    icon: Coins,
+    title: "Earn KarmaCoins",
+    desc: "Get recognized for your contributions",
   },
 ];
 
-// ✅ Animation Variants
-const container: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.3 },
-  },
-};
-
-const item: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
-
 const Howitworks = () => {
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Main Content Section with Green Background */}
-      <div className="relative w-full bg-[#74E291] pt-16 pb-12 px-6 md:px-12">
-        <div className="relative z-30 max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-start gap-12">
-            {/* Left side: Text */}
-            <motion.div
-              className="w-full md:w-1/2"
-              variants={container}
-              initial="hidden"
-              animate="show"
-              viewport={{ once: true }}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <motion.h1
-                  className="font-medium text-[36px] sm:text-[48px] leading-[60px] text-[#0F1729]"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8 }}
-                  viewport={{ once: true }}
-                >
-                  How it Works
-                </motion.h1>
-                <motion.span
-                  className="text-5xl"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  viewport={{ once: true }}
-                >
-                  ⭐
-                </motion.span>
-              </div>
-              <motion.h2
-                className="font-normal text-[28px] sm:text-[36px] leading-[40px] text-[#0F1729] mb-4"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                viewport={{ once: true }}
-              >
-                Your Journey with NAMASTEP
-              </motion.h2>
-              <motion.p
-                className="font-normal text-[18px] sm:text-[19.8px] leading-[32px] text-[#65758B] mb-10 max-w-[550px]"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                viewport={{ once: true }}
-              >
-                Joining NAMASTEP is simple. Discover opportunities that match
-                your interests, contribute to your community, and see your
-                impact grow.
-              </motion.p>
-              <div className="space-y-8">
-                {steps.map((step) => (
-                  <motion.div
-                    key={step.step}
-                    className="flex items-start gap-5"
-                    variants={item}
-                  >
-                    <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-[#EFF396] shadow-[0px_6px_0px_#59B4C3] rounded-full font-normal text-2xl text-black">
-                      {step.step}
-                    </div>
-                    <div className="flex-1">
-                      <h3
-                        className="font-normal text-[24px] leading-[32px] text-[#0F1729] mb-2"
-                        style={{ fontFamily: "Satoshi, sans-serif" }}
-                      >
-                        {step.title}
-                      </h3>
-                      <p
-                        className="font-normal text-[17.7px] leading-[29px] text-[#65758B] max-w-[400px]"
-                        style={{ fontFamily: "Satoshi, sans-serif" }}
-                      >
-                        {step.desc}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="w-full md:w-1/2 flex justify-center md:justify-end relative"
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              {/* Mascot Image */}
-              <div className="relative w-full max-w-[500px] h-[400px] md:h-[623px]">
-                <Image
-                  src="/howItworksMascot2.png"
-                  alt="How it works illustration"
-                  fill
-                  className="object-contain relative z-10"
-                  priority
-                />
-              </div>
-            </motion.div>
-          </div>
-        </div>
+    <section className="relative w-full bg-[#4FC3DC] py-16 sm:py-20 md:py-24 overflow-hidden">
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white rounded-full" />
+        <div className="absolute bottom-20 right-20 w-32 h-32 border-2 border-white rounded-full" />
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 border-2 border-white rounded-full" />
       </div>
 
-      {/* Inverted Wave at bottom */}
-      <div className="relative w-full h-[160px]">
-        <Image
-          src="/InvertedGreenWave.svg"
-          alt="Wave decoration"
-          fill
-          className="object-cover object-top"
-          priority
-        />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
+        {/* Header */}
+        <div className="text-center mb-12 sm:mb-16">
+          <motion.h2
+            className="text-white text-3xl sm:text-4xl md:text-5xl font-semibold mb-4"
+            style={{ fontFamily: "Satoshi, sans-serif" }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            How NAMASTEP Works
+          </motion.h2>
+          <motion.p
+            className="text-white/80 text-base sm:text-lg max-w-md mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            Simple, rewarding, and impactful
+          </motion.p>
+        </div>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <motion.div
+                key={index}
+                className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                whileHover={{ y: -5 }}
+              >
+                {/* Icon */}
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#E8F5E9] rounded-full flex items-center justify-center mb-5">
+                  <Icon className="w-7 h-7 sm:w-8 sm:h-8 text-[#4FC3DC]" />
+                </div>
+
+                {/* Content */}
+                <h3
+                  className="text-gray-900 text-lg sm:text-xl font-semibold mb-2"
+                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                >
+                  {step.title}
+                </h3>
+                <p
+                  className="text-gray-500 text-sm sm:text-base"
+                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                >
+                  {step.desc}
+                </p>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
